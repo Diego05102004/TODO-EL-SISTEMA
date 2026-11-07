@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WebSocket</title>
+</head>
+<body>
+    <h1>Test de Conexión WebSocket</h1>
+    <div id="status">Conectando...</div>
+    <div id="messages"></div>
+    
+    <script>
+        let socket = null;
+        let reconnectAttempts = 0;
+        const maxAttempts = 5;
+        
+        function connect() {
+            try {
+                socket = new WebSocket('ws://localhost:8080');
+                
+                socket.onopen = function() {
+                    document.getElementById('status').innerHTML = '✅ Conectado exitosamente';
+                    document.getElementById('status').style.color = 'green';
+                    reconnectAttempts = 0;
+                    
+                    // Enviar mensaje de prueba
+                    socket.send(JSON.stringify({
+                        tipo: 'autenticar',
+                        usuario_id: 11
+                    }));
+                };
+                
+                socket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML += '<p><strong>Mensaje recibido:</strong> ' + JSON.stringify(data) + '</p>';
+                };
+                
+                socket.onclose = function(event) {
+                    document.getElementById('status').innerHTML = '❌ Conexión cerrada. Código: ' + event.code;
+                    document.getElementById('status').style.color = 'red';
+                    
+                    if (reconnectAttempts < maxAttempts) {
+                        reconnectAttempts++;
+                        setTimeout(connect, 2000);
+                    }
+                };
+                
+                socket.onerror = function(error) {
+                    document.getElementById('status').innerHTML = '❌ Error de conexión: ' + error;
+                    document.getElementById('status').style.color = 'red';
+                };
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = '❌ Error al crear WebSocket: ' + error.message;
+                document.getElementById('status').style.color = 'red';
+            }
+        }
+        
+        // Iniciar conexión
+        connect();
+    </script>
+</body>
+</html>

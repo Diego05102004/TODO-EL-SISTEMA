@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Casa Lai",
+    "slug": "casa-lai",
+    "owner": "saymon-apps",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/LOGO.png",
+    "scheme": "casalai",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./src/assets/images/LOGO.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/LOGO.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "casalai"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "package": "com.casalai.app",
+      "usesCleartextTraffic": true
+    },
+    "web": {
+      "favicon": "./src/assets/images/LOGO.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e156525a-c8a5-4641-9f52-963273975099"
+      }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-sharing"
+    ]
+  }
+}

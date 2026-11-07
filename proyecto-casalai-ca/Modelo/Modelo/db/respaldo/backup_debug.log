@@ -1,0 +1,258 @@
+[2025-11-14T19:27:43-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:27:43-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T19:27:46-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:27:46-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T19:32:50-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:32:50-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T19:32:58-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:32:58-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T19:33:07-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:33:07-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T19:33:10-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T19:33:10-05:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Config\Config\BD" not found
+[2025-11-14T20:37:14-04:00] CONTROLADOR: FATAL: Cannot redeclare Usuario\ProyectoCasalaiCa\Clases\Backup::formatearTamano() en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Usuario\ProyectoCasalaiCa\Clases\Backup.php:188
+[2025-11-14T20:37:55-04:00] CONTROLADOR: FATAL: Uncaught TypeError: htmlspecialchars(): Argument #1 ($string) must be of type string, array given in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Vista\backup.php:43
+Stack trace:
+#0 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Vista\backup.php(43): htmlspecialchars(Array)
+#1 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php(225): require_once('C:\\xampp\\htdocs...')
+#2 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\index.php(70): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Vista\backup.php:43
+[2025-11-14T19:53:46-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T20:53:47-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_205346.sql, ok=1, ruta=N/A
+[2025-11-14T20:53:47-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T19:53:55-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T20:53:56-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_205355.sql, ok=1, ruta=N/A
+[2025-11-14T20:53:56-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T19:54:03-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T20:54:04-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_205403.sql, ok=1, ruta=N/A
+[2025-11-14T20:54:04-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T20:56:13-04:00] CONTROLADOR: FATAL: syntax error, unexpected token "public" en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Usuario\ProyectoCasalaiCa\Clases\Backup.php:143
+[2025-11-14T19:58:34-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T20:58:34-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_205834.sql, ok=0, ruta=N/A
+[2025-11-14T20:58:34-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T20:01:36-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:01:36-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_210136.sql, ok=0, ruta=N/A
+[2025-11-14T21:01:36-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T20:02:45-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:02:45-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_210245.sql, ok=0, ruta=N/A
+[2025-11-14T21:02:45-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:05:17-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:05:17-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_210517.sql, ok=0, ruta=N/A
+[2025-11-14T21:05:17-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:06:36-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:06:37-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_210636.sql, ok=1, ruta=N/A
+[2025-11-14T21:06:37-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:09:03-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:09:03-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:09:20-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:09:20-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T21:10:06-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:10:07-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:10:15-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:10:15-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T21:12:08-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:12:08-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:12:11-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:12:11-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T21:14:07-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:14:07-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:14:13-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:14:13-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T21:16:36-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:16:36-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:17:18-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:17:18-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T21:18:08-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:18:08-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:18:10-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:18:10-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T20:19:07-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T20:19:07-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:24:14-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+[2025-11-14T21:24:14-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+[2025-11-14T21:28:05-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+[2025-11-14T21:28:05-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:56
+[2025-11-14T21:28:13-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:28:13-04:00] CONTROLADOR: Excepción en GENERAR: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found
+[2025-11-14T20:32:08-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T20:32:08-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T21:32:52-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:218
+Stack trace:
+#0 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\index.php(70): require_once()
+#1 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:218
+[2025-11-14T20:33:27-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T20:33:27-05:00] CONTROLADOR: FATAL: Uncaught Error: Class "Usuario\ProyectoCasalaiCa\Clases\Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:53
+[2025-11-14T20:33:32-05:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T20:33:32-05:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T21:38:03-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:38:03-04:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T21:40:50-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:40:50-04:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T21:40:54-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:40:54-04:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T21:43:24-04:00] CONTROLADOR: FATAL: Uncaught Error: Failed opening required 'C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Usuario/vendor/autoload.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Usuario\ProyectoCasalaiCa\Clases\Backup.php:9
+Stack trace:
+#0 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\vendor\composer\ClassLoader.php(576): include()
+#1 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\vendor\composer\ClassLoader.php(427): Composer\Autoload\{closure}('C:\\xampp\\htdocs...')
+#2 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php(225): Composer\Autoload\ClassLoader->loadClass('Usuario\\Proyect...')
+#3 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\index.php(70): require_once('C:\\xampp\\htdocs...')
+#4 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Usuario\ProyectoCasalaiCa\Clases\Backup.php:9
+[2025-11-14T21:50:34-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:50:36-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_215034.sql, ok=1, ruta=N/A
+[2025-11-14T21:50:36-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:51:59-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:52:00-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_215159.sql, ok=1, ruta=N/A
+[2025-11-14T21:52:00-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:52:54-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:52:55-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_215254.sql, ok=1, ruta=N/A
+[2025-11-14T21:52:55-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T21:58:59-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T21:58:59-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_215859.sql, ok=1, ruta=N/A
+[2025-11-14T21:58:59-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:02:32-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:02:33-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220232.sql, ok=1, ruta=N/A
+[2025-11-14T22:02:33-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:04:04-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:04:05-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220404.sql, ok=1, ruta=N/A
+[2025-11-14T22:04:05-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:04:07-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:04:08-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220407.sql, ok=1, ruta=N/A
+[2025-11-14T22:04:08-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:04:17-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:04:18-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220417.sql, ok=1, ruta=N/A
+[2025-11-14T22:04:18-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:04:21-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:04:23-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220421.sql, ok=1, ruta=N/A
+[2025-11-14T22:04:23-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:06:35-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:06:36-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_220635.sql, ok=1, ruta=N/A
+[2025-11-14T22:06:36-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:10:07-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:10:08-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_221007.sql, ok=1, ruta=N/A
+[2025-11-14T22:10:08-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:11:16-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:11:17-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_221116.sql, ok=1, ruta=N/A
+[2025-11-14T22:11:17-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:12:15-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:12:16-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_221215.sql, ok=1, ruta=N/A
+[2025-11-14T22:12:16-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:14:38-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:225
+Stack trace:
+#0 C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\index.php(70): require_once()
+#1 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:225
+[2025-11-14T22:19:34-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+[2025-11-14T22:19:34-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+[2025-11-14T22:19:41-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:19:41-04:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T22:20:24-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+[2025-11-14T22:20:24-04:00] CONTROLADOR: FATAL: Uncaught Error: Class "Backup" not found in C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+Stack trace:
+#0 {main}
+  thrown en C:\xampp\htdocs\Repositorio de GITHUB\proyecto-casalai-main\proyecto-casalai-ca\Modelo\Controlador\backup.php:60
+[2025-11-14T22:20:27-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:20:27-04:00] CONTROLADOR: Excepción en GENERAR: Class "Backup" not found
+[2025-11-14T22:21:51-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:21:52-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_222151.sql, ok=1, ruta=N/A
+[2025-11-14T22:21:52-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:23:20-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:23:20-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_222320.sql, ok=1, ruta=N/A
+[2025-11-14T22:23:20-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:26:35-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:26:36-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_222635.sql, ok=1, ruta=N/A
+[2025-11-14T22:26:36-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:27:44-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:27:45-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_222744.sql, ok=1, ruta=N/A
+[2025-11-14T22:27:45-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:30:20-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:30:21-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_223020.sql, ok=1, ruta=N/A
+[2025-11-14T22:30:21-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:31:10-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:31:11-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_223110.sql, ok=1, ruta=N/A
+[2025-11-14T22:31:11-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:33:19-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:33:21-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_223319.sql, ok=1, ruta=N/A
+[2025-11-14T22:33:21-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:33:46-04:00] CONTROLADOR: --- INICIO GENERAR ---
+[2025-11-14T22:33:47-04:00] CONTROLADOR: Acción GENERAR tipo=P, archivo=backup_principal_20251114_223346.sql, ok=1, ruta=N/A
+[2025-11-14T22:33:47-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:36:28-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).
+[2025-11-14T22:37:54-04:00] CONTROLADOR: Error al GENERAR respaldo (ok=0 o archivo no existe).

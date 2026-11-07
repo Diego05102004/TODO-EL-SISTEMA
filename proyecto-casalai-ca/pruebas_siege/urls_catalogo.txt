@@ -1,0 +1,6 @@
+# Siege URL file - Pruebas de Módulo de Catálogo
+# Criterio: 0.5s (bajo), 1.2s (medio), 2.5s (alto)
+
+GET http://192.168.10.1:8000/api/productos.php?funcion=default
+GET http://192.168.10.1:8000/api/productos.php?funcion=por_categoria&categoria=1
+GET http://192.168.10.1:8000/api/productos.php?funcion=combos

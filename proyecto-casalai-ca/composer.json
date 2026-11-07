@@ -1,0 +1,35 @@
+{
+    "name": "usuario/proyecto-casalai-ca",
+    "autoload": {
+        "psr-4": {
+            "Usuario\\ProyectoCasalaiCa\\": "Modelo/Usuario/ProyectoCasalaiCa/",
+            "Usuario\\ProyectoCasalaiCa\\Config\\": "Modelo/Config/"
+        },
+        "classmap": [
+            "Modelo/Usuario/ProyectoCasalaiCa/Clases"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Usuario\\ProyectoCasalaiCa\\Test\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=7.4.0",
+        "cboden/ratchet": "^0.4.4",
+        "ratchet/pawl": "^0.4.3",
+        "firebase/php-jwt": "^7.2"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "classmap-authoritative": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "policy": {
+        "advisories": {
+            "block": false
+        }
+    }
+}

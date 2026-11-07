@@ -1,0 +1,12 @@
+{
+    "active_version": "v1.0.0",
+    "versions": {
+        "v1.0.0": {
+            "path": "auditor_model_v1.0.0.pkl",
+            "metrics": {
+                "accuracy": 1.0
+            },
+            "created_at": "2026-10-23T06:01:32.185796"
+        }
+    }
+}

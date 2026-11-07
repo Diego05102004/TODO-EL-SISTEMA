@@ -1,0 +1,11 @@
+{
+  "fecha_reentrenamiento": "2026-10-29T21:21:30.169379",
+  "num_registros": 6,
+  "error_promedio_proveedor": 0.8843323586744632,
+  "error_promedio_correlativo": 0.6666666666666666,
+  "error_promedio_productos": 1.0,
+  "error_promedio_subtotal": 0.02067302580266504,
+  "error_promedio_total": 0.0405255037249945,
+  "confianza_promedio": 0.87298199023199,
+  "precision_modelo": 1.0
+}

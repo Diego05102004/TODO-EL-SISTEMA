@@ -1,0 +1,8 @@
+# Siege URL file - Pruebas de Módulo de Recepción IA (OCR)
+# Criterio: 1.5s (bajo), 2.8s (medio), 4.2s (alto - límite RNF11: 5s)
+# Nota: Este endpoint requiere archivo de imagen, para Siege pruebas simuladas
+
+POST http://192.168.10.1:8000/fase1/extraer
+Content-Type: multipart/form-data
+
+imagen=@/path/to/test_factura.jpg

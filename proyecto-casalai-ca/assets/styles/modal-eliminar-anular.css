@@ -1,0 +1,148 @@
+/* Modal Header */
+.modal-header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.modal-icon.warning {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+.modal-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.modal-title-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.modal-title-content p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.modal-header.warning {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+/* Modal Body */
+.modal-body-warning {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.anular-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.anular-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.anular-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.anular-content h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.anular-content p {
+    font-size: 0.95rem;
+    color: #718096;
+    margin-bottom: 10px;
+}
+
+.anular-info {
+    background: rgba(245, 101, 101, 0.05);
+    border: 1px solid rgba(245, 101, 101, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    margin: 0 15px;
+    border-bottom: 1px solid rgba(245, 101, 101, 0.1);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row label {
+    font-weight: 600;
+    color: #718096;
+}
+
+.info-row span {
+    font-weight: 700;
+    color: #2d3748;
+}
+
+/* Botones de confirmación */
+.modal-footer-content {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(245, 101, 101, 0.1);
+}
+
+.btm-confirmar {
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+.btn-cancel:hover {
+    box-shadow: 0 4px 12px rgba(241, 147, 251, 0.486);
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f07e7e 0%, #e53e3e 100%);
+}
+.btn-danger:hover {
+    box-shadow: 0 4px 12px rgba(245, 101, 101, 0.479);
+    transform: translateY(-2px);
+}

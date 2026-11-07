@@ -1,0 +1,30 @@
+{
+  "name": "proyecto-casalai-ca",
+  "version": "1.0.0",
+  "description": "Repositorio general del proyecto CASALAI",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Diego05102004/proyecto-casalai-ca.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Diego05102004/proyecto-casalai-ca/issues"
+  },
+  "homepage": "https://github.com/Diego05102004/proyecto-casalai-ca#readme",
+  "devDependencies": {
+    "chrome": "^0.1.0",
+    "mocha": "^11.7.4",
+    "selenium-webdriver": "^4.39.0"
+  }
+}

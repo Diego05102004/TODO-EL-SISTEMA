@@ -1,0 +1,7 @@
+# API secrets are configured in Config/.env or in the server environment.
+# Keep Config/.env out of Git and deny direct HTTP access to it.
+Options -Indexes
+
+<FilesMatch "^\.env$">
+    Require all denied
+</FilesMatch>

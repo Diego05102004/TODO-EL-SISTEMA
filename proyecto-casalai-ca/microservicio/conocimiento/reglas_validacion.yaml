@@ -1,0 +1,89 @@
+# Reglas de validación para facturas
+# Este archivo define las reglas que el microservicio usa para validar
+# la coherencia y autenticidad de las facturas extraídas.
+
+validaciones:
+  # Validación de si el documento es una factura válida
+  es_factura:
+    activo: true
+    palabras_clave:
+      - "invoice"
+      - "factura"
+      - "receipt"
+      - "comprobante"
+      - "bill"
+      - "nota de venta"
+      - "nota de entrega"
+    min_coincidencias: 1
+    mensaje_error: "El documento no parece ser una factura válida. Por favor seleccione una factura legítima."
+
+  # Validación de coherencia de montos
+  coherencia_montos:
+    activo: true
+    tolerancia_porcentaje: 0.01  # 1% de tolerancia para diferencias
+    formula: "subtotal + iva = total"
+    validar_subtotal: true
+    validar_iva: true
+    validar_total: true
+    mensaje_error: "Los montos de la factura no son coherentes (subtotal + IVA ≠ total)."
+
+  # Validación de productos contra catálogo
+  productos:
+    activo: true
+    validar_catalogo: true
+    permitir_productos_extra: false  # Si es false, todos los productos deben estar en catálogo
+    umbral_similitud: 0.8  # Umbral de similitud para nombres de productos (0-1)
+    mensaje_error: "La factura contiene productos que no están en el catálogo del sistema."
+    mensaje_advertencia: "Algunos productos de la factura no coinciden exactamente con el catálogo."
+
+  # Validación de campos requeridos
+  campos_requeridos:
+    activo: true
+    campos:
+      - numero_factura
+      - nombre_proveedor
+      - fecha
+      - productos
+    mensaje_error: "La factura no contiene todos los campos requeridos."
+
+  # Validación de rangos de valores
+  rangos:
+    activo: true
+    cantidad:
+      minimo: 1
+      maximo: 1000
+      mensaje_error: "La cantidad de productos debe estar entre 1 y 1000."
+    costo_unitario:
+      minimo: 0.01
+      maximo: 1000000
+      mensaje_error: "El costo unitario debe ser un valor positivo razonable."
+    porcentaje_iva:
+      minimo: 0
+      maximo: 30
+      mensaje_error: "El porcentaje de IVA debe estar entre 0% y 30%."
+
+  # Validación de formato de campos
+  formato:
+    activo: true
+    numero_factura:
+      longitud_minima: 5
+      longitud_maxima: 20
+      mensaje_error: "El número de factura debe tener entre 5 y 20 caracteres."
+    fecha:
+      formato_valido: true
+      mensaje_error: "La fecha de la factura no tiene un formato válido."
+
+# Umbrales de confianza para clasificación de extracción
+umbrales_confianza:
+  alta: 0.85
+  media: 0.60
+  baja: 0.40
+  minima: 0.20
+
+# Configuración de bloqueo de registro
+bloqueo_registro:
+  activo: true
+  bloquear_factura_invalida: true
+  bloquear_productos_no_catalogo: true
+  bloquear_discrepancias_criticas: true
+  permitir_registro_manual: true  # Permite registrar a pesar de discrepancias con confirmación

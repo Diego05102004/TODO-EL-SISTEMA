@@ -1,0 +1,15 @@
+# Siege URL file - Pruebas de Módulo de Ventas Presenciales
+# Criterio: 0.6s (bajo), 1.4s (medio), 2.9s (alto)
+
+POST http://192.168.10.1:8000/api/gestionarFactura.php
+Content-Type: application/json
+
+{
+  "funcion": "facturaingresarmovil",
+  "cedula": "12345678",
+  "cliente": "Cliente Test",
+  "metodo_pago": "efectivo",
+  "productos": [
+    {"id": 1, "cantidad": 2, "precio": 10.50}
+  ]
+}

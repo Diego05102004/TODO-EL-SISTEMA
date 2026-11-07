@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Conectividad HTTPS - Localhost</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .section h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            font-family: 'Courier New', monospace;
+            min-height: 150px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .response {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #822727;
+            border: 1px solid #fc8181;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            color: #2c5282;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba de Conectividad HTTPS</h1>
+        <p class="subtitle">Verifica que tu hosting puede recibir y enviar solicitudes HTTPS</p>
+
+        <div class="info-box">
+            <p><strong>Instrucciones:</strong></p>
+            <p>1. Sube el archivo <code>test_hosting_server.php</code> a tu hosting</p>
+            <p>2. Coloca la URL completa de ese archivo en el campo de abajo</p>
+            <p>3. Haz clic en "Enviar Solicitud" para probar la conexión</p>
+            <p>4. En el hosting, haz clic en "Responder" para ver la respuesta aquí</p>
+        </div>
+
+        <div class="section">
+            <h2>📤 Enviar Solicitud al Hosting</h2>
+            
+            <div class="form-group">
+                <label for="hostingUrl">URL del archivo en el hosting:</label>
+                <input type="url" id="hostingUrl" placeholder="https://tu-sitio.com/test_hosting_server.php" value="">
+            </div>
+
+            <div class="form-group">
+                <label for="jsonData">Datos JSON a enviar:</label>
+                <textarea id="jsonData">{
+    "mensaje": "Prueba de conexión desde localhost",
+    "timestamp": "2026-08-30T19:39:00Z",
+    "origen": "localhost",
+    "datos_prueba": {
+        "nombre": "Usuario de prueba",
+        "cedula": "12345678",
+        "accion": "test_conexion"
+    }
+}</textarea>
+            </div>
+
+            <button id="sendBtn" onclick="enviarSolicitud()">📡 Enviar Solicitud</button>
+        </div>
+
+        <div class="section">
+            <h2>📥 Respuesta del Hosting</h2>
+            <div id="status"></div>
+            <div id="response" class="response">Esperando respuesta...</div>
+        </div>
+    </div>
+
+    <script>
+        let lastRequestId = null;
+
+        function enviarSolicitud() {
+            const url = document.getElementById('hostingUrl').value.trim();
+            const jsonData = document.getElementById('jsonData').value;
+            const sendBtn = document.getElementById('sendBtn');
+            const statusDiv = document.getElementById('status');
+            const responseDiv = document.getElementById('response');
+
+            if (!url) {
+                statusDiv.innerHTML = '<div class="status error">❌ Por favor ingresa la URL del hosting</div>';
+                return;
+            }
+
+            try {
+                JSON.parse(jsonData);
+            } catch (e) {
+                statusDiv.innerHTML = '<div class="status error">❌ El JSON no es válido</div>';
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span> Enviando...';
+            statusDiv.innerHTML = '<div class="status">⏳ Enviando solicitud al hosting...</div>';
+            responseDiv.className = 'response';
+            responseDiv.textContent = 'Esperando respuesta...';
+
+            // Generar ID único para esta solicitud
+            lastRequestId = Date.now().toString();
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Request-ID': lastRequestId
+                },
+                body: jsonData
+            })
+            .then(response => response.json())
+            .then(data => {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '📡 Enviar Solicitud';
+                
+                if (data.status === 'success') {
+                    statusDiv.innerHTML = '<div class="status success">✅ Solicitud recibida correctamente</div>';
+                    responseDiv.className = 'response success';
+                    responseDiv.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Iniciar polling para verificar si el hosting respondió
+                    verificarRespuesta(url, lastRequestId);
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">❌ Error en la respuesta del hosting</div>';
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = JSON.stringify(data, null, 2);
+                }
+            })
+            .catch(error => {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '📡 Enviar Solicitud';
+                statusDiv.innerHTML = '<div class="status error">❌ Error de conexión: ' + error.message + '</div>';
+                responseDiv.className = 'response error';
+                responseDiv.textContent = 'Error: ' + error.message + '\n\nPosibles causas:\n- La URL es incorrecta\n- El hosting no permite solicitudes HTTPS\n- CORS está bloqueado\n- El archivo no existe en el hosting';
+            });
+        }
+
+        function verificarRespuesta(url, requestId) {
+            // Verificar si el hosting ha respondido (polling)
+            const checkInterval = setInterval(() => {
+                fetch(url + '?check_response=' + requestId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.has_response) {
+                            clearInterval(checkInterval);
+                            const statusDiv = document.getElementById('status');
+                            const responseDiv = document.getElementById('response');
+                            
+                            statusDiv.innerHTML = '<div class="status success">✅ El hosting respondió</div>';
+                            responseDiv.className = 'response success';
+                            responseDiv.textContent = JSON.stringify(data.response, null, 2);
+                        }
+                    })
+                    .catch(err => {
+                        // Ignorar errores de polling
+                    });
+            }, 2000);
+
+            // Detener polling después de 2 minutos
+            setTimeout(() => clearInterval(checkInterval), 120000);
+        }
+    </script>
+</body>
+</html>

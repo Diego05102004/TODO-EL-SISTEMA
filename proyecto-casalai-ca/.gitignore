@@ -1,0 +1,24 @@
+# Composer
+/vendor/
+/composer.phar
+
+# PHPUnit cache
+.phpunit.result.cache
+cl-app/
+
+# Variables de entorno (contiene claves sensibles)
+.env
+.env.local
+.env.production
+/microservicio/analitica_predictiva/modelos/demanda.json
+/microservicio/analitica_predictiva/modelos/*.tmp
+/microservicio/logs_metricas/feedback_analitica.jsonl
+/microservicio/__pycache__/
+/microservicio/modelo/__pycache__/
+/microservicio/controlador/__pycache__/
+/microservicio/tests/__pycache__/
+
+# Claves RSA generadas
+*.pem
+private.pem
+public.pem

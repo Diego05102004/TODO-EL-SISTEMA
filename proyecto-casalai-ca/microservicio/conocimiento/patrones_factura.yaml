@@ -1,0 +1,131 @@
+# Configuración de patrones regex para extracción de campos de factura
+# Este archivo define los patrones que el microservicio usa para identificar
+# y extraer información de facturas en diferentes formatos.
+
+campos:
+  numero_factura:
+    descripcion: "Número de factura o documento"
+    patrones:
+      - '(?:factura|n[°º]|nro|numero|#)\s*[.:]?\s*([A-Z0-9\-]{5,20})'
+      - '(?:factura)\s*(?:n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)'
+      - '(?:invoice|inv)\s*(?:#|n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)'
+      - '(?:bill)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)'
+      - '(?:receipt)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)'
+      - '(\d{6,10})'
+      - '#\s*([A-Z0-9\-]+)'
+    prioridad: 1
+    requerido: true
+
+  proveedor:
+    descripcion: "Nombre del proveedor o vendedor"
+    patrones:
+      - '(?:proveedor|vendedor|supplier|vendor|de|from)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+(?:S\.A|S\.R\.L|C\.A|LLC|INC|LTDA|S\.A\.S|GmbH|Ltd|Pty)?)'
+      - '(?:razon social|nombre|company|empresa)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)'
+      - '(?:sold\s*by|billed\s*by)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)'
+      - 'eBay|Amazon|MercadoLibre|AliExpress|Walmart|BestBuy|Newegg|Staples|Office Depot'
+      - '(?:HP|Canon|Epson|Brother|Xerox|Dell|Lenovo|Asus|Samsung|LG|Sony|Apple|Microsoft|Logitech|Intel|AMD|NVIDIA)\s+(?:Inc|Corp|LLC|GmbH|Ltd)?'
+    prioridad: 2
+    requerido: true
+
+  fecha:
+    descripcion: "Fecha de emisión de la factura"
+    patrones:
+      - '(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})'
+      - '(\d{4}[/-]\d{1,2}[/-]\d{1,2})'
+      - '(\d{1,2}\s+(?:de|of|del)\s+[A-Za-z]+\s+\d{2,4})'
+      - '([A-Za-z]+\s+\d{1,2},?\s+\d{4})'
+      - '(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})'
+      - '(\d{8})'  # Formato compacto DDMMYYYY
+    prioridad: 3
+    requerido: true
+
+  producto:
+    descripcion: "Nombre del producto o artículo"
+    patrones:
+      - '(?:descripcion|producto|articulo|item|product|description)[:\s]+([^\n]+)'
+      - '([A-Z][a-zA-Z0-9\s\-\+]+(?:Printer|Laptop|Desktop|Monitor|Phone|Tablet|Camera|Headphones|Speaker|Mouse|Keyboard|Router|Modem|Scanner|Copier|Ink|Toner|Cartridge|Memory|SSD|HDD|CPU|GPU))'
+      - '([A-Z][a-zA-Z0-9\s\-\+]{10,100})'
+    prioridad: 4
+    requerido: true
+
+  modelo:
+    descripcion: "Modelo del producto"
+    patrones:
+      - '(?:modelo|model|mod|type)[:\s]+([A-Z0-9\-\s]+)'
+      - '([A-Z0-9]{3,15}(?:\s*[A-Z0-9\-]+)*)'
+      - '(?:model\s*no|model\s*number)[:\s]*([A-Z0-9\-\s]+)'
+    prioridad: 5
+    requerido: false
+
+  marca:
+    descripcion: "Marca del producto"
+    patrones:
+      - '(?:marca|brand|fabricante|manufacturer|maker)[:\s]+([A-Za-z0-9\s]+)'
+      - '(HP|Canon|Epson|Brother|Xerox|Dell|Lenovo|Asus|Samsung|LG|Sony|Apple|Microsoft|Logitech|Intel|AMD|NVIDIA|Kingston|SanDisk|Crucial|Seagate|Western Digital|Toshiba|Fujitsu|Kyocera|Lexmark|Ricoh|Konica|Oki)'
+      - '(?:by|from)\s+([A-Z][A-Za-z0-9]+)'
+    prioridad: 6
+    requerido: false
+
+  serial:
+    descripcion: "Número de serie del producto"
+    patrones:
+      - '(?:serial|s/n|serie|sn)[:\s]+([A-Z0-9\-]+)'
+      - '(?:SN|S/N)[:\s]*([A-Z0-9\-]+)'
+      - '(?:serial\s*number)[:\s]*([A-Z0-9\-]+)'
+      - '([A-Z0-9]{8,20})'
+    prioridad: 7
+    requerido: false
+
+  cantidad:
+    descripcion: "Cantidad de unidades del producto"
+    patrones:
+      - '(?:cantidad|qty|quantity|cant)[:\s]+(\d+)'
+      - '(?:und|unidades|units?|pcs|pieces)[:\s]+(\d+)'
+      - '(\d+)\s*(?:und|unidades|units?|pcs|pieces)'
+      - '(\d+)\s*x\s*'  # Formato "2x" para cantidad
+    prioridad: 8
+    requerido: true
+
+  costo:
+    descripcion: "Costo unitario del producto"
+    patrones:
+      - '(?:precio|costo|price|valor|unitario|p/u|unit\s*price)[:\s]+[\$]?\s*(\d+[.,]?\d*)'
+      - '[\$]\s*(\d+[.,]?\d{2})'
+      - '(\d+[.,]\d{2})'
+      - '(?:rate)[:\s]+[\$]?\s*(\d+[.,]?\d*)'
+    prioridad: 9
+    requerido: true
+
+  total:
+    descripcion: "Monto total de la factura"
+    patrones:
+      - '(?:total|monto total|importe)[:\s]+[\$]?\s*(\d+[.,]?\d{2})'
+      - 'total\s*[\$]?\s*(\d+[.,]?\d{2})'
+      - '(?:grand\s*total|amount\s*due|balance\s*due)[:\s]+[\$]?\s*(\d+[.,]?\d{2})'
+    prioridad: 10
+    requerido: true
+
+  subtotal:
+    descripcion: "Subtotal antes de impuestos"
+    patrones:
+      - '(?:subtotal|sub\s*total)[:\s]+[\$]?\s*(\d+[.,]?\d{2})'
+      - 'subtotal\s*[\$]?\s*(\d+[.,]?\d{2})'
+    prioridad: 11
+    requerido: false
+
+  porcentaje_iva:
+    descripcion: "Porcentaje de IVA aplicado"
+    patrones:
+      - '(?:iva|vat|tax|impuesto)[:\s]+(\d+)%?'
+      - '(?:tax\s*rate)[:\s]+(\d+)%?'
+      - '(\d+)%?\s*(?:iva|vat|tax)'
+    prioridad: 12
+    requerido: false
+
+  monto_iva:
+    descripcion: "Monto del IVA"
+    patrones:
+      - '(?:iva|vat|tax|impuesto)[:\s]+[\$]?\s*(\d+[.,]?\d{2})'
+      - 'tax\s*amount[:\s]+[\$]?\s*(\d+[.,]?\d{2})'
+    prioridad: 13
+    requerido: false

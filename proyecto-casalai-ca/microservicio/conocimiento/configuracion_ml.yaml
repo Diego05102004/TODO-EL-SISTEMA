@@ -1,0 +1,67 @@
+# Configuración del modelo de Machine Learning
+# Este archivo define la configuración del modelo que predice la confiabilidad
+# de la extracción de datos de facturas.
+
+modelo:
+  # Ruta al archivo del modelo entrenado
+  ruta: "modelo/random_forest_recepcion.pkl"
+  
+  # Tipo de modelo
+  tipo: "RandomForestClassifier"
+  
+  # Features utilizadas para predicción
+  features:
+    - "confianza_ocr"
+  
+  # Umbral de confianza para clasificación
+  umbral_confianza: 0.7
+  
+  # Parámetros del modelo (para reentrenamiento)
+  parametros:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    min_samples_leaf: 2
+    random_state: 42
+
+# Configuración de reentrenamiento automático
+reentrenamiento:
+  activo: true
+  intervalo_dias: 7  # Reentrenar cada 7 días
+  min_muestras: 50   # Mínimo de muestras nuevas para reentrenar
+  max_historial: 1000  # Máximo de muestras a usar para reentrenamiento
+  
+  # Ruta al dataset de feedback
+  ruta_feedback: "entrenamiento/feedback_dataset.csv"
+  
+  # Ruta para guardar el modelo reentrenado
+  ruta_guardado: "modelo/random_forest_recepcion.pkl"
+  
+  # Porcentaje de datos para validación
+  validacion_split: 0.2
+
+# Configuración de logging del modelo
+logging:
+  activo: true
+  nivel: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  ruta_log: "logs/modelo_ml.log"
+  
+  # Métricas a registrar
+  metricas:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - confusion_matrix
+
+# Configuración de cache de predicciones
+cache:
+  activo: true
+  ttl_segundos: 3600  # 1 hora
+  max_entradas: 1000
+
+# Configuración de fallback
+fallback:
+  activo: true
+  estrategia: "regla_simple"  # regla_simple, promedio_historico, siempre_alto
+  mensaje_fallback: "Modelo ML no disponible, usando regla simple"

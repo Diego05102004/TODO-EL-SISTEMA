@@ -1,0 +1,791 @@
+/*
+    Diseñador: Darckort
+    Mejoramiento de Navegador
+    Actualizacion 07/07/24
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== Login: ojo dentro y centrado en el campo contraseña ===== */
+.iniciar-sesion-form .input-field { position: relative; }
+.iniciar-sesion-form .input-field .toggle-password {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.iniciar-sesion-form #password { padding-right: 48px; }
+
+.forgot-password {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.forgot-password a {
+    color: #5995fd;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+.form-wrapper {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+    margin: 50px auto;
+}
+
+body,
+input {
+  font-family: "Poppins", sans-serif;
+}
+
+html, body { 
+  height: 100%; 
+  overflow-y: auto; 
+  overflow-x: hidden; 
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  background-color: #fff;
+  min-height: 100vh;
+  /* El contenedor no debe tener su propio scroll */
+  overflow-y: hidden;
+  /* Ocultar desbordes horizontales producidos por el círculo decorativo */
+  overflow-x: hidden;
+}
+
+.forms-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.inicio-registro {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: 75%;
+  width: 50%;
+  transition: 1s 0.7s ease-in-out;
+  display: grid;
+  grid-template-columns: 1fr;
+  z-index: 5;
+  overflow: visible; /* sin scroll interno */
+}
+
+form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transition: all 0.2s 0.7s;
+  overflow: hidden;
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+form.registrar-form {
+  opacity: 0;
+  z-index: 1;
+}
+
+form.iniciar-sesion-form {
+  z-index: 2;
+}
+
+.title {
+  font-size: 2.2rem;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.input-field {
+  max-width: 380px;
+  width: 100%;
+  background-color: #f0f0f0;
+  margin: 10px 0;
+  height: 55px;
+  border-radius: 55px;
+  display: grid;
+  grid-template-columns: 15% 85%;
+  padding: 0 0.4rem;
+  position: relative;
+}
+
+.input-field i {
+  text-align: center;
+  line-height: 55px;
+  color: #acacac;
+  transition: 0.5s;
+  font-size: 1.1rem;
+}
+
+.input-field input {
+  background: none;
+  outline: none;
+  border: none;
+  line-height: 1;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.input-field input::placeholder {
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* ===== Registro: estilos específicos (no afectan inicio de sesión) ===== */
+.registrar-form {
+  max-width: 400px;
+  width: 100%;
+  margin: auto;
+  /* Sin scroll interno, usa el del documento */
+  max-height: none;
+  overflow: visible;
+  /* asegurar que el scroll abarque desde el título: evitar colapso de margen */
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+/* El título no debe colapsar margen con el contenedor scrollable */
+.registrar-form .title { margin-top: 0; }
+
+.iniciar-sesion-form{ 
+  max-height: none; 
+  overflow: visible; 
+}
+
+.registrar-form .input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.registrar-form .input-row .input-field {
+  flex: 1 1 45%;
+  width: auto;
+  max-width: 280px;
+}
+
+.registrar-form .input-field input,
+.registrar-form .input-field textarea {
+  font-size: 0.9rem; /* aún más compacto */
+  font-weight: 600;
+  text-align: left; /* como inicio de sesión */
+  font-family: "Poppins", sans-serif;
+}
+
+.registrar-form .input-field input::placeholder,
+.registrar-form .input-field textarea::placeholder {
+  color: #aaa;
+  font-weight: 500;
+}
+.registrar-form .input-field {
+  max-width: 280px; /* más estrecho */
+  width: 100%;
+  background-color: #f0f0f0;
+  margin: 6px; /* separación vertical compacta */
+  min-height: 40px; /* más bajo */
+  border-radius: 28px; /* acorde a menor altura */
+  display: grid;
+  grid-template-columns: 12% 88%; /* icono más compacto */
+  padding: 0 0.25rem;
+  position: relative;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+.registrar-form .input-field i {
+  text-align: center;
+  line-height: 1;
+  align-self: center;
+  color: #acacac;
+  transition: 0.5s;
+  font-size: 1.1rem;
+}
+.registrar-form .input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.registrar-form .input-row .input-field {
+  flex: 1 1 45%;
+  width: auto;
+  max-width: 280px;
+}
+.registrar-form .input-field .span-value{
+  position: absolute;
+  left: calc(15% + 12px); /* después del ícono y sangría */
+  right: 12px;
+  bottom: -22px; /* ligera separación extra */
+  font-size: 0.85rem;
+  color: #d93025; /* rojo validación */
+  line-height: 1.2;
+}
+.registrar-form .input-field .span-value:empty{
+  display: none;
+}
+.registrar-form .input-field textarea.form-control {
+  height: auto;
+  min-height: 40px;
+  max-height: 100px; /* límite de crecimiento visual */
+  line-height: 1.4;
+  padding: 8px 10px; /* leve sangría interna izquierda */
+  overflow-y: hidden; /* sin scroll por defecto */
+  resize: none;
+  background: none;
+  border: none !important; /* sin borde rectangular */
+  box-shadow: none !important; /* sin sombra bootstrap */
+}
+.registrar-form .input-field textarea.form-control:focus {
+  outline: none;
+  box-shadow: none !important;
+}
+
+/* ===== Mensajes de validación (.span-v) ===== */
+/* Registro: mismo ancho que el campo, debajo y con envoltura */
+.registrar-form .input-field { position: relative; }
+.registrar-form .input-field .span-v {
+  position: absolute;
+  left: calc(12% + 12px);
+  right: 12px;
+  top: 60px;
+  color: #d93025;
+  font-family: "Poppins", sans-serif;
+  font-style: italic; /* texto en diagonal */
+  font-weight: 400;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Dejar espacio bajo cada campo para que el mensaje no se superponga */
+.registrar-form .input-field { margin-bottom: 32px; overflow: visible; }
+.registrar-form .input-row { margin-bottom: 8px; }
+
+/* Login: mismo tratamiento visual y ancho del campo */
+.iniciar-sesion-form .input-field { position: relative; }
+.iniciar-sesion-form .input-field .span-v {
+  position: absolute;
+  left: calc(15% + 12px);
+  right: 16px;
+  bottom: -22px;
+  color: #d93025;
+  font-family: "Poppins", sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  pointer-events: none;
+  z-index: 0;
+}
+.iniciar-sesion-form .input-field { margin-bottom: 32px; overflow: visible; }
+
+/* Colocar el botón ojo dentro del campo (solo registro) */
+.registrar-form .input-field {
+  position: relative;
+}
+.registrar-form .input-field .toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  z-index: 1;
+}
+/* Evitar que el texto quede debajo del ojo */
+.registrar-form .input-field input[name="clave"],
+.registrar-form .input-field input[name="clave_confirmar"] {
+  padding-right: 40px;
+}
+
+/* Estado vacío: centrar verticalmente el placeholder como en input */
+.registrar-form .input-field textarea.form-control.placeholder-center {
+  line-height: 55px;
+  padding: 0 12px;
+}
+
+/* Responsive: 1 columna en móviles, 2 columnas en pantallas medianas+ */
+@media (max-width: 767.98px) {
+  .registrar-form .input-row .input-field {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+  
+  /* Apply scroll to entire registration view on mobile */
+  .container.registrar-mode {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Keep right panel moving with scroll in registration mode */
+  .container.registrar-mode .right-panel {
+    transform: translateY(0px);
+    padding: 20px 8%;
+  }
+  
+  .container.registrar-mode .right-panel .content {
+    transform: translateY(0);
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+@media (min-width: 768px) {
+  .registrar-form .input-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .registrar-form .input-row .input-field {
+    flex: 1 1 360px; /* igual al resto del registro */
+    max-width: 360px;
+  }
+}
+
+.social-text {
+  padding: 0.7rem 0;
+  font-size: 1rem;
+}
+
+.social-media {
+  display: flex;
+  justify-content: center;
+}
+
+.social-icon {
+  height: 46px;
+  width: 46px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 0.45rem;
+  color: #333;
+  border-radius: 50%;
+  border: 1px solid #333;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: 0.3s;
+}
+
+.social-icon:hover {
+  color: #4481eb;
+  border-color: #4481eb;
+}
+
+.btn {
+  width: 150px;
+  background-color: #5995fd;
+  border: none;
+  outline: none;
+  height: 49px;
+  border-radius: 49px;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 10px 0;
+  cursor: pointer;
+  transition: 0.5s;
+}
+
+a{
+  text-decoration: none;
+  color: #f0f0f0;
+}
+.btn:hover {
+  background-color: #4d84e2;
+}
+.panels-container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.container:before {
+  content: "";
+  position: absolute;
+  height: 2000px;
+  width: 2000px;
+  top: 60%;
+  right: 48%;
+  transform: translateY(-50%);
+  background-image: linear-gradient(-45deg, #4481eb 0%, #04befe 100%);
+  transition: 1.8s ease-in-out;
+  border-radius: 50%;
+  z-index: 6;
+}
+
+.image {
+  width: 100%;
+  transition: transform 1.1s ease-in-out;
+  transition-delay: 0.4s;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-around;
+  text-align: center;
+  z-index: 6;
+}
+
+.left-panel {
+  pointer-events: all;
+  padding: 3rem 17% 2rem 12%;
+}
+
+.right-panel {
+  pointer-events: none;
+  padding: 3rem 12% 2rem 17%;
+}
+
+.panel .content {
+  color: #fff;
+  transition: transform 0.9s ease-in-out;
+  transition-delay: 0.6s;
+}
+
+.panel h3 {
+  font-weight: 600;
+  line-height: 1;
+  font-size: 1.5rem;
+}
+
+.panel p {
+  font-size: 0.95rem;
+  padding: 0.7rem 0;
+}
+
+.btn.transparent {
+  margin: 0;
+  background: none;
+  border: 2px solid #fff;
+  width: 130px;
+  height: 41px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.right-panel .image,
+.right-panel .content {
+  transform: translateX(800px);
+}
+
+/* ANIMATION */
+
+.container.registrar-mode:before {
+  transform: translate(100%, -50%);
+  right: 52%;
+}
+
+.container.registrar-mode .left-panel .image,
+.container.registrar-mode .left-panel .content {
+  transform: translateX(-800px);
+}
+
+.container.registrar-mode .inicio-registro {
+  left: 25%;
+}
+
+.container.registrar-mode form.registrar-form {
+  opacity: 1;
+  z-index: 2;
+}
+
+.container.registrar-mode form.iniciar-sesion-form {
+  opacity: 0;
+  z-index: 1;
+}
+
+.container.registrar-mode .right-panel .image,
+.container.registrar-mode .right-panel .content {
+  transform: translateX(0%);
+}
+
+.container.registrar-mode .left-panel {
+  pointer-events: none;
+}
+
+.container.registrar-mode .right-panel {
+  pointer-events: all;
+}
+
+@media (max-width: 870px) {
+  .container {
+    min-height: 1200px;
+    height: 100vh;
+  }
+  .inicio-registro {
+    width: 100%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: 1s 0.8s ease-in-out;
+  }
+
+  .inicio-registro,
+  .container.registrar-mode .inicio-registro {
+    left: 50%;
+  }
+
+  .panels-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 2fr 1fr;
+  }
+
+  .panel {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 2.5rem 8%;
+    grid-column: 1 / 2;
+  }
+
+  .right-panel {
+    grid-row: 3 / 4;
+  }
+
+  .left-panel {
+    grid-row: 1 / 2;
+  }
+
+  .image {
+    width: 200px;
+    transition: transform 0.9s ease-in-out;
+    transition-delay: 0.6s;
+  }
+
+  .panel .content {
+    padding-right: 15%;
+    transition: transform 0.9s ease-in-out;
+    transition-delay: 0.8s;
+  }
+
+  .panel h3 {
+    font-size: 1.2rem;
+  }
+
+  .panel p {
+    font-size: 0.7rem;
+    padding: 0.5rem 0;
+  }
+
+  .btn.transparent {
+    width: 110px;
+    height: 35px;
+    font-size: 0.7rem;
+  }
+
+  .container:before {
+    width: 1500px;
+    height: 1500px;
+    transform: translateX(-50%);
+    left: 30%;
+    bottom: 68%;
+    right: initial;
+    top: initial;
+    transition: 2s ease-in-out;
+  }
+
+  .container.registrar-mode:before {
+    transform: translate(-50%, 100%);
+    bottom: 2%;
+    right: initial;
+  }
+
+  .container.registrar-mode .left-panel .image,
+  .container.registrar-mode .left-panel .content {
+    transform: translateY(-400px);
+  }
+
+  .container.registrar-mode .right-panel .image,
+  .container.registrar-mode .right-panel .content {
+    transform: translateY(100px);
+  }
+
+  .right-panel .image,
+  .right-panel .content {
+    transform: translateY(300px);
+  }
+
+  .container.registrar-mode .inicio-registro {
+    top: 0%;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 570px) {
+  form {
+    padding: 0 1.5rem;
+  }
+  
+  /* Apply scroll to entire registration view on small mobile */
+  .container.registrar-mode {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Keep right panel moving with scroll in registration mode */
+  .container.registrar-mode .right-panel {
+    transform: translateY(0px);
+    padding: 15px 5%;
+  }
+  
+  .container.registrar-mode .right-panel .content {
+    transform: translateY(0);
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .image {
+    display: none;
+  }
+  .panel .content {
+    padding: 0.5rem 1rem;
+  }
+  .container {
+    padding: 1.5rem;
+  }
+
+  .container:before {
+    bottom: 72%;
+    left: 50%;
+  }
+
+  .container.registrar-mode:before {
+    bottom: 8%;
+    left: 50%;
+  }
+
+  .inicio-registro {
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  /* Apply scroll to entire registration view on very small mobile */
+  .container.registrar-mode {
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Keep right panel moving with scroll in registration mode */
+  .container.registrar-mode .right-panel {
+    transform: translateY(0px);
+    padding: 12px 4%;
+  }
+  
+  .container.registrar-mode .right-panel .content {
+    transform: translateY(0);
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .container.registrar-mode::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .inicio-registro {
+    width: 100%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .input-field {
+    height: 50px;
+    margin: 8px 0;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

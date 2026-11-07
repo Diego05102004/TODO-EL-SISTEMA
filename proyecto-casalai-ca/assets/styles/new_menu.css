@@ -1,0 +1,786 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #1f66df;
+    --danger-color: #e74c3c;
+}
+
+/* Estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+/* Estilos de la barra de navegación FIJA */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0863b8;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    height: 70px;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 10px;
+}
+
+.hamburger-menu {
+    display: flex;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.logo-container:hover {
+    opacity: 0.8;
+}
+
+.company-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.nav-icons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-right: 10px;
+}
+
+/* Estilos de botones de íconos */
+.icon-btn {
+    background: none;
+    border: none;
+    color: #ecf0f1 !important;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 30%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.local-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.menu-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Botón de perfil específico */
+#profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border-radius: 10px !important;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid white;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    line-height: 1;
+}
+
+/* Badges para notificaciones y carrito */
+.notification-badge, .cart-count-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4757;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Estilos del menú lateral */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+    z-index: 1011;
+    overflow-y: auto;
+}
+
+.side-menu.active {
+    left: 0;
+}
+
+.side-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background-color: #0863b8;
+    color: white;
+}
+
+.side-menu-header h3 {
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.menu-options {
+    padding: 10px 0;
+}
+
+.menu-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-option:hover {
+    background-color: #f5f5f5;
+}
+
+.menu-option.active {
+    background-color: #e9ecef;
+}
+
+.sub-options {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.sub-options.active {
+    max-height: 500px;
+}
+
+.sub-option {
+    padding: 10px 20px 10px 40px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sub-option:hover {
+    background-color: #e9ecef;
+}
+
+/* Overlay para el menú lateral */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1010;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Panel de notificaciones */
+.notificacion-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1010;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.notificacion-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.notificacion-panel h2 {
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0863b8;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.notificacion-panel h2 a.small {
+    color: white !important;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: normal;
+    margin-left: 10px;
+    transition: opacity 0.2s;
+}
+
+.notificacion-panel h2 a.small:hover {
+    opacity: 0.8;
+}
+
+.notificacion-panel h2 span {
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.item-notificacion {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.item-notificacion:hover {
+    background-color: #f8f9fa;
+}
+
+.item-notificacion .texto {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.item-notificacion h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.item-notificacion p {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.3;
+}
+
+.item-notificacion small {
+    color: #999;
+    font-size: 0.75rem;
+}
+
+.marcar-leido {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.marcar-leido:hover {
+    background-color: #e9ecef;
+}
+
+.marcar-leido img {
+    width: 16px;
+    height: 16px;
+}
+
+/* Panel de perfil */
+.profile-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 280px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1010;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.profile-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-panel h2 {
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1rem;
+    background-color: #0863b8;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.profile-info {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    margin: 5px 4px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.profile-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid white;
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.profile-role {
+    color: white;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.profile-options {
+    padding: 10px 0;
+}
+
+.profile-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.profile-option:hover {
+    background-color: #f8f9fa;
+}
+
+.profile-option img {
+    width: 18px;
+    height: 18px;
+}
+
+.session-out {
+    color: var(--danger-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 8px 15px;
+        height: 60px;
+    }
+    
+    .nav-left {
+        gap: 10px;
+        margin-left: 5px;
+    }
+    
+    .nav-icons {
+        gap: 8px;
+        margin-right: 5px;
+    }
+    
+    .user-info {
+        display: none;
+    }
+    
+    .side-menu {
+        width: 280px;
+        left: -280px;
+    }
+    
+    .notificacion-panel,
+    .profile-panel {
+        width: 300px;
+        right: 10px;
+    }
+    
+    .company-name {
+        font-size: 1rem;
+    }
+    
+    .icon-btn {
+        padding: 6px;
+    }
+    
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        height: 56px;
+        padding: 6px 10px;
+    }
+    
+    .nav-left {
+        gap: 8px;
+        margin-left: 3px;
+    }
+    
+    .nav-icons {
+        gap: 5px;
+        margin-right: 3px;
+    }
+    
+    .company-name {
+        font-size: 0.9rem;
+    }
+    
+    .icon-btn {
+        padding: 5px;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 11px;
+    }
+    
+    .menu-icon,
+    .local-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .notificacion-panel,
+    .profile-panel {
+        width: calc(100vw - 20px);
+        right: 10px;
+        left: 10px;
+    }
+    
+    .tasa-cambio-panel {
+        width: calc(100vw - 20px);
+        right: 10px;
+        left: 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    .navbar {
+        height: 52px;
+        padding: 5px 8px;
+    }
+    
+    .nav-left {
+        gap: 5px;
+    }
+    
+    .nav-icons {
+        gap: 3px;
+    }
+    
+    .company-name {
+        font-size: 0.85rem;
+    }
+    
+    .icon-btn {
+        padding: 4px;
+    }
+    
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+    
+    .menu-icon,
+    .local-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 320px) {
+    .navbar {
+        height: 48px;
+        padding: 4px 6px;
+    }
+    
+    .company-name {
+        display: none;
+    }
+}
+
+/* Estilos para el panel de tasa de cambio */
+.tasa-cambio-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 280px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1010;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.tasa-cambio-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.tasa-cambio-panel h2 {
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1rem;
+    background-color: #0863b8 !important;
+    color: white;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tasa-info {
+    padding: 20px 15px;
+}
+
+.tasa-valor {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #0863b8;
+}
+
+.tasa-actualizacion {
+    margin-bottom: 8px;
+}
+
+.tasa-fuente {
+    color: #666;
+}
+
+.tasa-no-disponible {
+    text-align: center;
+    color: #666;
+}
+
+.tasa-no-disponible i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+    color: #ffc107;
+}
+
+/* Responsive para el panel de tasa de cambio */
+@media (max-width: 768px) {
+    .tasa-cambio-panel {
+        width: 300px;
+        right: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tasa-cambio-panel {
+        width: calc(100vw - 40px);
+        right: 20px;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+    .navbar {
+        height: 68px;
+        padding: 10px 30px;
+    }
+
+    .nav-left {
+        gap: 20px;
+    }
+
+    .nav-icons {
+        gap: 18px;
+    }
+
+    .side-menu {
+        width: 320px;
+        left: -320px;
+    }
+}
+
+@media (max-width: 360px) {
+    .navbar {
+        height: 52px;
+        padding: 5px 8px;
+    }
+    
+    .nav-left {
+        gap: 5px;
+    }
+    
+    .nav-icons {
+        gap: 3px;
+    }
+    
+    .company-name {
+        font-size: 0.85rem;
+    }
+    
+    .icon-btn {
+        padding: 4px;
+    }
+    
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+    
+    .menu-icon,
+    .local-icon {
+        width: 16px;
+        height: 16px;
+    }
+}

@@ -1,0 +1,11 @@
+# Siege URL file - Pruebas de Módulo de Autenticación (Login)
+# Criterio: 0.4s (bajo), 0.9s (medio), 1.8s (alto)
+
+POST http://192.168.10.1:8000/api/login.php
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "testpass123",
+  "recaptcha_token": "test_token"
+}

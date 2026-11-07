@@ -1,0 +1,8 @@
+.fondo{
+    background-size: cover;
+    font-size: 13px;
+    margin: 0;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}

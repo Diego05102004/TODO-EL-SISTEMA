@@ -1,0 +1,189 @@
+/* Modal Header */
+#viewModal .modal-content.modal-large {
+    max-width: 95%;
+    width: 1300px;
+    max-height: 90vh;
+    margin-top: 8vh;
+}
+
+.modal-header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.modal-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+.modal-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.modal-title-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.modal-title-content p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+/* Modal Body */
+#viewModal .modal-content {
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+#viewModal .modal-body-detallar {
+    max-height: calc(90vh - 120px);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.recepcion-detallar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.detalle-section {
+    background: rgba(33, 150, 243, 0.03);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(33, 150, 243, 0.1);
+    text-align: center;
+}
+
+.detalle-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 10px;
+}
+
+.detalle-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.detalle-item label {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #2196F3;
+}
+
+.detalle-item span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #2d3748;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(33, 150, 243, 0.1);
+}
+
+.section-title i {
+    font-size: 1.3rem;
+    color: #2196F3;
+}
+
+.section-title h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+.section-title .product-count {
+    margin-left: auto;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(33, 150, 243, 0.1);
+}
+
+.section-title i {
+    font-size: 1.3rem;
+    color: #2196F3;
+}
+
+.section-title h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+/* Modal de Detalles */
+.detalle-table {
+    overflow-x: auto;
+}
+
+.detalle-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detalle-table thead {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.detalle-table th {
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.detalle-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detalle-table tfoot {
+    background: rgba(33, 150, 243, 0.05);
+}
+
+.detalle-table tfoot td {
+    font-weight: 700;
+    color: #2196F3;
+}
+
+.monto{
+    text-align: left;
+}

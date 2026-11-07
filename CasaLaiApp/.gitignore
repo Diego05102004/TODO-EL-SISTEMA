@@ -1,0 +1,30 @@
+# Expo
+.expo/
+dist/
+web-build/
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# OS and editor files
+.DS_Store
+.idea/
+*.swp
+
+# Android local/build files
+android/.gradle/
+android/local.properties
+android/build/
+android/app/build/
+android/.cxx/

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prueba de Validación de Proveedores</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <h1>Prueba de Validación de Errores del Backend</h1>
+    
+    <h2>Escenarios de prueba:</h2>
+    <ul>
+        <li>Intentar registrar un proveedor con nombre duplicado</li>
+        <li>Intentar registrar un proveedor con RIF duplicado</li>
+        <li>Intentar registrar un proveedor con datos inválidos</li>
+        <li>Intentar modificar un proveedor con nombre duplicado</li>
+        <li>Intentar modificar un proveedor con RIF duplicado</li>
+    </ul>
+    
+    <h2>Resultados esperados:</h2>
+    <ul>
+        <li>Los errores deben mostrarse en los spans correspondientes</li>
+        <li>Los mensajes deben ser específicos y claros</li>
+        <li>Debe aparecer un mensaje general indicando que hay campos por corregir</li>
+    </ul>
+
+    <script>
+        // Función para simular la respuesta del backend con errores
+        function simularRespuestaErrores() {
+            const respuestasSimuladas = [
+                {
+                    status: 'error',
+                    message: 'Error en la validación de datos',
+                    field_errors: {
+                        'nombre_proveedor': 'El nombre del proveedor ya existe',
+                        'rif_proveedor': 'El RIF del proveedor ya está registrado'
+                    }
+                },
+                {
+                    status: 'error',
+                    message: 'Error en la validación de datos',
+                    field_errors: {
+                        'correo_proveedor': 'El correo debe tener formato usuario@dominio.extensión',
+                        'telefono_1': 'El teléfono debe tener entre 7 y 20 caracteres'
+                    }
+                }
+            ];
+            
+            return respuestasSimuladas[Math.floor(Math.random() * respuestasSimuladas.length)];
+        }
+
+        // Función de prueba para manejar errores (simulada del archivo real)
+        function manejarErroresBackend(respuesta, esModificacion = false) {
+            if (respuesta.field_errors && typeof respuesta.field_errors === 'object') {
+                console.log('Procesando errores específicos:', respuesta.field_errors);
+                
+                // Simular limpieza de spans
+                console.log('Limpiando spans de error...');
+                
+                // Mapeo de campos
+                const mapeoCampos = esModificacion ? {
+                    'nombre_proveedor': '#smnombre_proveedor',
+                    'rif_proveedor': '#smrif_proveedor'
+                } : {
+                    'nombre_proveedor': '#snombre_proveedor',
+                    'rif_proveedor': '#srif_proveedor'
+                };
+
+                // Mensajes personalizados
+                const mensajesPersonalizados = {
+                    'El nombre del proveedor ya existe': '*Este nombre de proveedor ya está registrado*',
+                    'El RIF del proveedor ya está registrado': '*Este RIF ya está registrado*'
+                };
+
+                // Procesar errores
+                Object.keys(respuesta.field_errors).forEach(function(campo) {
+                    const spanSelector = mapeoCampos[campo];
+                    const mensajeError = respuesta.field_errors[campo];
+                    
+                    if (spanSelector) {
+                        let mensajeMostrar = mensajeError;
+                        Object.keys(mensajesPersonalizados).forEach(function(errorOriginal) {
+                            if (mensajeError.includes(errorOriginal)) {
+                                mensajeMostrar = mensajesPersonalizados[errorOriginal];
+                            }
+                        });
+                        
+                        console.log(`Campo: ${campo}, Span: ${spanSelector}, Mensaje: ${mensajeMostrar}`);
+                    }
+                });
+
+                alert('Se mostrarían los errores en los spans correspondientes. Revisa la consola para detalles.');
+            } else {
+                alert('Mensaje genérico: ' + (respuesta.message || 'Error en la validación de datos'));
+            }
+        }
+
+        // Botón de prueba
+        function probarValidacion() {
+            const respuesta = simularRespuestaErrores();
+            manejarErroresBackend(respuesta, false);
+        }
+    </script>
+
+    <button onclick="probarValidacion()">Probar Validación de Errores</button>
+</body>
+</html>

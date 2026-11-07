@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Casos de Prueba - TestLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --fg:#111827; --muted:#6B7280; --border:#E5E7EB; --bg:#FFFFFF; --accent:#2563EB; }
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg);}
+    .container{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    h1{font-size:28px;margin:0}
+    .meta{color:var(--muted);font-size:14px}
+    #content{line-height:1.6}
+    #content h2{margin-top:28px;padding-top:10px;border-top:1px solid var(--border)}
+    #content h3{margin-top:20px}
+    #content code{background:#F3F4F6;padding:2px 5px;border-radius:4px}
+    #content pre{background:#0B1021;color:#E5E7EB;padding:16px;border-radius:8px;overflow:auto}
+    #toolbar{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.5) blur(6px);border-bottom:1px solid var(--border);padding:8px 0;margin-bottom:16px}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:#fff;cursor:pointer}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .toc{border:1px solid var(--border);border-radius:12px;padding:12px;margin:16px 0;background:#fff}
+    .toc h3{margin:0 0 8px 0}
+    .toc ul{margin:0 0 0 18px}
+    @media print{
+      #toolbar, .toc { display:none !important }
+      .container{padding:0}
+      header{margin-bottom:0}
+      h1{font-size:22px}
+      a{color:black;text-decoration:none}
+      body{zoom:0.85}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Casos de Prueba - TestLink</h1>
+      <div class="meta" id="meta"></div>
+    </header>
+    <div id="toolbar">
+      <button class="btn" id="btn-refresh">Actualizar</button>
+      <button class="btn primary" id="btn-print">Imprimir/Exportar PDF</button>
+    </div>
+    <div class="toc" id="toc">
+      <h3>Índice</h3>
+      <div id="toc-content">Cargando índice…</div>
+    </div>
+    <main id="content">Cargando documento…</main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const MD_PATH = 'testlink-casos.md';
+    const contentEl = document.getElementById('content');
+    const metaEl = document.getElementById('meta');
+    const tocEl = document.getElementById('toc-content');
+
+    function buildTOC(html){
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      const headings = tmp.querySelectorAll('h2, h3');
+      const ul = document.createElement('ul');
+      let currentUL = ul;
+      let lastLevel = 2;
+      headings.forEach(h => {
+        const level = Number(h.tagName.substring(1));
+        if(!h.id){
+          h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        }
+        if(level > lastLevel){
+          const nested = document.createElement('ul');
+          currentUL.lastElementChild && currentUL.lastElementChild.appendChild(nested);
+          currentUL = nested;
+        } else if(level < lastLevel){
+          currentUL = currentUL.parentElement.closest('ul') || ul;
+        }
+        lastLevel = level;
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+        currentUL.appendChild(li);
+      });
+      return ul;
+    }
+
+    async function load(){
+      try{
+        const res = await fetch(MD_PATH + '?t=' + Date.now());
+        const md = await res.text();
+        const html = marked.parse(md, { mangle:false, headerIds:true });
+        contentEl.innerHTML = html;
+        // rebuild TOC from rendered content
+        const toc = buildTOC(contentEl.innerHTML);
+        tocEl.innerHTML = '';
+        tocEl.appendChild(toc);
+        metaEl.textContent = 'Fuente: ' + MD_PATH + ' • ' + new Date().toLocaleString();
+      }catch(err){
+        contentEl.textContent = 'No se pudo cargar el documento: ' + err;
+      }
+    }
+
+    document.getElementById('btn-refresh').addEventListener('click', load);
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+    load();
+  </script>
+</body>
+</html>
