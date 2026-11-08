@@ -23,6 +23,11 @@ $usuario = $usuarioModel->obtenerUsuarioPorId($_SESSION['id_usuario']);
 
 // Manejo de actualizaciones específicas
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // El SP no devuelve el hash de la contraseña; se obtiene aparte solo cuando se necesita
+    if ($usuario && !isset($usuario['password'])) {
+        $usuario['password'] = $usuarioModel->obtenerPasswordHash($_SESSION['id_usuario']) ?? '';
+    }
+
     $tipo = $_POST['tipo'] ?? 'general';
     
     switch($tipo) {
@@ -87,7 +92,7 @@ function handlePersonalUpdate($usuarioModel, $bitacoraModel, $usuario) {
     // Preparar datos para validación del modelo
     $datosValidacion = [
         'id_usuario' => $_SESSION['id_usuario'],
-        'username' => $_POST['username'] ?? null,
+        'username' => $usuario['username'], // Usar username actual (no editable desde perfil)
         'nombre' => $_POST['nombres'] ?? null,
         'apellido' => $_POST['apellidos'] ?? null,
         'correo' => $usuario['correo'], // Usar correo actual para validación

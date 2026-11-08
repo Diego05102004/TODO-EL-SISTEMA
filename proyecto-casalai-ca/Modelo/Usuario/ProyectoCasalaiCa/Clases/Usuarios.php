@@ -871,6 +871,16 @@ class Usuarios extends BD {
     public function obtenerUsuarioPorId($id_usuario) {
         return $this->o_usuarioPorId($id_usuario);
     }
+
+    public function obtenerPasswordHash($id_usuario) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($id_usuario) {
+            $stmt = $pdo->prepare("SELECT password FROM tbl_usuarios WHERE id_usuario = :id_usuario LIMIT 1");
+            $stmt->execute([':id_usuario' => $id_usuario]);
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
+            return $fila ? $fila['password'] : null;
+        }, false);
+    }
     private function o_usuarioPorId($id_usuario) {
         $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($id_usuario) {
             // Cambiamos la consulta estructurada por la invocación al procedimiento
