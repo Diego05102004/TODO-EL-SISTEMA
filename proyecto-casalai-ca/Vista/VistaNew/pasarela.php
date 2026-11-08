@@ -11,14 +11,25 @@ $pagina_actual = 'pasarela';
 $titulo_pagina = 'Gestion de Pagos';
 ob_start();
 ?>
-<link rel="stylesheet" href="assets/public/bootstrap/css/bootstrap.min.css">
+
 <link rel="stylesheet" href="assets/styles/tabla_consulta.css">
-<link rel="stylesheet" href="assets/styles/modalmodificar.css">
-<link rel="stylesheet" href="assets/styles/modaldetalles.css">
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/public/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="assets/public/js/jquery.dataTables.min.js"></script>
 <script src="assets/public/js/dataTables.bootstrap5.min.js"></script>
+<script>
+// Puente jQuery -> Bootstrap 5: Bootstrap 5 ya no registra plugins jQuery ($.fn.modal)
+if (window.jQuery && window.bootstrap && !jQuery.fn.modal) {
+    jQuery.fn.modal = function (command) {
+        return this.each(function () {
+            var modal = bootstrap.Modal.getOrCreateInstance(this);
+            if (command === 'show') modal.show();
+            else if (command === 'hide') modal.hide();
+            else if (command === 'toggle') modal.toggle();
+        });
+    };
+}
+</script>
 <section class="table-section pasarela-section">
     <div class="section-header">
         <div>
@@ -117,7 +128,7 @@ ob_start();
 <td>
   <?php if ($_SESSION['nombre_rol'] == 'Administrador'|| $_SESSION['nombre_rol'] == 'SuperUsuario' || $_SESSION['nombre_rol'] == 'Almacenista'): ?>
     <?php if (isset($dato['estatus']) && $dato['estatus'] === 'Pago Procesado'): ?>
-      <span class="text-success">Pago procesado. No es posible cambiar estatus.</span>
+      <span class="text-success">Pago procesado. <br> No es posible cambiar estatus.</span>
     <?php else: ?>
       <button class="btn btn-primary modificarEstado" 
               data-id="<?= htmlspecialchars($dato['id_detalles']); ?>"
@@ -288,6 +299,194 @@ $(document).ready(function() {
 </script>
 
 <style>
+/* ===== Soporte local de modales Bootstrap 5 (sin bootstrap.min.css global) ===== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    opacity: 0;
+    transition: opacity .15s linear;
+}
+.modal-backdrop.show { opacity: .5; }
+
+#modificarEstadoModal,
+#modalComprobante {
+    z-index: 1055 !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+}
+
+#modificarEstadoModal .modal-dialog,
+#modalComprobante .modal-dialog {
+    position: relative;
+    width: auto;
+    max-width: 500px;
+    margin: 1.75rem auto;
+    pointer-events: none;
+}
+#modalComprobante .modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+}
+#modificarEstadoModal.fade .modal-dialog,
+#modalComprobante.fade .modal-dialog {
+    transition: transform .3s ease-out;
+    transform: translate(0, -50px);
+}
+#modificarEstadoModal.show .modal-dialog,
+#modalComprobante.show .modal-dialog {
+    transform: none;
+}
+
+#modificarEstadoModal .modal-content,
+#modalComprobante .modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, .2);
+    border-radius: .3rem;
+    outline: 0;
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+}
+
+#modificarEstadoModal .modal-header,
+#modalComprobante .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: calc(.3rem - 1px);
+    border-top-right-radius: calc(.3rem - 1px);
+}
+#modificarEstadoModal .modal-header { color: #212529; background-color: #fff; }
+
+#modificarEstadoModal .modal-title,
+#modalComprobante .modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.btn-close {
+    box-sizing: content-box;
+    width: 1em;
+    height: 1em;
+    padding: .25em;
+    color: #000;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+    border: 0;
+    border-radius: .375rem;
+    opacity: .5;
+    cursor: pointer;
+}
+.btn-close:hover { color: #000; opacity: .75; }
+
+#modificarEstadoModal .modal-body,
+#modalComprobante .modal-body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+#modificarEstadoModal .modal-footer,
+#modalComprobante .modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* ===== Utilidades y controles de formulario usados en los modales ===== */
+.mb-3 { margin-bottom: 1rem; }
+.text-center { text-align: center !important; }
+.text-muted { color: #6c757d !important; }
+.text-success { color: #198754 !important; }
+.img-fluid { max-width: 100%; height: auto; }
+
+.form-label {
+    margin-bottom: .5rem;
+    font-size: 1rem;
+}
+.form-select {
+    display: block;
+    width: 100%;
+    padding: .375rem 2.25rem .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px 12px;
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.form-select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+
+.btn {
+    display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .375rem;
+    transition: color .15s, background-color .15s, border-color .15s, box-shadow .15s;
+}
+.btn:focus,
+.btn:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+}
+.btn-primary {
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+.btn-primary:hover {
+    color: #fff;
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+.btn-secondary {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.btn-secondary:hover {
+    color: #fff;
+    background-color: #5c636a;
+    border-color: #565e64;
+}
+
 .img-comprobante {
     transition: all 0.3s ease;
 }

@@ -36,6 +36,8 @@ $modulos = [
     'Roles' => ['gestionarroles', '?pagina=rol'],
     'Bitacora' => ['gestionarbitacora', '?pagina=bitacora'],
     'Backup' => ['gestionarbackup', '?pagina=backup'],
+    'Pasarela' => ['gestionarpasarela', '?pagina=pasarela'],
+    'Compra Fisica' => ['gestionarcomprafisica', '?pagina=comprafisica'],
 ];
 
 // Verificar permisos para cada módulo
@@ -218,12 +220,25 @@ if ($nombre_rol === 'SuperUsuario') {
                     <span class="nav-text">Gestionar Catálogo</span>
                 </a>
                 <?php endif; ?>
-                <?php if ($permisosConsulta['Pedidos'] ?? false): ?>
-                <a href="?pagina=gestionarfactura" class="nav-link <?php echo ($pagina_actual ?? '') === 'gestionarfactura' ? 'active' : ''; ?>">
+                <?php if ($permisosConsulta['Compra Fisica'] ?? false): ?>
+                <a href="?pagina=comprafisica" class="nav-link <?php echo ($pagina_actual ?? '') === 'comprafisica' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
                     <span class="nav-text">Gestionar Ventas Presenciales</span>
                 </a>
                 <?php endif; ?>
+                <?php if ($permisosConsulta['Pedidos'] ?? false): ?>
+                <a href="?pagina=gestionarfactura" class="nav-link <?php echo ($pagina_actual ?? '') === 'gestionarfactura' ? 'active' : ''; ?>">
+                    <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
+                    <span class="nav-text">Gestionar Pedidos</span>
+                </a>
+                <?php endif; ?>
+                <?php if ($permisosConsulta['Pasarela'] ?? false): ?>
+                <a href="?pagina=pasarela" class="nav-link <?php echo ($pagina_actual ?? '') === 'pasarela' ? 'active' : ''; ?>">
+                    <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
+                    <span class="nav-text">Gestionar Pagos</span>
+                </a>
+                <?php endif; ?>
+
                 <?php if ($permisosConsulta['Despacho'] ?? false): ?>
                 <a href="?pagina=despacho" class="nav-link <?php echo ($pagina_actual ?? '') === 'despacho' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
