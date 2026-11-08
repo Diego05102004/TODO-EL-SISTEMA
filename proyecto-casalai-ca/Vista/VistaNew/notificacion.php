@@ -27,20 +27,26 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 $pagina_actual = 'notificacion';
 $titulo_pagina = 'Notificaciones';
 
+$notificacionesLista = is_array($notificaciones ?? null) ? array_values($notificaciones) : [];
+
+// Estadísticas reales para las tarjetas
+$total_notificaciones = count($notificacionesLista);
+$notificaciones_no_leidas = 0;
+$notificaciones_importantes = 0;
+foreach ($notificacionesLista as $n) {
+    if ((int)($n['leido'] ?? 0) !== 1) {
+        $notificaciones_no_leidas++;
+    }
+    $prio = strtolower((string)($n['prioridad'] ?? ''));
+    if (in_array($prio, ['alta', 'urgente'], true)) {
+        $notificaciones_importantes++;
+    }
+}
+$porcentaje_no_leidas = $total_notificaciones > 0 ? round(($notificaciones_no_leidas / $total_notificaciones) * 100) : 0;
+$porcentaje_importantes = $total_notificaciones > 0 ? round(($notificaciones_importantes / $total_notificaciones) * 100) : 0;
+
 // Iniciar el buffer de contenido
 ob_start();
-?>
-
-<?php
-// Cálculos previos para summary cards
-$total_notificaciones = count($notificaciones ?? []);
-$notificaciones_no_leidas = count(array_filter($notificaciones ?? [], function($n) { return ($n['leida'] ?? 0) === 0; }));
-$notificaciones_leidas = count(array_filter($notificaciones ?? [], function($n) { return ($n['leida'] ?? 0) === 1; }));
-
-// Calcular porcentajes
-$porcentaje_total = 100;
-$porcentaje_no_leidas = $total_notificaciones > 0 ? round(($notificaciones_no_leidas / $total_notificaciones) * 100) : 0;
-$porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas / $total_notificaciones) * 100) : 0;
 ?>
 
             <!-- Summary Cards para Notificaciones -->
@@ -49,13 +55,13 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     <div class="card-icon"><i class="fas fa-comments"></i></div>
                     <div class="card-content">
                         <h3>Total Notificaciones</h3>
-                        <p class="card-value"><?php echo $total_notificaciones; ?></p>
+                        <p class="card-value" id="notif-count-total"><?php echo $total_notificaciones; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_total; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage"><?php echo $porcentaje_total; ?>%</span>
+                            <span class="percentage">100%</span>
                         </div>
                     </div>
                 </div>
@@ -64,44 +70,13 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     <div class="card-icon"><i class="fas fa-envelope"></i></div>
                     <div class="card-content">
                         <h3>No Leídas</h3>
-                        <p class="card-value"><?php echo $notificaciones_no_leidas; ?></p>
+                        <p class="card-value" id="notif-count-unread"><?php echo $notificaciones_no_leidas; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_no_leidas; ?>, 100" stroke="#ff6b6b" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" id="notif-pct-unread" stroke-dasharray="<?php echo $porcentaje_no_leidas; ?>, 100" stroke="#ff6b6b" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage"><?php echo $porcentaje_no_leidas; ?>%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-check-double"></i></div>
-                    <div class="card-content">
-                        <h3>Leídas</h3>
-                        <p class="card-value"><?php echo $notificaciones_leidas; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_leidas; ?>, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $porcentaje_leidas; ?>%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-                <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-bell"></i></div>
-                    <div class="card-content">
-                        <h3>No Leídas</h3>
-                        <p class="card-value">12</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="25, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">25%</span>
+                            <span class="percentage" id="notif-pct-unread-label"><?php echo $porcentaje_no_leidas; ?>%</span>
                         </div>
                     </div>
                 </div>
@@ -110,13 +85,13 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     <div class="card-icon"><i class="fas fa-star"></i></div>
                     <div class="card-content">
                         <h3>Importantes</h3>
-                        <p class="card-value">5</p>
+                        <p class="card-value" id="notif-count-important"><?php echo $notificaciones_importantes; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="11, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" id="notif-pct-important" stroke-dasharray="<?php echo $porcentaje_importantes; ?>, 100" stroke="#ffc107" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage">11%</span>
+                            <span class="percentage" id="notif-pct-important-label"><?php echo $porcentaje_importantes; ?>%</span>
                         </div>
                     </div>
                 </div>
@@ -125,215 +100,39 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
             <!-- Filtros de Notificaciones -->
             <div class="notifications-filters">
                 <div class="section-header">
-                    <h2>Mis Notificaciones</h2>
+                    <h2><i class="fas fa-bell"></i> Mis Notificaciones</h2>
                     <div class="section-actions">
-                        <button class="btn-mark-read" onclick="markAllAsRead()">
+                        <button class="btn-mark-read" id="btn-marcar-todas">
                             <span class="btn-icon">✓</span>
                             Marcar todas como leídas
-                        </button>
-                        <button class="btn-clear-notifications" onclick="clearNotifications()">
-                            <span class="btn-icon"><i class="fas fa-trash"></i></span>
-                            Limpiar notificaciones
                         </button>
                     </div>
                 </div>
 
                 <div class="filter-tabs">
-                    <button class="filter-tab active" onclick="filterNotifications('all')">Todas</button>
-                    <button class="filter-tab" onclick="filterNotifications('unread')">No leídas</button>
-                    <button class="filter-tab" onclick="filterNotifications('important')">Importantes</button>
-                    <button class="filter-tab" onclick="filterNotifications('system')">Sistema</button>
+                    <button class="filter-tab active" data-filtro="all">Todas</button>
+                    <button class="filter-tab" data-filtro="unread">No leídas</button>
+                    <button class="filter-tab" data-filtro="important">Importantes</button>
+                    <button class="filter-tab" data-filtro="system">Sistema</button>
+                </div>
+
+                <div class="notif-search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="notif-search" class="notif-search" placeholder="Buscar en título o descripción...">
                 </div>
             </div>
 
             <!-- Lista de Notificaciones -->
-            <div class="notifications-list">
-                <!-- Notificación Importante -->
-                <div class="notification-item important unread">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-exclamation-triangle"></i></span>
-                        <span class="unread-dot"></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Alerta de Stock Bajo</h4>
-                            <span class="notification-time">hace 5 min</span>
-                        </div>
-                        <p>El producto "iPhone 15 Pro Max" tiene menos de 10 unidades en stock. Se recomienda reabastecer.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('stock', 1)">Ver Producto</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(1)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Pedido -->
-                <div class="notification-item unread">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-box"></i></span>
-                        <span class="unread-dot"></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Nuevo Pedido #ORD-006</h4>
-                            <span class="notification-time">hace 15 min</span>
-                        </div>
-                        <p>El cliente Juan Pérez ha realizado un nuevo pedido por $2,450. El pedido está pendiente de procesamiento.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('order', 2)">Ver Pedido</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(2)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Pago -->
-                <div class="notification-item unread">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-credit-card"></i></span>
-                        <span class="unread-dot"></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Pago Recibido</h4>
-                            <span class="notification-time">hace 30 min</span>
-                        </div>
-                        <p>Se ha recibido un pago de $1,299 del cliente María González mediante transferencia bancaria.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('payment', 3)">Ver Detalles</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(3)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Sistema -->
-                <div class="notification-item system">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-tools"></i></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Actualización del Sistema</h4>
-                            <span class="notification-time">hace 1 hora</span>
-                        </div>
-                        <p>El sistema ha sido actualizado a la versión 2.5.0 con nuevas funcionalidades de reportes y mejoras de rendimiento.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('system', 4)">Ver Novedades</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(4)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Cliente -->
-                <div class="notification-item">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-user"></i></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Nuevo Cliente Registrado</h4>
-                            <span class="notification-time">hace 2 horas</span>
-                        </div>
-                        <p>El cliente Carlos Rodríguez se ha registrado en el sistema. Su información está disponible en el módulo de clientes.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('client', 5)">Ver Cliente</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(5)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Envío -->
-                <div class="notification-item">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-truck"></i></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Pedido Enviado</h4>
-                            <span class="notification-time">hace 3 horas</span>
-                        </div>
-                        <p>El pedido #ORD-004 ha sido enviado al cliente Ana Martínez. Se espera entrega en 2-3 días hábiles.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('shipping', 6)">Ver Pedido</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(6)">Descartar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notificación de Reporte -->
-                <div class="notification-item system">
-                    <div class="notification-icon">
-                        <span class="icon-container"><i class="fas fa-chart-bar"></i></span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h4>Reporte Generado</h4>
-                            <span class="notification-time">hace 5 horas</span>
-                        </div>
-                        <p>El reporte mensual de ventas ha sido generado automáticamente. Está disponible en el módulo de reportes.</p>
-                        <div class="notification-actions">
-                            <button class="btn-notification-action" onclick="handleNotification('report', 7)">Ver Reporte</button>
-                            <button class="btn-notification-action" onclick="dismissNotification(7)">Descartar</button>
-                        </div>
-                    </div>
+            <div class="notifications-list" id="notif-page-list">
+                <div class="notif-empty" id="notif-empty" style="display:none;">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No hay notificaciones para mostrar</p>
                 </div>
             </div>
 
-            <!-- Configuración de Notificaciones -->
-            <div class="notification-settings">
-                <h2>Configuración de Notificaciones</h2>
-                <div class="settings-grid">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Notificaciones de Pedidos</h4>
-                            <p>Recibir alertas cuando se creen nuevos pedidos</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Alertas de Stock</h4>
-                            <p>Notificar cuando el stock esté bajo</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Notificaciones de Pagos</h4>
-                            <p>Alertas sobre pagos recibidos</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Actualizaciones del Sistema</h4>
-                            <p>Información sobre mantenimiento y actualizaciones</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Notificaciones por Email</h4>
-                            <p>Enviar resumen diario por correo electrónico</p>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
+            <button class="btn-ayuda" id="btn-ayuda-notificacion" title="Visualizar Ayuda">
+                <img src="assets/img/info-ayuda.svg" alt="Ayuda" width="20" height="20">
+            </button>
 
             <style>
                 /* Estilos específicos de Notificaciones */
@@ -345,10 +144,52 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     margin-bottom: 30px;
                 }
 
+                .section-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    gap: 15px;
+                }
+
+                .section-header h2 {
+                    margin: 0;
+                    color: #333;
+                    font-size: 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .section-header h2 i {
+                    color: #2196F3;
+                }
+
+                .btn-mark-read {
+                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+                    color: white;
+                    border: none;
+                    padding: 10px 18px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+                }
+
+                .btn-mark-read:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.35);
+                }
+
                 .filter-tabs {
                     display: flex;
                     gap: 10px;
                     margin-top: 20px;
+                    flex-wrap: wrap;
                 }
 
                 .filter-tab {
@@ -371,10 +212,58 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     color: white;
                 }
 
+                .notif-search-wrapper {
+                    position: relative;
+                    margin-top: 20px;
+                    max-width: 420px;
+                }
+
+                .notif-search-wrapper i {
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #718096;
+                }
+
+                .notif-search {
+                    width: 100%;
+                    padding: 11px 15px 11px 40px;
+                    border: 2px solid #e9ecef;
+                    border-radius: 10px;
+                    font-size: 0.95rem;
+                    transition: all 0.3s ease;
+                }
+
+                .notif-search:focus {
+                    border-color: #2196F3;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+                }
+
                 .notifications-list {
                     display: flex;
                     flex-direction: column;
                     gap: 15px;
+                }
+
+                .notif-empty {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 50px 25px;
+                    text-align: center;
+                    color: #718096;
+                }
+
+                .notif-empty i {
+                    font-size: 3rem;
+                    color: #cbd5e0;
+                    margin-bottom: 15px;
+                }
+
+                .notif-empty p {
+                    margin: 0;
+                    font-weight: 600;
                 }
 
                 .notification-item {
@@ -400,8 +289,17 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     border-left: 4px solid #f5576c;
                 }
 
-                .notification-item.system {
-                    border-left: 4px solid #6c757d;
+                .notification-item.read {
+                    opacity: 0.75;
+                }
+
+                .notification-item.new-live {
+                    animation: notif-enter 0.5s ease-out;
+                }
+
+                @keyframes notif-enter {
+                    from { opacity: 0; transform: translateY(-15px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
 
                 .notification-icon {
@@ -424,6 +322,12 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     color: #2196F3;
                 }
 
+                .notification-item[data-tipo="pago"] .icon-container i { color: #38a169; }
+                .notification-item[data-tipo="despacho"] .icon-container i { color: #3182ce; }
+                .notification-item[data-tipo="sistema"] .icon-container i { color: #6c757d; }
+                .notification-item[data-tipo="alerta"] .icon-container i { color: #e53e3e; }
+                .notification-item[data-tipo="general"] .icon-container i { color: #d69e2e; }
+
                 .unread-dot {
                     position: absolute;
                     top: 5px;
@@ -437,13 +341,16 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
 
                 .notification-content {
                     flex: 1;
+                    min-width: 0;
                 }
 
                 .notification-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    gap: 10px;
                     margin-bottom: 10px;
+                    flex-wrap: wrap;
                 }
 
                 .notification-header h4 {
@@ -452,15 +359,47 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     font-size: 1rem;
                 }
 
+                .notification-header .notif-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .prio-badge {
+                    display: inline-block;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    text-transform: capitalize;
+                }
+
+                .prio-alta, .prio-urgente {
+                    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+                    color: white;
+                }
+
+                .prio-media {
+                    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+                    color: white;
+                }
+
+                .prio-baja {
+                    background: linear-gradient(135deg, #68d391 0%, #38a169 100%);
+                    color: white;
+                }
+
                 .notification-time {
                     font-size: 0.85rem;
                     color: #666;
+                    white-space: nowrap;
                 }
 
                 .notification-content p {
                     margin: 0 0 15px 0;
                     color: #555;
                     line-height: 1.5;
+                    word-break: break-word;
                 }
 
                 .notification-actions {
@@ -483,160 +422,412 @@ $porcentaje_leidas = $total_notificaciones > 0 ? round(($notificaciones_leidas /
                     transform: scale(1.05);
                 }
 
-                .notification-settings {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 25px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                .btn-notification-action:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
                 }
 
-                .notification-settings h2 {
-                    color: #333;
-                    margin: 0 0 25px 0;
-                    font-size: 1.5rem;
-                }
-
-                .settings-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
-                }
-
-                .setting-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 15px;
-                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                    border-radius: 8px;
-                }
-
-                .setting-info h4 {
-                    margin: 0 0 5px 0;
-                    color: #333;
-                    font-size: 1rem;
-                }
-
-                .setting-info p {
-                    margin: 0;
-                    font-size: 0.85rem;
-                    color: #666;
-                }
-
-                .toggle-switch {
-                    position: relative;
-                    display: inline-block;
+                /* Botón de ayuda */
+                .btn-ayuda {
+                    position: fixed;
+                    top: 115px;
+                    right: 25px;
                     width: 50px;
-                    height: 26px;
-                }
-
-                .toggle-switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-
-                .toggle-slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    transition: 0.4s;
-                    border-radius: 26px;
-                }
-
-                .toggle-slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 20px;
-                    width: 20px;
-                    left: 3px;
-                    bottom: 3px;
-                    background-color: white;
-                    transition: 0.4s;
+                    height: 50px;
+                    border: none;
                     border-radius: 50%;
+                    background-color: #5995fd;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                    z-index: 1000;
                 }
-
-                .toggle-switch input:checked + .toggle-slider {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+                .btn-ayuda img {
+                    width: 25px;
+                    height: 25px;
+                    pointer-events: none;
                 }
-
-                .toggle-switch input:checked + .toggle-slider:before {
-                    transform: translateX(24px);
+                .btn-ayuda:hover {
+                    background-color: #4d84e2;
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
                 }
 
                 @media (max-width: 768px) {
                     .notification-item {
                         flex-direction: column;
                     }
-                    
-                    .settings-grid {
-                        grid-template-columns: 1fr;
-                    }
                 }
             </style>
 
             <script>
-                function filterNotifications(type) {
-                    // Remover clase active de todos los tabs
-                    document.querySelectorAll('.filter-tab').forEach(tab => {
-                        tab.classList.remove('active');
-                    });
-                    
-                    // Agregar clase active al tab seleccionado
-                    event.target.classList.add('active');
-                    
-                    // Aquí implementarías la lógica de filtrado
-                    alert('Filtrar notificaciones: ' + type);
+            (function () {
+                'use strict';
+
+                const ENDPOINT_MARCAR = '?pagina=notificacion&accion=marcar_leida';
+                const ENDPOINT_MARCAR_TODAS = '?pagina=notificacion&accion=marcar_todas_leidas';
+
+                const ICONOS_POR_TIPO = {
+                    pago: 'fa-credit-card',
+                    despacho: 'fa-truck',
+                    sistema: 'fa-tools',
+                    alerta: 'fa-exclamation-triangle',
+                    general: 'fa-bell'
+                };
+
+                const state = {
+                    notificaciones: [],
+                    filtro: 'all',
+                    busqueda: ''
+                };
+
+                const listaEl = document.getElementById('notif-page-list');
+                const emptyEl = document.getElementById('notif-empty');
+                const searchEl = document.getElementById('notif-search');
+
+                /* ==================== Utilidades ==================== */
+                function escaparHtml(texto) {
+                    const div = document.createElement('div');
+                    div.textContent = texto == null ? '' : String(texto);
+                    return div.innerHTML;
                 }
 
-                function markAllAsRead() {
-                    // Remover todos los puntos de no leído
-                    document.querySelectorAll('.unread-dot').forEach(dot => {
-                        dot.style.display = 'none';
+                function formatearFecha(fechaString) {
+                    if (!fechaString) return '';
+                    let fecha = new Date(String(fechaString).replace(' ', 'T'));
+                    if (isNaN(fecha.getTime())) return '';
+                    const ahora = new Date();
+                    const diff = Math.floor((ahora - fecha) / 1000);
+                    if (diff < 60) return 'Hace unos segundos';
+                    if (diff < 3600) {
+                        const m = Math.floor(diff / 60);
+                        return 'Hace ' + m + ' minuto' + (m > 1 ? 's' : '');
+                    }
+                    if (diff < 86400) {
+                        const h = Math.floor(diff / 3600);
+                        return 'Hace ' + h + ' hora' + (h > 1 ? 's' : '');
+                    }
+                    if (diff < 604800) {
+                        const d = Math.floor(diff / 86400);
+                        return 'Hace ' + d + ' día' + (d > 1 ? 's' : '');
+                    }
+                    return fecha.toLocaleDateString('es-ES', {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
                     });
-                    
-                    // Remover clase unread de los items
-                    document.querySelectorAll('.notification-item.unread').forEach(item => {
-                        item.classList.remove('unread');
-                    });
-                    
-                    alert('Todas las notificaciones marcadas como leídas');
                 }
 
-                function clearNotifications() {
-                    if (confirm('¿Está seguro de limpiar todas las notificaciones?')) {
-                        alert('Función de limpiar notificaciones (conectar con backend)');
+                function estaLeida(n) {
+                    return n && (n.leido === 1 || n.leido === '1' || n.leido === true ||
+                                 n.leida === 1 || n.leida === '1' || n.leida === true);
+                }
+
+                function esImportante(n) {
+                    const p = String(n.prioridad || '').toLowerCase();
+                    return p === 'alta' || p === 'urgente';
+                }
+
+                function clasePrioridad(n) {
+                    const p = String(n.prioridad || 'baja').toLowerCase();
+                    return ['alta', 'media', 'baja', 'urgente'].includes(p) ? p : 'baja';
+                }
+
+                function iconoTipo(tipo) {
+                    return ICONOS_POR_TIPO[String(tipo || '').toLowerCase()] || 'fa-bell';
+                }
+
+                function coincideFiltro(n) {
+                    switch (state.filtro) {
+                        case 'unread': return !estaLeida(n);
+                        case 'important': return esImportante(n);
+                        case 'system': return String(n.tipo || '').toLowerCase() === 'sistema';
+                        default: return true;
                     }
                 }
 
-                function handleNotification(type, id) {
-                    const actions = {
-                        'stock': 'Ver producto',
-                        'order': 'Ver pedido',
-                        'payment': 'Ver detalles de pago',
-                        'system': 'Ver novedades',
-                        'client': 'Ver cliente',
-                        'shipping': 'Ver pedido',
-                        'report': 'Ver reporte'
-                    };
-                    
-                    alert('Acción: ' + actions[type] + ' (ID: ' + id + ')');
+                function coincideBusqueda(n) {
+                    if (!state.busqueda) return true;
+                    const q = state.busqueda.toLowerCase();
+                    return String(n.titulo || '').toLowerCase().includes(q) ||
+                           String(n.mensaje || '').toLowerCase().includes(q);
                 }
 
-                function dismissNotification(id) {
-                    // Aquí implementarías la lógica para descartar la notificación
-                    const notification = event.target.closest('.notification-item');
-                    notification.style.opacity = '0.5';
-                    notification.style.pointerEvents = 'none';
-                    
-                    setTimeout(() => {
-                        notification.style.display = 'none';
-                    }, 300);
+                /* ==================== Renderizado ==================== */
+                function htmlNotificacion(n, esNueva) {
+                    const leida = estaLeida(n);
+                    const importante = esImportante(n);
+                    const prio = clasePrioridad(n);
+                    const id = n.id_notificacion || n.id;
+                    const clases = ['notification-item'];
+                    if (leida) clases.push('read'); else clases.push('unread');
+                    if (importante) clases.push('important');
+                    if (esNueva) clases.push('new-live');
+
+                    return '<div class="' + clases.join(' ') + '" data-id="' + escaparHtml(id) +
+                        '" data-tipo="' + escaparHtml(String(n.tipo || '').toLowerCase()) + '">' +
+                        '<div class="notification-icon">' +
+                            '<span class="icon-container"><i class="fas ' + iconoTipo(n.tipo) + '"></i></span>' +
+                            (leida ? '' : '<span class="unread-dot"></span>') +
+                        '</div>' +
+                        '<div class="notification-content">' +
+                            '<div class="notification-header">' +
+                                '<h4>' + escaparHtml(n.titulo || 'Notificación') + '</h4>' +
+                                '<div class="notif-meta">' +
+                                    '<span class="prio-badge prio-' + escaparHtml(prio) + '">' + escaparHtml(prio) + '</span>' +
+                                    '<span class="notification-time">' + escaparHtml(formatearFecha(n.fecha_hora || n.fecha_creacion)) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                            '<p>' + escaparHtml(n.mensaje || '') + '</p>' +
+                            '<div class="notification-actions">' +
+                                (leida ? '' : '<button class="btn-notification-action btn-mark-one" data-id="' + escaparHtml(id) + '">Marcar leída</button>') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
                 }
+
+                function renderLista() {
+                    const visibles = state.notificaciones.filter(n => coincideFiltro(n) && coincideBusqueda(n));
+                    if (!visibles.length) {
+                        listaEl.innerHTML = '';
+                        emptyEl.style.display = 'block';
+                    } else {
+                        emptyEl.style.display = 'none';
+                        listaEl.innerHTML = visibles.map(n => htmlNotificacion(n, false)).join('');
+                    }
+                    actualizarContadores();
+                }
+
+                function actualizarContadores() {
+                    const total = state.notificaciones.length;
+                    const noLeidas = state.notificaciones.filter(n => !estaLeida(n)).length;
+                    const importantes = state.notificaciones.filter(n => esImportante(n)).length;
+
+                    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                    setVal('notif-count-total', total);
+                    setVal('notif-count-unread', noLeidas);
+                    setVal('notif-count-important', importantes);
+
+                    const pctU = total > 0 ? Math.round((noLeidas / total) * 100) : 0;
+                    const pctI = total > 0 ? Math.round((importantes / total) * 100) : 0;
+                    const arcU = document.getElementById('notif-pct-unread');
+                    const arcI = document.getElementById('notif-pct-important');
+                    const lblU = document.getElementById('notif-pct-unread-label');
+                    const lblI = document.getElementById('notif-pct-important-label');
+                    if (arcU) arcU.setAttribute('stroke-dasharray', pctU + ', 100');
+                    if (arcI) arcI.setAttribute('stroke-dasharray', pctI + ', 100');
+                    if (lblU) lblU.textContent = pctU + '%';
+                    if (lblI) lblI.textContent = pctI + '%';
+                }
+
+                function agregarNotificacion(n, esNueva) {
+                    const id = String(n.id_notificacion || n.id || '');
+                    if (!id) return;
+                    const idx = state.notificaciones.findIndex(x => String(x.id_notificacion || x.id) === id);
+                    if (idx >= 0) {
+                        // Actualizar datos sin duplicar
+                        state.notificaciones[idx] = Object.assign({}, state.notificaciones[idx], n);
+                    } else {
+                        // Insertar manteniendo orden descendente por id
+                        const idNum = parseInt(id, 10) || 0;
+                        let pos = state.notificaciones.length;
+                        for (let i = 0; i < state.notificaciones.length; i++) {
+                            const otroId = parseInt(state.notificaciones[i].id_notificacion || state.notificaciones[i].id || 0, 10) || 0;
+                            if (otroId < idNum) { pos = i; break; }
+                        }
+                        state.notificaciones.splice(pos, 0, n);
+                    }
+                    renderLista();
+                    if (esNueva) {
+                        const item = listaEl.querySelector('.notification-item[data-id="' + CSS.escape(id) + '"]');
+                        if (item) item.classList.add('new-live');
+                    }
+                }
+
+                /* ==================== Acciones ==================== */
+                function actualizarLocalLeida(id) {
+                    const notif = state.notificaciones.find(x => String(x.id_notificacion || x.id) === String(id));
+                    if (notif) notif.leido = 1;
+                    renderLista();
+                }
+
+                async function marcarLeida(id) {
+                    const boton = listaEl.querySelector('.btn-mark-one[data-id="' + CSS.escape(String(id)) + '"]');
+                    if (boton) boton.disabled = true;
+
+                    let exito = false;
+                    try {
+                        if (window.notificacionesWS && typeof window.notificacionesWS.marcarComoLeida === 'function') {
+                            const res = await window.notificacionesWS.marcarComoLeida(id);
+                            // res puede ser undefined si el cliente lo capturó como error
+                            exito = !!(res && res.success === true);
+                        }
+                    } catch (e) {
+                        console.warn('Long polling marcar_leida falló, se intenta endpoint clásico:', e);
+                    }
+
+                    if (!exito) {
+                        try {
+                            const body = new URLSearchParams({ id_notificacion: String(id) });
+                            const resp = await fetch(ENDPOINT_MARCAR, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                credentials: 'same-origin',
+                                body: body.toString()
+                            });
+                            const data = await resp.json();
+                            exito = !!(data && data.exito === true);
+                        } catch (e2) {
+                            console.error('Error al marcar notificación como leída:', e2);
+                        }
+                    }
+
+                    if (exito) {
+                        actualizarLocalLeida(id);
+                    } else {
+                        if (boton) boton.disabled = false;
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo marcar la notificación como leída' });
+                    }
+                }
+
+                async function marcarTodasLeidas() {
+                    const confirmar = await Swal.fire({
+                        title: '¿Marcar todas como leídas?',
+                        text: 'Todas las notificaciones no leídas pasarán a estado leído.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#2196F3',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, marcar todas',
+                        cancelButtonText: 'Cancelar'
+                    });
+                    if (!confirmar.isConfirmed) return;
+
+                    Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                    try {
+                        const resp = await fetch(ENDPOINT_MARCAR_TODAS, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            credentials: 'same-origin'
+                        });
+                        const data = await resp.json();
+                        if (data && data.exito === true) {
+                            state.notificaciones.forEach(n => { n.leido = 1; });
+                            renderLista();
+                            await Swal.fire({ icon: 'success', title: 'Listo', text: 'Todas las notificaciones fueron marcadas como leídas', timer: 2000, showConfirmButton: false });
+                        } else {
+                            await Swal.fire({ icon: 'error', title: 'Error', text: data.mensaje || 'No se pudieron actualizar las notificaciones' });
+                        }
+                    } catch (e) {
+                        console.error('Error al marcar todas como leídas:', e);
+                        await Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo completar la operación. Intente nuevamente.' });
+                    } finally {
+                        Swal.close();
+                    }
+                }
+
+                /* ==================== Eventos ==================== */
+                document.querySelectorAll('.filter-tab').forEach(tab => {
+                    tab.addEventListener('click', function () {
+                        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        state.filtro = this.dataset.filtro;
+                        renderLista();
+                    });
+                });
+
+                if (searchEl) {
+                    searchEl.addEventListener('input', function () {
+                        state.busqueda = this.value.trim();
+                        renderLista();
+                    });
+                }
+
+                listaEl.addEventListener('click', function (e) {
+                    const btn = e.target.closest('.btn-mark-one');
+                    if (btn) {
+                        e.stopPropagation();
+                        marcarLeida(btn.dataset.id);
+                    }
+                });
+
+                document.getElementById('btn-marcar-todas')?.addEventListener('click', marcarTodasLeidas);
+
+                /* ==================== Datos iniciales ==================== */
+                state.notificaciones = <?php echo json_encode($notificacionesLista, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) ?: '[]'; ?>;
+                if (!Array.isArray(state.notificaciones)) state.notificaciones = [];
+                renderLista();
+
+                /* ==================== Actualización en tiempo real (long polling) ==================== */
+                function manejarMensajeLive(data) {
+                    if (!data || (data.tipo !== 'nueva_notificacion' && data.tipo !== 'sync_inicial')) return;
+                    const nuevas = Array.isArray(data.notificaciones) ? data.notificaciones : [];
+                    nuevas.forEach(n => agregarNotificacion(n, true));
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ws = window.notificacionesWS;
+                    if (ws && typeof ws.manejarMensaje === 'function') {
+                        const original = ws.manejarMensaje.bind(ws);
+                        ws.manejarMensaje = function (data) {
+                            original(data);
+                            manejarMensajeLive(data);
+                        };
+                    }
+                });
+
+                /* ==================== Modal de ayuda ==================== */
+                let modalAyudaInstance = null;
+
+                function cargarRecursoAyuda(tipo, url) {
+                    return new Promise((resolve, reject) => {
+                        if (tipo === 'css' && document.querySelector('link[href*="ayuda/css/modal.css"]')) return resolve();
+                        if (tipo === 'js' && document.querySelector('script[src*="ayuda/js/modal.js"]')) return resolve();
+                        const el = document.createElement(tipo === 'css' ? 'link' : 'script');
+                        if (tipo === 'css') { el.rel = 'stylesheet'; el.href = url; }
+                        else { el.src = url; }
+                        el.onload = resolve;
+                        el.onerror = reject;
+                        document.head.appendChild(el);
+                    });
+                }
+
+                async function abrirModalAyuda(contexto) {
+                    try {
+                        await cargarRecursoAyuda('css', 'assets/public/ayuda/css/modal.css');
+
+                        if (!document.getElementById('modalAyuda')) {
+                            const html = await (await fetch('assets/public/ayuda/notificacion.php')).text();
+                            document.body.insertAdjacentHTML('beforeend', html);
+                        }
+
+                        await cargarRecursoAyuda('js', 'assets/public/ayuda/js/modal.js');
+
+                        if (typeof inicializarModalAyudaUsuario === 'function') {
+                            modalAyudaInstance = inicializarModalAyudaUsuario();
+                            document.body.style.overflow = '';
+                            modalAyudaInstance.openModal();
+                        } else {
+                            console.error('La función inicializarModalAyudaUsuario no está disponible');
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar el modal de ayuda:', err);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cargar el contenido de ayuda' });
+                    }
+                }
+
+                document.getElementById('btn-ayuda-notificacion')?.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    abrirModalAyuda();
+                });
+            })();
             </script>
 
 <?php

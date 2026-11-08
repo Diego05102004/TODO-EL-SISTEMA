@@ -21,6 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $accion = '';
     }
 
+    try {
     switch ($accion) {
         case 'permisos_tiempo_real':
             header('Content-Type: application/json; charset=utf-8');
@@ -173,6 +174,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         default:
             echo json_encode(['status' => 'error', 'message' => 'Acción no válida']);
+        exit;
+    }
+    } catch (\Exception $e) {
+        // Log completo solo en servidor; al cliente nunca se expone el error SQL
+        error_log('Error POST rol.php (accion=' . $accion . '): ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode(['status' => 'error', 'message' => 'No se pudo completar la operación. Intente nuevamente.']);
         exit;
     }
 }

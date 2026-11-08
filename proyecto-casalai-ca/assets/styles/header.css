@@ -321,3 +321,41 @@
         width: 350px;
     }
 }
+/* Iconos y botón de marcar-leído del panel de notificaciones
+   (antes definidos en new_menu.css, que no se carga en VistaNew) */
+.local-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.item-notificacion {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.item-notificacion .texto {
+    flex: 1;
+    margin-right: 10px;
+    min-width: 0;
+}
+
+.marcar-leido {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.marcar-leido:hover {
+    background-color: #e9ecef;
+}
+
+.marcar-leido img {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
