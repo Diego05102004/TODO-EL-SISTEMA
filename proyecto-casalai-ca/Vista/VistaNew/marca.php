@@ -27,6 +27,16 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 $pagina_actual = 'marca';
 $titulo_pagina = 'Gestión de Marcas';
 
+// Datos reales para las tarjetas
+$marcasArray = $marcas ?? [];
+$totalMarcas = count($marcasArray);
+$marcasPorId = $marcasArray;
+usort($marcasPorId, function ($a, $b) {
+    return ((int)($a['id_marca'] ?? 0)) <=> ((int)($b['id_marca'] ?? 0));
+});
+$primeraMarca = $marcasPorId[0] ?? null;
+$ultimaMarca = $marcasPorId[$totalMarcas - 1] ?? null;
+
 // Iniciar el buffer de contenido
 ob_start();
 ?>
@@ -37,58 +47,59 @@ ob_start();
                     <div class="card-icon"><i class="fas fa-trademark"></i></div>
                     <div class="card-content">
                         <h3>Total Marcas</h3>
-                        <p class="card-value"><?php echo count($marcas ?? []); ?></p>
+                        <p class="card-value" id="marca-count-total"><?php echo $totalMarcas; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="78, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" stroke-dasharray="100, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage">78%</span>
+                            <span class="percentage">100%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
                     <div class="card-content">
-                        <h3>Activas</h3>
-                        <p class="card-value"><?php echo count($marcas ?? []); ?></p>
+                        <h3>Primera Registrada</h3>
+                        <p class="card-value" id="marca-primera" style="font-size: 1.1rem;"><?php echo $primeraMarca ? htmlspecialchars($primeraMarca['nombre_marca']) : 'N/A'; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="92, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" stroke-dasharray="<?php echo $totalMarcas > 0 ? round(100 / $totalMarcas, 1) : 0; ?>, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage">92%</span>
+                            <span class="percentage"><?php echo $totalMarcas > 0 ? round(100 / $totalMarcas) . '%' : '0%'; ?></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
                     <div class="card-content">
-                        <h3>Crecimiento</h3>
-                        <p class="card-value">+12%</p>
+                        <h3>Última Registrada</h3>
+                        <p class="card-value" id="marca-ultima" style="font-size: 1.1rem;"><?php echo $ultimaMarca ? htmlspecialchars($ultimaMarca['nombre_marca']) : 'N/A'; ?></p>
                         <div class="progress-circle">
                             <svg viewBox="0 0 36 36" class="circular-chart">
                                 <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="65, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" stroke-dasharray="<?php echo $totalMarcas > 0 ? round(100 / $totalMarcas, 1) : 0; ?>, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
-                            <span class="percentage">65%</span>
+                            <span class="percentage"><?php echo $totalMarcas > 0 ? round(100 / $totalMarcas) . '%' : '0%'; ?></span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Marcas Section -->
-            <div class="marcas-section">
+            <div class="marcas-section" id="contenedor-marcas">
+                <div id="mensaje-permiso" style="display:none; color:#dc2626; text-align:center; margin:20px 0; font-weight:600;"></div>
                 <div class="section-header">
                     <h2>Gestión de Marcas</h2>
                     <div class="section-actions">
-                        <button class="btn-add-marca" onclick="openModal('registrar')">
+                        <button class="btn-add-marca" id="btn-add-marca">
                             <span class="btn-icon"><i class="fas fa-plus"></i></span>
                             Nueva Marca
                         </button>
-                        <button class="btn-filter" onclick="openFilterModal()">
+                        <button class="btn-filter" id="btn-filter">
                             <span class="btn-icon"><i class="fas fa-search"></i></span>
                             Buscar
                         </button>
@@ -97,7 +108,7 @@ ob_start();
 
                 <!-- Tabla de Marcas -->
                 <div class="table-container">
-                    <table class="marcas-table">
+                    <table class="marcas-table" id="tablaMarcas" data-datatable data-page-length="15" data-datatable-order="[[0,\"desc\"]]" data-datatable-no-order="2" data-datatable-no-search="2">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -108,14 +119,18 @@ ob_start();
                         <tbody>
                             <?php if (!empty($marcas)): ?>
                                 <?php foreach ($marcas as $marca): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($marca['id_marca'] ?? 'N/A'); ?></td>
+                                    <tr data-id="<?php echo (int)$marca['id_marca']; ?>">
+                                        <td><?php echo (int)$marca['id_marca']; ?></td>
                                         <td><?php echo htmlspecialchars($marca['nombre_marca'] ?? 'N/A'); ?></td>
                                         <td>
-                                            <button class="btn-action btn-edit" onclick="editMarca(<?php echo $marca['id_marca']; ?>)">
+                                            <button class="btn-action btn-edit" title="Modificar Marca"
+                                                data-id="<?php echo (int)$marca['id_marca']; ?>"
+                                                data-nombre="<?php echo htmlspecialchars($marca['nombre_marca'] ?? '', ENT_QUOTES); ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn-action btn-delete" onclick="deleteMarca(<?php echo $marca['id_marca']; ?>)">
+                                            <button class="btn-action btn-delete" title="Eliminar Marca"
+                                                data-id="<?php echo (int)$marca['id_marca']; ?>"
+                                                data-nombre="<?php echo htmlspecialchars($marca['nombre_marca'] ?? '', ENT_QUOTES); ?>">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>
@@ -144,24 +159,25 @@ ob_start();
                             </div>
                             <div class="modal-title-content">
                                 <h2 id="modalTitle">Nueva Marca</h2>
-                                <p>Complete los datos para registrar una nueva marca</p>
+                                <p id="modalSubtitle">Complete los datos para registrar una nueva marca</p>
                             </div>
                         </div>
                         <span class="close-modal" onclick="closeModal()">&times;</span>
                     </div>
                     <div class="modal-body">
                         <form id="marcaForm">
-                            <input type="hidden" name="accion" value="registrar">
+                            <input type="hidden" name="accion" id="accionForm" value="registrar">
                             <input type="hidden" name="id_marca" id="id_marca">
-                            
+
                             <div class="form-group">
                                 <label for="nombre_marca">
                                     <i class="fas fa-tag"></i>
                                     Nombre de la Marca*
                                 </label>
-                                <input type="text" id="nombre_marca" name="nombre_marca" required 
+                                <input type="text" id="nombre_marca" name="nombre_marca" required
                                        placeholder="Ej: Apple, Samsung, Sony" maxlength="25" class="input-with-icon">
                                 <i class="fas fa-trademark input-icon"></i>
+                                <span class="span-error" id="error-nombre-marca"></span>
                             </div>
                         </form>
                     </div>
@@ -169,7 +185,7 @@ ob_start();
                         <button class="btn-cancel" onclick="closeModal()">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button class="btn-save" onclick="saveMarca()">
+                        <button class="btn-save" id="btn-save-marca">
                             <i class="fas fa-check"></i> Guardar
                         </button>
                     </div>
@@ -186,7 +202,7 @@ ob_start();
                             </div>
                             <div class="modal-title-content">
                                 <h2>Buscar Marca</h2>
-                                <p>Filtre las marcas por nombre o estatus</p>
+                                <p>Filtre las marcas por nombre</p>
                             </div>
                         </div>
                         <span class="close-modal" onclick="closeSearchModal()">&times;</span>
@@ -198,20 +214,8 @@ ob_start();
                                     <i class="fas fa-tag"></i>
                                     Nombre
                                 </label>
-                                <input type="text" id="searchNombre" name="searchNombre" 
+                                <input type="text" id="searchNombre" name="searchNombre"
                                        placeholder="Ingrese el nombre de la marca">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="searchEstatus">
-                                    <i class="fas fa-toggle-on"></i>
-                                    Estatus
-                                </label>
-                                <select id="searchEstatus" name="searchEstatus">
-                                    <option value="">Todos</option>
-                                    <option value="activo">Activo</option>
-                                    <option value="inactivo">Inactivo</option>
-                                </select>
                             </div>
                         </form>
                     </div>
@@ -219,12 +223,16 @@ ob_start();
                         <button class="btn-cancel" onclick="closeSearchModal()">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button class="btn-save" onclick="searchMarca()">
+                        <button class="btn-save" id="btn-do-search">
                             <i class="fas fa-search"></i> Buscar
                         </button>
                     </div>
                 </div>
             </div>
+
+            <button class="btn-ayuda" id="btn-ayuda-marca" title="Visualizar Ayuda">
+                <img src="assets/img/info-ayuda.svg" alt="Ayuda" width="20" height="20">
+            </button>
 
             <style>
                 /* Estilos específicos de Marcas */
@@ -292,23 +300,6 @@ ob_start();
                 .btn-add-marca:hover, .btn-filter:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
-                }
-
-                .status-badge {
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                }
-
-                .status-badge.completed {
-                    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-                    color: white;
-                }
-
-                .status-badge.cancelled {
-                    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-                    color: white;
                 }
 
                 .btn-action {
@@ -468,6 +459,14 @@ ob_start();
                     pointer-events: none;
                 }
 
+                .span-error {
+                    display: block;
+                    color: #dc2626;
+                    font-size: 0.82rem;
+                    margin-top: 5px;
+                    min-height: 1em;
+                }
+
                 .modal-footer {
                     padding: 20px 25px;
                     border-top: 1px solid #e9ecef;
@@ -525,6 +524,35 @@ ob_start();
                     }
                 }
 
+                /* Botón de ayuda flotante */
+                .btn-ayuda {
+                    position: fixed;
+                    top: 115px;
+                    right: 25px;
+                    width: 50px;
+                    height: 50px;
+                    border: none;
+                    border-radius: 50%;
+                    background-color: #5995fd;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                    z-index: 1000;
+                }
+                .btn-ayuda img {
+                    width: 25px;
+                    height: 25px;
+                    pointer-events: none;
+                }
+                .btn-ayuda:hover {
+                    background-color: #4d84e2;
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+                }
+
                 /* Responsive */
                 @media (max-width: 768px) {
                     .marcas-table {
@@ -539,84 +567,420 @@ ob_start();
             </style>
 
             <script>
-                function openModal(type) {
-                    if (type === 'registrar') {
-                        document.getElementById('modalTitle').textContent = 'Nueva Marca';
-                        document.getElementById('marcaForm').reset();
-                        document.getElementById('id_marca').value = '';
+            (function () {
+                'use strict';
+
+                const ENDPOINT = '?pagina=marca';
+                const INPUT_NOMBRE = document.getElementById('nombre_marca');
+                const ERROR_NOMBRE = document.getElementById('error-nombre-marca');
+                const REGEX_NOMBRE = /^[a-zA-ZÁÉÍÓÚñÑáéíóúüÜ0-9\s\-\.\&\']*$/;
+
+                /* ==================== Utilidades ==================== */
+                function esc(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text == null ? '' : String(text);
+                    return div.innerHTML;
+                }
+
+                function space(str) {
+                    return String(str).replace(/\s{2,}/g, ' ');
+                }
+
+                async function postAccion(formData) {
+                    const res = await fetch(ENDPOINT, { method: 'POST', body: formData });
+                    const text = await res.text();
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Respuesta no JSON del servidor:', text);
+                        return { status: 'error', message: 'Error en la solicitud. Intente nuevamente.' };
                     }
-                    document.getElementById('marcaModal').style.display = 'block';
                 }
 
-                function closeModal() {
-                    document.getElementById('marcaModal').style.display = 'none';
+                function mostrarErrorCampo(mensaje) {
+                    if (ERROR_NOMBRE) ERROR_NOMBRE.textContent = mensaje || '';
                 }
 
-                function openFilterModal() {
-                    document.getElementById('searchModal').style.display = 'block';
-                }
-
-                function closeSearchModal() {
-                    document.getElementById('searchModal').style.display = 'none';
-                }
-
-                function saveMarca() {
-                    const form = document.getElementById('marcaForm');
-                    const formData = new FormData(form);
-                    
-                    if (!formData.get('nombre_marca').trim()) {
-                        alert('Por favor, ingrese el nombre de la marca');
-                        return;
+                function obtenerTabla() {
+                    const tabla = document.getElementById('tablaMarcas');
+                    if (!tabla) return null;
+                    if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tablaMarcas')) {
+                        return jQuery('#tablaMarcas').DataTable();
                     }
-                    
-                    // Enviar al backend
-                    fetch('?pagina=marca', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.status === 'success') {
-                            alert('Marca guardada correctamente');
-                            closeModal();
-                            location.reload();
-                        } else {
-                            alert('Error al guardar marca: ' + (data.message || 'Error desconocido'));
+                    return null;
+                }
+
+                /* ==================== Filas de la tabla ==================== */
+                function buildRowData(marca) {
+                    const id = parseInt(marca.id_marca, 10);
+                    const nombre = esc(marca.nombre_marca);
+                    return [
+                        String(id),
+                        nombre,
+                        '<button class="btn-action btn-edit" title="Modificar Marca" data-id="' + id + '" data-nombre="' + nombre + '"><i class="fas fa-edit"></i></button>' +
+                        '<button class="btn-action btn-delete" title="Eliminar Marca" data-id="' + id + '" data-nombre="' + nombre + '"><i class="fas fa-trash"></i></button>'
+                    ];
+                }
+
+                function agregarFila(marca) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        dt.row.add(buildRowData(marca)).draw(false);
+                    } else {
+                        const tbody = document.querySelector('#tablaMarcas tbody');
+                        if (!tbody) return;
+                        const tr = document.createElement('tr');
+                        tr.setAttribute('data-id', marca.id_marca);
+                        buildRowData(marca).forEach(function (html) {
+                            const td = document.createElement('td');
+                            td.innerHTML = html;
+                            tr.appendChild(td);
+                        });
+                        tbody.insertBefore(tr, tbody.firstChild);
+                    }
+                    actualizarContadores();
+                }
+
+                function actualizarFila(marca) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        const fila = dt.row('tr[data-id="' + marca.id_marca + '"]');
+                        if (fila.length) {
+                            fila.data(buildRowData(marca)).draw(false);
+                            actualizarContadores();
+                            return;
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Error al guardar marca. Por favor, intente nuevamente.');
+                    }
+                    const tr = document.querySelector('#tablaMarcas tbody tr[data-id="' + marca.id_marca + '"]');
+                    if (tr) {
+                        const tds = tr.querySelectorAll('td');
+                        buildRowData(marca).forEach(function (html, i) {
+                            if (tds[i]) tds[i].innerHTML = html;
+                        });
+                    }
+                    actualizarContadores();
+                }
+
+                function eliminarFila(id) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        const fila = dt.row('tr[data-id="' + id + '"]');
+                        if (fila.length) { fila.remove().draw(false); actualizarContadores(); return; }
+                    }
+                    const tr = document.querySelector('#tablaMarcas tbody tr[data-id="' + id + '"]');
+                    if (tr) { tr.remove(); actualizarContadores(); }
+                }
+
+                function actualizarContadores() {
+                    const filas = document.querySelectorAll('#tablaMarcas tbody tr[data-id]');
+                    const total = filas.length;
+                    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                    set('marca-count-total', total);
+
+                    let primera = null, ultima = null;
+                    filas.forEach(function (tr) {
+                        const id = parseInt(tr.getAttribute('data-id'), 10);
+                        const nombre = tr.querySelector('td:nth-child(2)') ? tr.querySelector('td:nth-child(2)').textContent.trim() : '';
+                        if (!primera || id < primera.id) primera = { id: id, nombre: nombre };
+                        if (!ultima || id > ultima.id) ultima = { id: id, nombre: nombre };
+                    });
+                    set('marca-primera', primera ? primera.nombre : 'N/A');
+                    set('marca-ultima', ultima ? ultima.nombre : 'N/A');
+
+                    document.querySelectorAll('#tablaMarcas .progress-circle .circle').forEach(function (circle, idx) {
+                        if (idx === 0) return;
+                        const pct = total > 0 ? Math.round(100 / total) : 0;
+                        circle.setAttribute('stroke-dasharray', pct + ', 100');
+                        const label = circle.parentElement.querySelector('.percentage');
+                        if (label) label.textContent = pct + '%';
                     });
                 }
 
-                function editMarca(id) {
-                    alert('Función para editar marca ID: ' + id + '\n(conectar con backend)');
+                /* ==================== Modal registrar/modificar ==================== */
+                const marcaModal = document.getElementById('marcaModal');
+                const searchModal = document.getElementById('searchModal');
+
+                function openModal(modo, marca) {
+                    document.getElementById('accionForm').value = modo === 'modificar' ? 'modificar' : 'registrar';
+                    document.getElementById('modalTitle').textContent = modo === 'modificar' ? 'Modificar Marca' : 'Nueva Marca';
+                    document.getElementById('modalSubtitle').textContent = modo === 'modificar'
+                        ? 'Actualice los datos de la marca'
+                        : 'Complete los datos para registrar una nueva marca';
+                    document.getElementById('id_marca').value = marca ? marca.id : '';
+                    INPUT_NOMBRE.value = marca ? marca.nombre : '';
+                    mostrarErrorCampo('');
+                    marcaModal.style.display = 'block';
                 }
 
-                function deleteMarca(id) {
-                    if (confirm('¿Está seguro de eliminar esta marca?')) {
-                        alert('Función para eliminar marca ID: ' + id + '\n(conectar con backend)');
+                function closeModal() {
+                    marcaModal.style.display = 'none';
+                }
+
+                function openSearchModal() {
+                    searchModal.style.display = 'block';
+                }
+
+                function closeSearchModal() {
+                    searchModal.style.display = 'none';
+                }
+
+                function validarNombre() {
+                    const valor = space(INPUT_NOMBRE.value).trim();
+                    INPUT_NOMBRE.value = valor;
+                    if (valor === '') {
+                        mostrarErrorCampo('*Este campo es obligatorio*');
+                        return false;
+                    }
+                    if (valor.length < 2) {
+                        mostrarErrorCampo('*Mínimo 2 caracteres*');
+                        return false;
+                    }
+                    if (valor.length > 25) {
+                        mostrarErrorCampo('*Máximo 25 caracteres*');
+                        return false;
+                    }
+                    if (!REGEX_NOMBRE.test(valor)) {
+                        mostrarErrorCampo('*El formato permite letras, números, espacios y caracteres especiales comunes*');
+                        return false;
+                    }
+                    mostrarErrorCampo('');
+                    return true;
+                }
+
+                async function saveMarca() {
+                    if (!validarNombre()) {
+                        Swal.fire({ icon: 'warning', title: 'Verifique el nombre de la marca', text: 'Revise los datos ingresados.' });
+                        return;
+                    }
+
+                    const form = document.getElementById('marcaForm');
+                    const formData = new FormData(form);
+                    const accion = formData.get('accion');
+                    const btnSave = document.getElementById('btn-save-marca');
+                    btnSave.disabled = true;
+
+                    try {
+                        Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                        const data = await postAccion(formData);
+                        Swal.close();
+
+                        if (data && data.status === 'success') {
+                            if (accion === 'modificar' && data.marca) {
+                                actualizarFila(data.marca);
+                                Swal.fire({ icon: 'success', title: '¡Éxito!', text: 'La marca se ha actualizado correctamente' });
+                            } else {
+                                agregarFila(data.marca);
+                                Swal.fire({ icon: 'success', title: '¡Éxito!', text: data.message || 'Marca registrada correctamente' });
+                            }
+                            closeModal();
+                        } else {
+                            const errores = data && data.field_errors ? Object.values(data.field_errors).join(' ') : '';
+                            mostrarErrorCampo(errores || (data && data.message) || 'Error al guardar la marca');
+                            Swal.fire({ icon: 'error', title: 'Error', text: (data && data.message) || 'No se pudo guardar la marca' });
+                        }
+                    } catch (e) {
+                        Swal.close();
+                        console.error(e);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Error al guardar marca. Intente nuevamente.' });
+                    } finally {
+                        btnSave.disabled = false;
                     }
                 }
 
+                /* ==================== Buscar ==================== */
                 function searchMarca() {
-                    alert('Función para buscar marcas (conectar con backend)');
+                    const termino = document.getElementById('searchNombre').value.trim();
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        dt.search(termino).draw();
+                    } else {
+                        const filas = document.querySelectorAll('#tablaMarcas tbody tr[data-id]');
+                        filas.forEach(function (tr) {
+                            const nombre = tr.querySelector('td:nth-child(2)') ? tr.querySelector('td:nth-child(2)').textContent.toLowerCase() : '';
+                            tr.style.display = termino === '' || nombre.includes(termino.toLowerCase()) ? '' : 'none';
+                        });
+                    }
                     closeSearchModal();
                 }
 
-                // Event listeners
-                document.querySelector('#marcaModal .close-modal').addEventListener('click', closeModal);
-                document.querySelector('#searchModal .close-modal').addEventListener('click', closeSearchModal);
+                /* ==================== Eventos ==================== */
+                document.getElementById('btn-add-marca')?.addEventListener('click', function () {
+                    openModal('registrar');
+                });
 
-                window.addEventListener('click', function(event) {
-                    if (event.target === document.getElementById('marcaModal')) {
-                        closeModal();
+                document.getElementById('btn-filter')?.addEventListener('click', openSearchModal);
+                document.getElementById('btn-do-search')?.addEventListener('click', searchMarca);
+                document.getElementById('btn-save-marca')?.addEventListener('click', saveMarca);
+
+                INPUT_NOMBRE?.addEventListener('keypress', function (e) {
+                    if (!REGEX_NOMBRE.test(e.key)) e.preventDefault();
+                });
+                INPUT_NOMBRE?.addEventListener('input', function () {
+                    this.value = space(this.value);
+                    mostrarErrorCampo('');
+                });
+                INPUT_NOMBRE?.addEventListener('blur', validarNombre);
+
+                document.getElementById('marcaForm')?.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    saveMarca();
+                });
+                document.getElementById('searchForm')?.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    searchMarca();
+                });
+
+                // Delegación para editar/eliminar (funciona con DataTables y DOM plano)
+                document.querySelector('#tablaMarcas tbody')?.addEventListener('click', async function (e) {
+                    const btnEdit = e.target.closest('.btn-edit');
+                    const btnDelete = e.target.closest('.btn-delete');
+
+                    if (btnEdit) {
+                        const marca = {
+                            id: btnEdit.getAttribute('data-id'),
+                            nombre: btnEdit.getAttribute('data-nombre')
+                        };
+                        openModal('modificar', marca);
+                        return;
                     }
-                    if (event.target === document.getElementById('searchModal')) {
-                        closeSearchModal();
+
+                    if (btnDelete) {
+                        const id = btnDelete.getAttribute('data-id');
+                        const nombre = btnDelete.getAttribute('data-nombre') || '';
+                        const result = await Swal.fire({
+                            title: '¿Está seguro?',
+                            html: 'Se eliminará la marca <strong>' + esc(nombre) + '</strong>. ¡No podrás revertir esto!',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#e53e3e',
+                            cancelButtonColor: '#64748b',
+                            confirmButtonText: 'Sí, eliminarla',
+                            cancelButtonText: 'Cancelar'
+                        });
+                        if (!result.isConfirmed) return;
+
+                        const fd = new FormData();
+                        fd.append('accion', 'eliminar');
+                        fd.append('id_marca', id);
+
+                        try {
+                            Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                            const data = await postAccion(fd);
+                            Swal.close();
+
+                            if (data && data.status === 'success') {
+                                eliminarFila(id);
+                                Swal.fire({ icon: 'success', title: 'Eliminada', text: 'La marca ha sido eliminada.' });
+                            } else {
+                                let mensaje = (data && data.message) || 'Error al eliminar la marca';
+                                if (data && data.field_errors) {
+                                    const extra = Object.values(data.field_errors).join(' ');
+                                    if (extra) mensaje = extra;
+                                }
+                                Swal.fire({ icon: 'error', title: 'No se puede eliminar', text: mensaje });
+                            }
+                        } catch (err) {
+                            Swal.close();
+                            console.error(err);
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error al eliminar la marca' });
+                        }
                     }
                 });
+
+                marcaModal?.addEventListener('click', function (e) {
+                    if (e.target === marcaModal) closeModal();
+                });
+                searchModal?.addEventListener('click', function (e) {
+                    if (e.target === searchModal) closeSearchModal();
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') { closeModal(); closeSearchModal(); }
+                });
+
+                /* ==================== Permisos en tiempo real ==================== */
+                async function verificarPermisos() {
+                    const fd = new FormData();
+                    fd.append('accion', 'permisos_tiempo_real');
+                    try {
+                        const permisos = await postAccion(fd);
+                        const contenedor = document.getElementById('contenedor-marcas');
+                        const msg = document.getElementById('mensaje-permiso');
+                        const btnAdd = document.getElementById('btn-add-marca');
+                        const btnFilter = document.getElementById('btn-filter');
+                        if (!permisos || !permisos.consultar) {
+                            if (contenedor) contenedor.style.display = 'none';
+                            if (msg) { msg.style.display = 'block'; msg.textContent = 'No tiene permiso para consultar los registros.'; }
+                            return;
+                        }
+                        if (contenedor) contenedor.style.display = '';
+                        if (msg) msg.style.display = 'none';
+                        if (btnAdd) btnAdd.style.display = permisos.incluir ? '' : 'none';
+                        if (btnFilter) btnFilter.style.display = '';
+                        document.querySelectorAll('#tablaMarcas .btn-edit').forEach(function (b) {
+                            b.style.display = permisos.modificar ? '' : 'none';
+                        });
+                        document.querySelectorAll('#tablaMarcas .btn-delete').forEach(function (b) {
+                            b.style.display = permisos.eliminar ? '' : 'none';
+                        });
+                    } catch (e) {
+                        console.error('Error verificando permisos:', e);
+                    }
+                }
+
+                verificarPermisos();
+                setInterval(verificarPermisos, 10000);
+
+                /* ==================== Modal de ayuda ==================== */
+                let modalAyudaInstance = null;
+
+                function cargarRecursoAyuda(tipo, url) {
+                    return new Promise((resolve, reject) => {
+                        if (tipo === 'css' && document.querySelector('link[href*="ayuda/css/modal.css"]')) return resolve();
+                        if (tipo === 'js' && document.querySelector('script[src*="ayuda/js/modal.js"]')) return resolve();
+                        const el = document.createElement(tipo === 'css' ? 'link' : 'script');
+                        if (tipo === 'css') { el.rel = 'stylesheet'; el.href = url; }
+                        else { el.src = url; }
+                        el.onload = resolve;
+                        el.onerror = reject;
+                        document.head.appendChild(el);
+                    });
+                }
+
+                async function abrirModalAyuda(contexto) {
+                    try {
+                        await cargarRecursoAyuda('css', 'assets/public/ayuda/css/modal.css');
+
+                        if (!document.getElementById('modalAyuda')) {
+                            const html = await (await fetch('assets/public/ayuda/marca.php')).text();
+                            document.body.insertAdjacentHTML('beforeend', html);
+                        }
+
+                        await cargarRecursoAyuda('js', 'assets/public/ayuda/js/modal.js');
+
+                        if (typeof inicializarModalAyudaUsuario === 'function') {
+                            modalAyudaInstance = inicializarModalAyudaUsuario();
+                            document.body.style.overflow = '';
+                            if (contexto) {
+                                const slideIndex = modalAyudaInstance.mapeoContextos[contexto];
+                                if (slideIndex !== undefined) {
+                                    setTimeout(() => modalAyudaInstance.goToSlide(slideIndex), 300);
+                                }
+                            }
+                            modalAyudaInstance.openModal();
+                        } else {
+                            console.error('La función inicializarModalAyudaUsuario no está disponible');
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar el modal de ayuda:', err);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cargar el contenido de ayuda' });
+                    }
+                }
+
+                document.getElementById('btn-ayuda-marca')?.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    abrirModalAyuda();
+                });
+            })();
             </script>
 
 <?php

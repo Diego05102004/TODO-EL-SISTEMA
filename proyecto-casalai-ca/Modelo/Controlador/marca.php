@@ -100,34 +100,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
             
-            $marca = new marca();
+            try {
+                $marca = new marca();
 
-            $marca->setIdMarca($id_marca);
-            $marca->setnombre_marca($_POST['nombre_marca']);
+                $marca->setIdMarca($id_marca);
+                $marca->setnombre_marca($_POST['nombre_marca']);
 
-            $errores = $marca->validarModificar($_POST);
-            
-            if (!empty($errores)) {
+                $errores = $marca->validarModificar($_POST);
+
+                if (!empty($errores)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error en la validación de datos',
+                        'field_errors' => $errores
+                    ]);
+                    exit;
+                }
+
+                $marcaVieja = $marca->obtenermarcasPorId($id_marca);
+                if ($marca->modificarmarcas($id_marca, $id_usuario_sesion)) {
+                    $marcaActualizada = $marca->obtenermarcasPorId($id_marca);
+
+                    echo json_encode([
+                        'status' => 'success',
+                        'marca' => $marcaActualizada
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error al modificar la marca'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                error_log('Error al modificar marca: ' . $e->getMessage());
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Error en la validación de datos',
-                    'field_errors' => $errores
-                ]);
-                exit;
-            }
-
-            $marcaVieja = $marca->obtenermarcasPorId($id_marca);
-            if ($marca->modificarmarcas($id_marca, $id_usuario_sesion)) {
-                $marcaActualizada = $marca->obtenermarcasPorId($id_marca);
-                
-                echo json_encode([
-                    'status' => 'success',
-                    'marca' => $marcaActualizada
-                ]);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error al modificar la marca'
+                    'message' => 'No se pudo completar la operación. Intente nuevamente.'
                 ]);
             }
             exit;
@@ -144,26 +152,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
-            $marca = new marca();
-            $errores = $marca->validarEliminar($_POST['id_marca']);
-            
-            if (!empty($errores)) {
+            try {
+                $marca = new marca();
+                $errores = $marca->validarEliminar($_POST['id_marca']);
+
+                if (!empty($errores)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error en la validación de datos',
+                        'field_errors' => $errores
+                    ]);
+                    exit;
+                }
+
+                $eliminada = $marca->obtenermarcasPorId($id_marca);
+
+                if ($marca->eliminarmarcas($id_marca, $id_usuario_sesion)) {
+                    echo json_encode(['status' => 'success']);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error al eliminar la marca'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                error_log('Error al eliminar marca: ' . $e->getMessage());
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Error en la validación de datos',
-                    'field_errors' => $errores
-                ]);
-                exit;
-            }
-        
-            $eliminada = $marca->obtenermarcasPorId($id_marca);
-            
-            if ($marca->eliminarmarcas($id_marca, $id_usuario_sesion)) {
-                echo json_encode(['status' => 'success']);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error al eliminar la marca'
+                    'message' => 'No se pudo completar la operación. Intente nuevamente.'
                 ]);
             }
             exit;

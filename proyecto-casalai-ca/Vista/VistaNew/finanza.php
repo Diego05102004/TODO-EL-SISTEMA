@@ -248,16 +248,11 @@ ob_start();
                 }
 
                 .report-layout {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
+                    display: flex;
+                    flex-direction: column;
                     gap: 30px;
                     margin-top: 30px;
-                }
-
-                @media (max-width: 992px) {
-                    .report-layout {
-                        grid-template-columns: 1fr;
-                    }
+                    width: 100%;
                 }
 
                 .chart-section, .table-section {
@@ -266,6 +261,8 @@ ob_start();
                     padding: 25px;
                     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
                     border: 1px solid rgba(33, 150, 243, 0.1);
+                    width: 100%;
+                    box-sizing: border-box;
                 }
 
                 .chart-section h3, .table-section h3 {
@@ -283,13 +280,54 @@ ob_start();
                 }
 
                 .chart-container {
-                    max-width: 600px;
-                    margin: 0 auto;
+                    width: 100%;
+                    max-width: 100%;
                 }
 
                 .report-table {
                     max-height: 400px;
                     overflow-y: auto;
+                    width: 100%;
+                }
+
+                /* Bordes para la tabla de Detalle de Movimientos */
+                .report-table table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 0.9rem;
+                }
+
+                .report-table thead th {
+                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+                    color: white;
+                    padding: 12px 14px;
+                    text-align: left;
+                    font-weight: 600;
+                    border: 1px solid #1976D2;
+                }
+
+                .report-table tbody td {
+                    padding: 10px 14px;
+                    border: 1px solid #dee2e6;
+                    color: #4a5568;
+                }
+
+                .report-table tbody tr:nth-child(even) {
+                    background: #f8fafc;
+                }
+
+                .report-table tbody tr:hover {
+                    background: rgba(33, 150, 243, 0.06);
+                }
+
+                .report-table .text-success {
+                    color: #28a745;
+                    font-weight: 600;
+                }
+
+                .report-table .text-danger {
+                    color: #dc3545;
+                    font-weight: 600;
                 }
 
                 .no-data {
@@ -441,12 +479,52 @@ ob_start();
                 }
 
                 function descargarPDF() {
-                    const element = document.querySelector('.filters-section');
-                    html2canvas(element).then(canvas => {
+                    const element = document.querySelector('.report-layout');
+                    if (!element) {
+                        Swal.fire({ icon: 'warning', title: 'Sin datos', text: 'Genere un reporte antes de descargar el PDF' });
+                        return;
+                    }
+                    Swal.fire({ title: 'Generando PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    // Expandir la tabla para que html2canvas capture todos los movimientos
+                    const tablaEl = document.querySelector('.report-table');
+                    const prevMaxHeight = tablaEl ? tablaEl.style.maxHeight : '';
+                    const prevOverflow = tablaEl ? tablaEl.style.overflowY : '';
+                    if (tablaEl) {
+                        tablaEl.style.maxHeight = 'none';
+                        tablaEl.style.overflowY = 'visible';
+                    }
+                    html2canvas(element, { scale: 2, useCORS: true }).then(canvas => {
+                        if (tablaEl) {
+                            tablaEl.style.maxHeight = prevMaxHeight;
+                            tablaEl.style.overflowY = prevOverflow;
+                        }
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'pt', 'a4');
                         const imgData = canvas.toDataURL('image/png');
-                        const pdf = new jspdf.jsPDF();
-                        pdf.addImage(imgData, 'PNG', 10, 10, 190, 100);
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        const imgWidth = pageWidth - 40;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 10;
+                        pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight - 20;
+                        while (heightLeft > 0) {
+                            position = heightLeft - imgHeight + 10;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+                            heightLeft -= pageHeight;
+                        }
                         pdf.save('reporte_finanzas.pdf');
+                        Swal.close();
+                    }).catch(err => {
+                        if (tablaEl) {
+                            tablaEl.style.maxHeight = prevMaxHeight;
+                            tablaEl.style.overflowY = prevOverflow;
+                        }
+                        console.error('Error generando PDF:', err);
+                        Swal.close();
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el PDF' });
                     });
                 }
 

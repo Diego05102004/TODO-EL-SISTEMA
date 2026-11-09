@@ -97,34 +97,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
-            $modelo = new modelo();
-            
-            $modelo->setIdModelo($id_modelo);
-            $modelo->setnombre_modelo($_POST['nombre_modelo']);
-            $modelo->setid_marca($_POST['id_marca']);
+            try {
+                $modelo = new modelo();
 
-            $errores = $modelo->validarModificar($_POST);
-            
-            if (!empty($errores)) {
+                $modelo->setIdModelo($id_modelo);
+                $modelo->setnombre_modelo($_POST['nombre_modelo']);
+                $modelo->setid_marca($_POST['id_marca']);
+
+                $errores = $modelo->validarModificar($_POST);
+
+                if (!empty($errores)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error en la validación de datos',
+                        'field_errors' => $errores
+                    ]);
+                    exit;
+                }
+
+                if ($modelo->modificarModelo($id_modelo, $id_usuario_sesion)) {
+                    $modeloActualizado = $modelo->obtenerModeloConMarcaPorId($id_modelo);
+                    echo json_encode([
+                        'status' => 'success',
+                        'message' => 'Modelo modificado correctamente',
+                        'modelo' => $modeloActualizado
+                    ]);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error al modificar el modelo'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                error_log('Error al modificar modelo: ' . $e->getMessage());
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Error en la validación de datos',
-                    'field_errors' => $errores
-                ]);
-                exit;
-            }
-
-            if ($modelo->modificarModelo($id_modelo, $id_usuario_sesion)) {
-                $modeloActualizado = $modelo->obtenerModeloConMarcaPorId($id_modelo);
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Modelo modificado correctamente',
-                    'modelo' => $modeloActualizado
-                ]);
-            } else {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error al modificar el modelo'
+                    'message' => 'No se pudo completar la operación. Intente nuevamente.'
                 ]);
             }
             exit;
@@ -141,26 +149,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
-            $modelo = new modelo();
-            $errores = $modelo->validarEliminar($_POST['id_modelo']);
-            
-            if (!empty($errores)) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Error en la validación de datos',
-                    'field_errors' => $errores
-                ]);
-                exit;
-            }
+            try {
+                $modelo = new modelo();
+                $errores = $modelo->validarEliminar($_POST['id_modelo']);
 
-            $eliminado = $modelo->obtenerModeloPorId($id_modelo);
-            
-            if ($modelo->eliminarModelo($id_modelo, $id_usuario_sesion)) {
-                echo json_encode(['status' => 'success']);
-            } else {
+                if (!empty($errores)) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error en la validación de datos',
+                        'field_errors' => $errores
+                    ]);
+                    exit;
+                }
+
+                $eliminado = $modelo->obtenerModeloPorId($id_modelo);
+
+                if ($modelo->eliminarModelo($id_modelo, $id_usuario_sesion)) {
+                    echo json_encode(['status' => 'success']);
+                } else {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => 'Error al eliminar el modelo'
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                error_log('Error al eliminar modelo: ' . $e->getMessage());
                 echo json_encode([
                     'status' => 'error',
-                    'message' => 'Error al eliminar la modelo'
+                    'message' => 'No se pudo completar la operación. Intente nuevamente.'
                 ]);
             }
             exit;

@@ -688,6 +688,10 @@ ob_start();
                 }
             </style>
 
+            <button class="btn-ayuda" id="btn-ayuda-perfil" title="Visualizar Ayuda">
+                <img src="assets/img/info-ayuda.svg" alt="Ayuda" width="20" height="20">
+            </button>
+
             <script>
             (function () {
                 'use strict';
@@ -1137,10 +1141,6 @@ ob_start();
                 });
             })();
             </script>
-
-            <button class="btn-ayuda" id="btn-ayuda-perfil" title="Visualizar Ayuda">
-                <img src="assets/img/info-ayuda.svg" alt="Ayuda" width="20" height="20">
-            </button>
 
 <?php
 $contenido_pagina = ob_get_clean();

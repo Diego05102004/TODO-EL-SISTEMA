@@ -603,7 +603,7 @@ class Cuentabanco extends BD {
     }
 
     private function cuentaporid($id_cuenta) {
-        return $this->ejecutarConConexionSegura(function($pdo) use ($id_cuenta){
+        $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($id_cuenta){
             // REEMPLAZO: Invocamos el procedimiento almacenado específico por ID
             $sql = "CALL sp_obtener_cuenta_por_id(:id_cuenta)";
             $stmt = $pdo->prepare($sql);

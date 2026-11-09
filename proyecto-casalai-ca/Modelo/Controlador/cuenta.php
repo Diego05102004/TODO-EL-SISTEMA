@@ -16,7 +16,8 @@ $permisosUsuario = $permisos->getPermisosPorRolModulo();
 $id_rol = $_SESSION['id_rol'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
+
+    try {
     if (isset($_POST['accion'])) {
         $accion = $_POST['accion'];
     } else {
@@ -227,7 +228,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
             
-            $resultado = $cuentabanco->eliminarCuentabanco($id_cuenta, $id_usuario_sesion);
+            try {
+                $resultado = $cuentabanco->eliminarCuentabanco($id_cuenta, $id_usuario_sesion);
+            } catch (\Throwable $e) {
+                // El SP puede denegar la eliminación con un mensaje de negocio (SQLSTATE 45000 SIGNAL).
+                // Se extrae ese mensaje porque es seguro mostrarlo; el resto del error queda en el log.
+                $detalle = $e->getMessage();
+                $mensajeUsuario = 'No se pudo eliminar la cuenta. Intente nuevamente.';
+                if (preg_match('/\d{4}\s+(.+)$/s', $detalle, $m)) {
+                    $mensajeUsuario = trim($m[1]);
+                }
+                error_log("[CUENTA-CONTROLADOR] Error al eliminar cuenta {$id_cuenta}: " . $detalle);
+                echo json_encode(['status' => 'error', 'message' => $mensajeUsuario]);
+                exit;
+            }
 
             if (is_array($resultado) && $resultado['status'] === 'error') {
                 // MANTENEMOS la bitácora manual SÓLO si la eliminación falló preventivamente en PHP
@@ -295,6 +309,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 echo json_encode(['status' => 'error', 'message' => 'Error al cambiar el estado']);
             }
             exit;
+    }
+    } catch (\Throwable $e) {
+        error_log("[CUENTA-CONTROLADOR] Excepción en POST accion=" . ($accion ?? '?') . ": " . $e->getMessage());
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'No se pudo completar la operación. Intente nuevamente.']);
+        exit;
     }
 }
 
