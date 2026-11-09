@@ -50,6 +50,7 @@ if (defined('DEBUG_PERMISOS') && DEBUG_PERMISOS) {
 }
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+    try {
     $accion = isset($_POST['accion']) ? $_POST['accion'] : '';
 
     switch ($accion) {
@@ -263,6 +264,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         default:
             echo json_encode(['status' => 'error', 'message' => 'Acción no válida']);
             exit;
+    }
+    } catch (Exception $e) {
+        error_log('Error en controlador categoria (' . ($accion ?? 'desconocida') . '): ' . $e->getMessage());
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Ocurrió un error al procesar la solicitud. Intente nuevamente.'
+        ]);
+        exit;
     }
 }
 

@@ -611,6 +611,20 @@ ob_start();
                 }
 
                 /* ==================== Filas de la tabla ==================== */
+                function encontrarTr(id) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        const nodos = dt.rows().nodes().toArray();
+                        for (let i = 0; i < nodos.length; i++) {
+                            const nodo = nodos[i];
+                            if (nodo && nodo.getAttribute && nodo.getAttribute('data-id') === String(id)) {
+                                return nodo;
+                            }
+                        }
+                    }
+                    return document.querySelector('#tablaMarcas tbody tr[data-id="' + id + '"]');
+                }
+
                 function buildRowData(marca) {
                     const id = parseInt(marca.id_marca, 10);
                     const nombre = esc(marca.nombre_marca);
@@ -625,7 +639,10 @@ ob_start();
                 function agregarFila(marca) {
                     const dt = obtenerTabla();
                     if (dt) {
-                        dt.row.add(buildRowData(marca)).draw(false);
+                        const row = dt.row.add(buildRowData(marca));
+                        const nodo = row.node();
+                        if (nodo) nodo.setAttribute('data-id', marca.id_marca);
+                        row.draw(false);
                     } else {
                         const tbody = document.querySelector('#tablaMarcas tbody');
                         if (!tbody) return;
@@ -642,16 +659,16 @@ ob_start();
                 }
 
                 function actualizarFila(marca) {
+                    const tr = encontrarTr(marca.id_marca);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + marca.id_marca + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) {
                             fila.data(buildRowData(marca)).draw(false);
                             actualizarContadores();
                             return;
                         }
                     }
-                    const tr = document.querySelector('#tablaMarcas tbody tr[data-id="' + marca.id_marca + '"]');
                     if (tr) {
                         const tds = tr.querySelectorAll('td');
                         buildRowData(marca).forEach(function (html, i) {
@@ -662,12 +679,12 @@ ob_start();
                 }
 
                 function eliminarFila(id) {
+                    const tr = encontrarTr(id);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + id + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) { fila.remove().draw(false); actualizarContadores(); return; }
                     }
-                    const tr = document.querySelector('#tablaMarcas tbody tr[data-id="' + id + '"]');
                     if (tr) { tr.remove(); actualizarContadores(); }
                 }
 

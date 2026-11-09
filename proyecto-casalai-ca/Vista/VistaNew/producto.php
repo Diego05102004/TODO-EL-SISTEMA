@@ -248,7 +248,8 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                 <div class="products-grid">
                     <?php if (!empty($productos)): ?>
                         <?php foreach ($productos as $producto): ?>
-                            <div class="product-card" data-product-id="<?php echo (int)$producto['id_producto']; ?>">
+                            <?php $estadoProducto = $producto['estado'] ?? 'habilitado'; ?>
+                            <div class="product-card <?php echo $estadoProducto !== 'habilitado' ? 'producto-inhabilitado' : ''; ?>" data-product-id="<?php echo (int)$producto['id_producto']; ?>" data-estado="<?php echo htmlspecialchars($estadoProducto); ?>">
                                 <div class="product-image">
                                     <?php if (!empty($producto['imagen'])): ?>
                                         <img src="<?php echo htmlspecialchars($producto['imagen']); ?>" alt="<?php echo htmlspecialchars($producto['nombre_producto']); ?>" class="product-img">
@@ -271,6 +272,19 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                                     <p class="product-category"><?php echo htmlspecialchars($producto['nombre_categoria'] ?? 'Sin categoría'); ?></p>
                                     <p class="product-brand"><?php echo htmlspecialchars($producto['nombre_marca'] ?? 'Sin marca'); ?></p>
                                     <div class="product-price">$<?php echo number_format($producto['precio'] ?? 0, 2); ?></div>
+                                    <?php if ($puedeModificarProductos): ?>
+                                        <button type="button" class="product-estatus <?php echo htmlspecialchars($estadoProducto); ?>"
+                                            data-product-action="toggle-estatus"
+                                            data-product-id="<?php echo (int)$producto['id_producto']; ?>"
+                                            data-estado="<?php echo htmlspecialchars($estadoProducto); ?>"
+                                            title="<?php echo $estadoProducto === 'habilitado' ? 'Clic para inhabilitar el producto' : 'Clic para habilitar el producto'; ?>">
+                                            <i class="fas fa-power-off"></i> <?php echo $estadoProducto === 'habilitado' ? 'Habilitado' : 'Inhabilitado'; ?>
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="product-estatus <?php echo htmlspecialchars($estadoProducto); ?>">
+                                            <?php echo $estadoProducto === 'habilitado' ? 'Habilitado' : 'Inhabilitado'; ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <div class="product-stock">
                                         <span class="stock-label">Stock:</span>
                                         <span class="stock-value <?php 
@@ -298,29 +312,6 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                         <div class="no-products">
                             <i class="fas fa-box-open"></i>
                             <p>No hay productos registrados en el sistema</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Categorías Section -->
-            <div class="categories-section">
-                <h2>Categorías de Productos</h2>
-                <div class="categories-grid">
-                    <?php if (!empty($categoriasDinamicas)): ?>
-                        <?php foreach ($categoriasDinamicas as $categoria): ?>
-                            <div class="category-card">
-                                <div class="category-icon">
-                                    <i class="fas fa-tag"></i>
-                                </div>
-                                <h3><?php echo htmlspecialchars($categoria['nombre_categoria'] ?? 'Sin nombre'); ?></h3>
-                                <p><?php echo $categoria['cantidad'] ?? 0; ?> productos</p>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="no-categories">
-                            <i class="fas fa-folder-open"></i>
-                            <p>No hay categorías registradas</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -447,7 +438,7 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
 
                         <div class="form-group">
                             <label for="Precio">Precio ($)*</label>
-                            <input type="number" class="input-textnum" id="Precio" name="Precio" min="1" step="1" placeholder="Ej: 100" required>
+                            <input type="number" class="input-textnum" id="Precio" name="Precio" min="0.01" step="0.01" placeholder="Ej: 100.50" required>
                             <span class="span-value" id="sPrecio"></span>
                         </div>
                     </div>
@@ -949,70 +940,51 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                     font-size: 1rem;
                 }
 
-                /* Categorías Section */
-                .categories-section {
-                    margin-top: 40px;
-                }
-
-                .categories-section h2 {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #2d3748;
-                    margin-bottom: 20px;
-                }
-
-                .categories-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                    gap: 20px;
-                }
-
-                .category-card {
-                    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-                    border-radius: 12px;
-                    padding: 25px;
-                    text-align: center;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-                    transition: all 0.3s ease;
-                    border: 1px solid rgba(33, 150, 243, 0.1);
-                }
-
-                .category-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
-                }
-
-                .category-icon {
-                    width: 60px;
-                    height: 60px;
-                    margin: 0 auto 15px;
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    border-radius: 50%;
-                    display: flex;
+                /* Estado del producto */
+                .product-estatus {
+                    display: inline-flex;
                     align-items: center;
-                    justify-content: center;
+                    gap: 6px;
+                    width: fit-content;
+                    margin: 8px 0 4px;
+                    padding: 5px 12px;
+                    border-radius: 20px;
+                    font-size: 0.78rem;
+                    font-weight: 600;
                 }
 
-                .category-icon i {
-                    font-size: 1.5rem;
-                    color: white;
+                .product-estatus.habilitado {
+                    background: #dcfce7;
+                    color: #15803d;
                 }
 
-                .category-card h3 {
-                    font-size: 1rem;
-                    font-weight: 700;
-                    color: #2d3748;
-                    margin: 0 0 8px 0;
+                .product-estatus.inhabilitado {
+                    background: #fee2e2;
+                    color: #b91c1c;
                 }
 
-                .category-card p {
-                    font-size: 0.85rem;
-                    color: #718096;
-                    margin: 0;
+                button.product-estatus {
+                    border: none;
+                    cursor: pointer;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+
+                button.product-estatus:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                }
+
+                .producto-inhabilitado {
+                    opacity: 0.6;
+                    filter: grayscale(0.4);
+                }
+
+                .producto-inhabilitado:hover {
+                    opacity: 0.9;
                 }
 
                 /* Mensajes de vacío */
-                .no-products, .no-categories {
+                .no-products {
                     text-align: center;
                     padding: 60px 40px;
                     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -1020,13 +992,13 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                     grid-column: 1 / -1;
                 }
 
-                .no-products i, .no-categories i {
+                .no-products i {
                     font-size: 4rem;
                     color: #2196F3;
                     margin-bottom: 20px;
                 }
 
-                .no-products p, .no-categories p {
+                .no-products p {
                     font-size: 1.2rem;
                     color: #666;
                     margin: 0;
@@ -1279,10 +1251,6 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 15px;
-                    }
-
-                    .categories-grid {
-                        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                     }
 
                     #productModal .form-row, #productModal .stock-fields,

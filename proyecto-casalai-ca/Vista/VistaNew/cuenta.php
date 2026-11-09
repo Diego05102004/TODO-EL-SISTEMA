@@ -953,10 +953,27 @@ ob_start();
                     return null;
                 }
 
+                function encontrarTr(id) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        const nodos = dt.rows().nodes().toArray();
+                        for (let i = 0; i < nodos.length; i++) {
+                            const nodo = nodos[i];
+                            if (nodo && nodo.getAttribute && nodo.getAttribute('data-id') === String(id)) {
+                                return nodo;
+                            }
+                        }
+                    }
+                    return document.querySelector('#tablaCuentas tbody tr[data-id="' + id + '"]');
+                }
+
                 function agregarFila(cuenta) {
                     const dt = obtenerTabla();
                     if (dt) {
-                        dt.row.add(buildRowData(cuenta)).draw(false);
+                        const row = dt.row.add(buildRowData(cuenta));
+                        const nodo = row.node();
+                        if (nodo) nodo.setAttribute('data-id', cuenta.id_cuenta);
+                        row.draw(false);
                     } else {
                         const tbody = document.querySelector('#tablaCuentas tbody');
                         if (!tbody) return;
@@ -973,16 +990,16 @@ ob_start();
                 }
 
                 function actualizarFila(cuenta) {
+                    const tr = encontrarTr(cuenta.id_cuenta);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + cuenta.id_cuenta + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) {
                             fila.data(buildRowData(cuenta)).draw(false);
                             return;
                         }
                     }
                     // Respaldo DOM
-                    const tr = document.querySelector('#tablaCuentas tbody tr[data-id="' + cuenta.id_cuenta + '"]');
                     if (tr) {
                         const tds = tr.querySelectorAll('td');
                         buildRowData(cuenta).forEach(function (html, i) {
@@ -993,12 +1010,12 @@ ob_start();
                 }
 
                 function eliminarFila(id) {
+                    const tr = encontrarTr(id);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + id + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) { fila.remove().draw(false); actualizarContadores(); return; }
                     }
-                    const tr = document.querySelector('#tablaCuentas tbody tr[data-id="' + id + '"]');
                     if (tr) { tr.remove(); actualizarContadores(); }
                 }
 

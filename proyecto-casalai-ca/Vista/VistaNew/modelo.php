@@ -662,6 +662,20 @@ ob_start();
                 }
 
                 /* ==================== Filas de la tabla ==================== */
+                function encontrarTr(id) {
+                    const dt = obtenerTabla();
+                    if (dt) {
+                        const nodos = dt.rows().nodes().toArray();
+                        for (let i = 0; i < nodos.length; i++) {
+                            const nodo = nodos[i];
+                            if (nodo && nodo.getAttribute && nodo.getAttribute('data-id') === String(id)) {
+                                return nodo;
+                            }
+                        }
+                    }
+                    return document.querySelector('#tablaModelos tbody tr[data-id="' + id + '"]');
+                }
+
                 function nombreMarcaPorId(idMarca) {
                     return MARCAS_MAP[String(parseInt(idMarca, 10))] || '';
                 }
@@ -683,7 +697,10 @@ ob_start();
                 function agregarFila(modelo) {
                     const dt = obtenerTabla();
                     if (dt) {
-                        dt.row.add(buildRowData(modelo)).draw(false);
+                        const row = dt.row.add(buildRowData(modelo));
+                        const nodo = row.node();
+                        if (nodo) nodo.setAttribute('data-id', modelo.id_modelo);
+                        row.draw(false);
                     } else {
                         const tbody = document.querySelector('#tablaModelos tbody');
                         if (!tbody) return;
@@ -700,16 +717,16 @@ ob_start();
                 }
 
                 function actualizarFila(modelo) {
+                    const tr = encontrarTr(modelo.id_modelo);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + modelo.id_modelo + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) {
                             fila.data(buildRowData(modelo)).draw(false);
                             actualizarContadores();
                             return;
                         }
                     }
-                    const tr = document.querySelector('#tablaModelos tbody tr[data-id="' + modelo.id_modelo + '"]');
                     if (tr) {
                         const tds = tr.querySelectorAll('td');
                         buildRowData(modelo).forEach(function (html, i) {
@@ -720,12 +737,12 @@ ob_start();
                 }
 
                 function eliminarFila(id) {
+                    const tr = encontrarTr(id);
                     const dt = obtenerTabla();
-                    if (dt) {
-                        const fila = dt.row('tr[data-id="' + id + '"]');
+                    if (dt && tr) {
+                        const fila = dt.row(tr);
                         if (fila.length) { fila.remove().draw(false); actualizarContadores(); return; }
                     }
-                    const tr = document.querySelector('#tablaModelos tbody tr[data-id="' + id + '"]');
                     if (tr) { tr.remove(); actualizarContadores(); }
                 }
 

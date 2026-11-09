@@ -882,15 +882,15 @@ $(document).ready(function () {
     });
 
     $("#Precio").on("keypress", function (e) {
-        validarkeypress(/^[0-9]*$/, e); 
+        validarkeypress(/^[0-9.]$/, e);
     });
 
     $("#Precio").on("keyup", function () {
         validarkeyup(
-            /^[0-9]{1,10}$/,
+            /^\d{1,7}(\.\d{1,2})?$/,
             $(this),
             $("#sPrecio"),
-            "*El formato solo permite números*"
+            "*Formato: números con hasta 2 decimales*"
         );
     });
 
@@ -1620,7 +1620,8 @@ function eliminarFilaProducto(id_producto) {
             ['#Precio', productFormConfig.campos.precio]
         ].forEach(([selector, config]) => {
             const input = productForm.querySelector(selector);
-            input.addEventListener('keypress', event => validarkeypress(/^[0-9\b]*$/, event));
+            const esPrecio = config === productFormConfig.campos.precio;
+            input.addEventListener('keypress', event => validarkeypress(esPrecio ? /^[0-9.]$/ : /^[0-9\b]*$/, event));
             input.addEventListener('keyup', () => {
                 if (config === productFormConfig.campos.precio) {
                     validarPrecioCampo(config);
@@ -1881,6 +1882,12 @@ function eliminarFilaProducto(id_producto) {
                 brand.className = 'product-brand';
                 const price = document.createElement('div');
                 price.className = 'product-price';
+                const estatus = document.createElement(productModal.dataset.canModify === 'true' ? 'button' : 'span');
+                estatus.className = 'product-estatus';
+                if (estatus.tagName === 'BUTTON') {
+                    estatus.type = 'button';
+                    estatus.dataset.productAction = 'toggle-estatus';
+                }
                 const stock = document.createElement('div');
                 stock.className = 'product-stock';
                 stock.innerHTML = '<span class="stock-label">Stock:</span> <span class="stock-value"></span>';
@@ -1889,7 +1896,7 @@ function eliminarFilaProducto(id_producto) {
                 if (productModal.dataset.canModify === 'true') actions.append(createProductAction('edit', id));
                 if (productModal.dataset.canDelete === 'true') actions.append(createProductAction('delete', id));
                 actions.append(createProductAction('view', id));
-                info.append(name, category, brand, price, stock, actions);
+                info.append(name, category, brand, price, estatus, stock, actions);
                 card.append(imageFrame, info);
             }
 
@@ -1922,6 +1929,29 @@ function eliminarFilaProducto(id_producto) {
             card.querySelector('.product-category').textContent = product.nombre_categoria || 'Sin categoría';
             card.querySelector('.product-brand').textContent = product.nombre_marca || 'Sin marca';
             card.querySelector('.product-price').textContent = `$${Number(product.precio || 0).toFixed(2)}`;
+
+            // Estado del producto (habilitado/inhabilitado)
+            const estadoProd = product.estado || 'habilitado';
+            let estatusEl = card.querySelector('.product-estatus');
+            if (!estatusEl) {
+                estatusEl = document.createElement(productModal.dataset.canModify === 'true' ? 'button' : 'span');
+                estatusEl.className = 'product-estatus';
+                if (estatusEl.tagName === 'BUTTON') {
+                    estatusEl.type = 'button';
+                    estatusEl.dataset.productAction = 'toggle-estatus';
+                }
+                const stockEl = card.querySelector('.product-stock');
+                if (stockEl) stockEl.before(estatusEl);
+                else card.querySelector('.product-info')?.appendChild(estatusEl);
+            }
+            estatusEl.className = 'product-estatus ' + estadoProd;
+            estatusEl.dataset.estado = estadoProd;
+            estatusEl.dataset.productId = id;
+            estatusEl.title = estadoProd === 'habilitado' ? 'Clic para inhabilitar el producto' : 'Clic para habilitar el producto';
+            estatusEl.innerHTML = (estatusEl.tagName === 'BUTTON' ? '<i class="fas fa-power-off"></i> ' : '') +
+                (estadoProd === 'habilitado' ? 'Habilitado' : 'Inhabilitado');
+            card.classList.toggle('producto-inhabilitado', estadoProd !== 'habilitado');
+
             const stockValue = card.querySelector('.stock-value');
             stockValue.textContent = `${stockActual} unidades`;
             stockValue.className = `stock-value ${stockActual <= stockMinimo ? 'low' : stockActual < 10 ? 'critical' : stockActual > 30 ? 'high' : 'medium'}`;
@@ -2053,6 +2083,35 @@ function eliminarFilaProducto(id_producto) {
             }
         }
 
+        async function toggleProductEstatus(productId, button) {
+            const producto = productosDisponibles.find(item => String(item.id_producto) === String(productId));
+            if (!producto) return;
+            const estadoActual = producto.estado || 'habilitado';
+            const nuevoEstado = estadoActual === 'habilitado' ? 'inhabilitado' : 'habilitado';
+            if (button) button.disabled = true;
+            try {
+                const datos = new FormData();
+                datos.append('accion', 'cambiar_estatus');
+                datos.append('id_producto', String(productId));
+                datos.append('nuevo_estatus', nuevoEstado);
+                const resultado = await enviarAccionProducto(datos);
+                producto.estado = nuevoEstado;
+                productModal.dataset.products = JSON.stringify(productosDisponibles);
+                updateProductCard(producto);
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Estatus actualizado',
+                    text: resultado.message || `El producto ahora está ${nuevoEstado}.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'No se pudo cambiar el estatus', text: error.message });
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
         function viewProduct(productId) {
             const producto = productosDisponibles.find(item => Number(item.id_producto) === Number(productId));
             if (!producto) return;
@@ -2154,6 +2213,9 @@ function eliminarFilaProducto(id_producto) {
                     break;
                 case 'delete':
                     deleteProduct(productId);
+                    break;
+                case 'toggle-estatus':
+                    toggleProductEstatus(productId, button);
                     break;
                 case 'view':
                     viewProduct(productId);
