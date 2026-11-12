@@ -157,7 +157,7 @@ export const securePost = async (endpoint, data = {}, schema = null, requestTime
       url,
       endpoint,
       baseURL: API_CONFIG.baseURL,
-      encrypted: encryptSensitive
+      encrypted: encryptSensitive,
     });
 
     const { signal, timeoutId } = createTimeoutSignal(requestTimeout);
@@ -255,61 +255,65 @@ export const secureDelete = async (endpoint, params = {}, schema = null) => {
  * @returns {Promise} - Datos de la respuesta
  */
 const handleResponse = async (response) => {
-  try {
-    const contentType = response.headers.get('content-type');
+  const contentType = response.headers.get('content-type');
+  const responseText = await response.text();
+  const diagnostics = {
+    contentType,
+    responseBodyLength: responseText.length,
+    ...(typeof __DEV__ !== 'undefined' && __DEV__ && !response.ok && responseText
+      ? { responsePreview: responseText.slice(0, 500) }
+      : {}),
+  };
 
-    console.log('API Response status:', response.status);
-    console.log('API Response ok:', response.ok);
-    console.log('API Response contentType:', contentType);
+  console.log('API Response status:', response.status);
+  console.log('API Response ok:', response.ok);
+  console.log('API Response contentType:', contentType);
+  console.log('API Response diagnostics:', diagnostics);
 
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new APIError(
-          data.message || data.error || 'Error en la petición',
-          response.status,
-          data
-        );
-      }
-
-      return data;
-    }
-
+  if (!responseText.trim()) {
     if (!response.ok) {
-      const text = await response.text();
-      console.log('API Response text:', text);
       throw new APIError(
-        'Error en la petición',
+        `El servidor devolvió HTTP ${response.status} sin contenido. Revisa el registro de errores PHP del hosting.`,
         response.status,
-        { text }
+        diagnostics
       );
     }
 
-    return response.text();
-  } catch (error) {
-    console.error('Error handling API response:', error);
-    if (error instanceof SyntaxError) {
-      console.error('JSON parsing error - response might not be valid JSON');
-      // Intentar obtener el texto de la respuesta para debugging
-      try {
-        const text = await response.text();
-        console.log('Response text (fallback):', text);
-        throw new APIError(
-          'La respuesta del servidor no es JSON válido',
-          response.status,
-          { text, originalError: error.message }
-        );
-      } catch (textError) {
-        throw new APIError(
-          'Error al procesar la respuesta del servidor',
-          response.status,
-          { originalError: error.message }
-        );
-      }
-    }
-    throw error;
+    return contentType?.includes('application/json') ? null : responseText;
   }
+
+  if (contentType?.includes('application/json')) {
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (error) {
+      throw new APIError(
+        `El servidor devolvió JSON inválido (HTTP ${response.status}).`,
+        response.status,
+        { ...diagnostics, originalError: error.message }
+      );
+    }
+
+    if (!response.ok) {
+      throw new APIError(
+        data.message || data.error || 'Error en la petición',
+        response.status,
+        data
+      );
+    }
+
+    return data;
+  }
+
+  if (!response.ok) {
+    throw new APIError(
+      `El servidor devolvió HTTP ${response.status} con una respuesta no JSON.`,
+      response.status,
+      diagnostics
+    );
+  }
+
+  return responseText;
 };
 
 /**
@@ -357,7 +361,6 @@ export const API_SCHEMAS = {
     email: { type: 'email' },
     username: { type: 'text', maxLength: 50 },
     password: { type: 'sql' },
-    recaptcha_token: { type: 'token' },
   },
   register: {
     email: { type: 'email' },

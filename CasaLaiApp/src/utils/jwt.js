@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Configuración JWT (debe coincidir con el servidor)
-// Para desarrollo local: http://localhost/proyecto-casalai-ca/
+// Para desarrollo local: http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/
 // Para producción Always Data: https://casalai.alwaysdata.net/
 // NOTA: El servidor está enviando iss: "casalai-api" - Debes actualizar el servidor
 // para que use "https://casalai.alwaysdata.net/" o cambiar esto a "casalai-api"

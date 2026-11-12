@@ -37,7 +37,7 @@ Esta configuración necesita que el sitio PHP y el servicio usen los mismos valo
 2. Crea el servicio persistente con el directorio de trabajo en la raíz del proyecto y el comando:
 
    ```sh
-   php /home/TU_CUENTA/proyecto-casalai-ca/websocket_server.php
+   php /home/TU_CUENTA/TODO-EL-SISTEMA/proyecto-casalai-ca/websocket_server.php
    ```
 
 3. Configura las variables de entorno anteriores en el servicio y reinícialo.

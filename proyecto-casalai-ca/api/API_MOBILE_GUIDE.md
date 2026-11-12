@@ -319,7 +319,7 @@ private function getBaseUrl() {
             return getBaseUrl();
         }
     }
-    return 'http://localhost/proyecto-casalai-ca';
+    return 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca';
 }
 ```
 

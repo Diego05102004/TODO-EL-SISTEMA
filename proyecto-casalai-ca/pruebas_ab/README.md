@@ -6,7 +6,7 @@ Este directorio contiene scripts de ApacheBench para realizar pruebas de servido
 
 - Kali Linux (o Debian/Ubuntu)
 - ApacheBench instalado: `sudo apt-get install apache2-utils`
-- Servidor corriendo en `http://192.168.10.1/proyecto-casalai-ca/`
+- Servidor corriendo en `http://192.168.10.1/TODO-EL-SISTEMA/proyecto-casalai-ca/`
 - Microservicio OCR corriendo en `http://192.168.10.1:8000`
 
 ## Estructura de Archivos

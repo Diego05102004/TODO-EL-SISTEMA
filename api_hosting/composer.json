@@ -1,0 +1,22 @@
+{
+    "name": "proyecto-casalai-ca/api",
+    "description": "API autónoma para proyecto Casalai CA",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Usuario\\ProyectoCasalaiCa\\Config\\": "Config/",
+            "Usuario\\ProyectoCasalaiCa\\": "Clases/"
+        },
+        "classmap": ["Config/"]
+    },
+    "require": {
+        "firebase/php-jwt": "^6.0",
+        "phpseclib/phpseclib": "^3.0",
+        "cboden/ratchet": "^0.4.4",
+        "ratchet/pawl": "^0.4.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "php-webdriver/webdriver": "^1.1"
+    }
+}

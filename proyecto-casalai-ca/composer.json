@@ -1,5 +1,5 @@
 {
-    "name": "usuario/proyecto-casalai-ca",
+    "name": "usuario/TODO-EL-SISTEMA/proyecto-casalai-ca",
     "autoload": {
         "psr-4": {
             "Usuario\\ProyectoCasalaiCa\\": "Modelo/Usuario/ProyectoCasalaiCa/",

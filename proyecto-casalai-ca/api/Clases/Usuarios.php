@@ -24,7 +24,7 @@ class Usuarios extends BD {
     
     // Campos que deben ser cifrados (NOTA: cédula NO se cifra porque se usa para búsquedas)
     // Los nombres de campos deben coincidir con los de la base de datos (nombres, apellidos)
-    const CAMPOS_CIFRADOS = ['nombres', 'apellidos', 'correo', 'telefono'];
+    const CAMPOS_CIFRADOS = ['username', 'nombres', 'apellidos', 'correo', 'telefono'];
 
     // Constantes de validación
     const MAX_ID_USUARIO = 999999999;
@@ -1242,7 +1242,7 @@ class Usuarios extends BD {
             }
         }
         // Valor por defecto para desarrollo
-        return 'http://localhost/proyecto-casalai-ca';
+        return 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca';
     }
 
     public function cambiarPersonal($data) {

@@ -7,10 +7,10 @@
 function getApiConfigurations() {
     return [
         'development' => [
-            'base_url' => 'http://localhost/proyecto-casalai-ca',
-            'api_base_url' => 'http://localhost/proyecto-casalai-ca/api',
-            'assets_url' => 'http://localhost/proyecto-casalai-ca/assets',
-            'images_url' => 'http://localhost/proyecto-casalai-ca/assets/img',
+            'base_url' => 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca',
+            'api_base_url' => 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/api',
+            'assets_url' => 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/assets',
+            'images_url' => 'http://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/assets/img',
         ],
         'production' => [
             'base_url' => 'https://casalai.alwaysdata.net',

@@ -37,8 +37,8 @@ export const buildProductImageUrl = (imageValue) => {
 
   const serverRoot = API_BASE_URL.replace(/\/api\/?$/i, '');
 
-  // Si la URL ya contiene localhost/proyecto-casalai-ca, reemplazarla completamente
-  if (value.includes('localhost/proyecto-casalai-ca')) {
+  // Si la URL ya contiene localhost/TODO-EL-SISTEMA/proyecto-casalai-ca, reemplazarla completamente
+  if (value.includes('localhost/TODO-EL-SISTEMA/proyecto-casalai-ca')) {
     const imagePath = value.replace(/^.*?\/assets\/img\/productos\//i, '');
     return `${serverRoot}/assets/img/productos/${imagePath}`;
   }
@@ -46,7 +46,7 @@ export const buildProductImageUrl = (imageValue) => {
   // Si es una URL HTTP/HTTPS, reemplazar el dominio
   if (/^https?:\/\//i.test(value)) {
     return value
-      .replace(/^https?:\/\/localhost\/proyecto-casalai-ca/i, serverRoot)
+      .replace(/^https?:\/\/localhost\/TODO-EL-SISTEMA\/proyecto-casalai-ca/i, serverRoot)
       .replace(/^https?:\/\/localhost(?::\d+)?/i, serverRoot);
   }
 
@@ -78,7 +78,7 @@ export const buildProductImageUrl = (imageValue) => {
     ? `${externalOrigin}${uniquePathSegments.length ? `/${uniquePathSegments.join('/')}` : ''}`
     : serverRoot;
 
-  // Si el origen es localhost/proyecto-casalai-ca, reemplazarlo
+  // Si el origen es localhost/TODO-EL-SISTEMA/proyecto-casalai-ca, reemplazarlo
   if (externalOrigin && externalOrigin.includes('localhost')) {
     return `${serverRoot}/assets/img/productos/${imagePath}`;
   }
@@ -87,9 +87,9 @@ export const buildProductImageUrl = (imageValue) => {
 };
 
 // Ruta del servidor - Usar siempre HTTPS en producción
-// Para desarrollo local: C:/xampp/htdocs/proyecto-casalai-ca
+// Para desarrollo local: C:/xampp/htdocs/TODO-EL-SISTEMA/proyecto-casalai-ca
 // Para producción Always Data: Usar rutas del servidor de Always Data
-const PROJECT_SERVER_ROOT = 'C:/xampp/htdocs/proyecto-casalai-ca'; // Solo para desarrollo local
+const PROJECT_SERVER_ROOT = 'C:/xampp/htdocs/TODO-EL-SISTEMA/proyecto-casalai-ca'; // Solo para desarrollo local
 
 // Ruta real del servidor donde PHP debe guardar la imagen.
 // IMPORTANTE: esto NO es una URL para el navegador; es una ruta del sistema de archivos.

@@ -155,12 +155,10 @@ export const loginUser = createAsyncThunk(
         ? {
             email: userData.email,
             password: userData.password,
-            recaptcha_token: userData.recaptcha_token,
           }
         : {
             username: userData.username,
             password: userData.password,
-            recaptcha_token: userData.recaptcha_token,
           };
 
       const response = await InvocarMetodo('login.php', 'login', apiData);

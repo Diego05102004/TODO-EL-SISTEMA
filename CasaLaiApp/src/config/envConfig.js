@@ -9,7 +9,7 @@ export const ENV_CONFIG = {
 
   // URLs de la API
   API_URLS: {
-    development: 'http://proyecto-casalai-ca/api',
+    development: 'http://TODO-EL-SISTEMA/proyecto-casalai-ca/api',
     production: 'https://casalai.alwaysdata.net/api',
   },
 
@@ -23,7 +23,7 @@ export const ENV_CONFIG = {
 
   // URLs de imágenes
   IMAGE_URLS: {
-    development: 'http://proyecto-casalai-ca',
+    development: 'http://TODO-EL-SISTEMA/proyecto-casalai-ca',
     production: 'https://casalai.alwaysdata.net',
   },
 };

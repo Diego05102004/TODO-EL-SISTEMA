@@ -12,24 +12,24 @@ const ENV = process.env.NODE_ENV || 'development';
 const config = {
   development: {
     // Para navegador en el mismo PC
-    BASE_URL: 'https://localhost/proyecto-casalai-ca',
-    API_BASE_URL: 'https://localhost/proyecto-casalai-ca/api',
-    ASSETS_URL: 'https://localhost/proyecto-casalai-ca/assets',
-    IMAGES_URL: 'https://localhost/proyecto-casalai-ca/assets/img',
+    BASE_URL: 'https://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca',
+    API_BASE_URL: 'https://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/api',
+    ASSETS_URL: 'https://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/assets',
+    IMAGES_URL: 'https://localhost/TODO-EL-SISTEMA/proyecto-casalai-ca/assets/img',
   },
   emulator: {
     // Para emulador Android (10.0.2.2 apunta al host)
-    BASE_URL: 'https://10.0.2.2/proyecto-casalai-ca',
-    API_BASE_URL: 'https://10.0.2.2/proyecto-casalai-ca/api',
-    ASSETS_URL: 'https://10.0.2.2/proyecto-casalai-ca/assets',
-    IMAGES_URL: 'https://10.0.2.2/proyecto-casalai-ca/assets/img',
+    BASE_URL: 'https://10.0.2.2/TODO-EL-SISTEMA/proyecto-casalai-ca',
+    API_BASE_URL: 'https://10.0.2.2/TODO-EL-SISTEMA/proyecto-casalai-ca/api',
+    ASSETS_URL: 'https://10.0.2.2/TODO-EL-SISTEMA/proyecto-casalai-ca/assets',
+    IMAGES_URL: 'https://10.0.2.2/TODO-EL-SISTEMA/proyecto-casalai-ca/assets/img',
   },
   device: {
     // Para dispositivo físico - REEMPLAZAR con tu IP local
-    BASE_URL: 'https://192.168.1.20/proyecto-casalai-ca',
-    API_BASE_URL: 'https://192.168.1.20/proyecto-casalai-ca/api',
-    ASSETS_URL: 'https://192.168.1.20/proyecto-casalai-ca/assets',
-    IMAGES_URL: 'https://192.168.1.20/proyecto-casalai-ca/assets/img',
+    BASE_URL: 'https://192.168.1.20/TODO-EL-SISTEMA/proyecto-casalai-ca',
+    API_BASE_URL: 'https://192.168.1.20/TODO-EL-SISTEMA/proyecto-casalai-ca/api',
+    ASSETS_URL: 'https://192.168.1.20/TODO-EL-SISTEMA/proyecto-casalai-ca/assets',
+    IMAGES_URL: 'https://192.168.1.20/TODO-EL-SISTEMA/proyecto-casalai-ca/assets/img',
   },
   production: {
     BASE_URL: 'https://casalai.alwaysdata.net',

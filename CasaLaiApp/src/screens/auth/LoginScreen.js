@@ -16,7 +16,6 @@ import { loginUser, clearError } from '../../redux/slices/authSlice';
 import COLORS from '../../constants/colors';
 import theme from '../../constants/theme';
 import { API_BASE_URL } from '../../config/apiConfig';
-import ReCaptcha from '../../components/ReCaptcha';
 import { filterKeyPress, validateField } from '../../validation/authValidation';
 
 // Intentar cargar la imagen
@@ -32,14 +31,11 @@ const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaError, setCaptchaError] = useState('');
   const [imageError, setImageError] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [debugData, setDebugData] = useState(null);
   const [apiResponse, setApiResponse] = useState(null);
-  const recaptchaRef = useRef(null);
   const loginSubmittingRef = useRef(false);
   const dispatch = useDispatch();
   const { loading, error, user } = useSelector((state) => state.auth);
@@ -97,13 +93,6 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const handleCaptchaVerify = (token) => {
-    setCaptchaToken(token);
-    if (token) {
-      setCaptchaError('');
-    }
-  };
-
   const handleLogin = async () => {
     if (loginSubmittingRef.current) {
       return;
@@ -114,7 +103,6 @@ const LoginScreen = ({ navigation }) => {
 
     let uError = '';
     let pError = '';
-    let cError = '';
 
     if (!username.trim()) {
       uError = '*Este campo es obligatorio*';
@@ -128,27 +116,19 @@ const LoginScreen = ({ navigation }) => {
       pError = validateField('passwordLogin', password);
     }
 
-    if (!captchaToken) {
-      cError = '*Por favor completa la verificación del reCAPTCHA*';
-    }
-
     setUsernameError(uError);
     setPasswordError(pError);
-    setCaptchaError(cError);
 
-    if (uError || pError || cError) {
+    if (uError || pError) {
       return;
     }
 
     const loginData = { 
       username: username, 
       password, 
-      recaptcha_token: captchaToken,
       name: 'Usuario' 
     };
     loginSubmittingRef.current = true;
-    setCaptchaToken(null);
-    recaptchaRef.current?.reset();
 
     setDebugData({
       timestamp: new Date().toISOString(),
@@ -253,16 +233,10 @@ const LoginScreen = ({ navigation }) => {
             {passwordError ? <Text style={styles.fieldErrorText}>{passwordError}</Text> : null}
           </View>
 
-          {/* Widget de reCAPTCHA */}
-          <View style={styles.captchaContainer}>
-            <ReCaptcha ref={recaptchaRef} onVerify={handleCaptchaVerify} />
-            {captchaError ? <Text style={styles.fieldErrorText}>{captchaError}</Text> : null}
-          </View>
-
           <TouchableOpacity
-            style={[styles.loginButton, (loading || !username || !password || !captchaToken) && styles.loginButtonDisabled]}
+            style={[styles.loginButton, (loading || !username || !password) && styles.loginButtonDisabled]}
             onPress={handleLogin}
-            disabled={loading || !username || !password || !captchaToken}
+            disabled={loading || !username || !password}
           >
             <Text style={styles.loginButtonText}>
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
@@ -367,10 +341,6 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     marginTop: theme.spacing.xs,
     textAlign: 'center',
-  },
-  captchaContainer: {
-    marginBottom: theme.spacing.md,
-    alignItems: 'center',
   },
   loginButton: {
     backgroundColor: COLORS.primary,

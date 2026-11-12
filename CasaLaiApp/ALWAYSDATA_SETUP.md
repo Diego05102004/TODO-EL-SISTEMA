@@ -87,11 +87,11 @@ $payload = [
 ### Paso 3: Configurar variables de entorno en el servidor PHP
 En AlwaysData, configura los secretos únicamente en variables de entorno privadas o en `api/Config/.env`, fuera del control de versiones y con acceso HTTP denegado. Genera un valor aleatorio nuevo para `JWT_SECRET_KEY` de al menos 32 bytes. No reutilices claves que hayan aparecido en código, documentación o historial de Git. Al cambiar la clave, todos los usuarios deberán iniciar sesión de nuevo.
 
-### reCAPTCHA v2 Checkbox
+### reCAPTCHA del sitio web (no se usa en la app móvil)
 
-En la consola de Google, configura el tipo **reCAPTCHA v2 → Casilla “No soy un robot”** y registra estos dominios:
+El formulario web mantiene reCAPTCHA v2. En la consola de Google, registra los dominios del sitio:
 
-- `casalai.alwaysdata.net` para producción y la APK publicada.
+- `casalai.alwaysdata.net` para producción.
 - `localhost` para desarrollo local.
 
 En `api/Config/.env` (local) y en las variables privadas de AlwaysData, configura:
@@ -102,19 +102,16 @@ RECAPTCHA_SECRET_KEY=<secret key privada de reCAPTCHA v2>
 RECAPTCHA_ALLOWED_HOSTNAMES=casalai.alwaysdata.net,localhost,127.0.0.1
 ```
 
-La app consulta la site key desde `api/recaptcha_config.php`; la secret key solo se usa en PHP para verificar el token con Google. No la pongas en la app, en un `EXPO_PUBLIC_...`, ni en archivos versionados. El backend valida `success` y el hostname devuelto por Google; no aplica el umbral `score` de reCAPTCHA v3.
+La clave secreta solo se usa en PHP para verificar el token del formulario web. La app móvil no muestra reCAPTCHA ni envía un token: puede iniciar sesión contra `api/login.php` sin configurar claves de reCAPTCHA para la app.
 
-Si `https://casalai.alwaysdata.net/api/recaptcha_config.php` responde `404`, despliega la versión actual de la API, incluyendo `recaptcha_config.php`, `config.php` y `login.php`, antes de compilar/publicar la app.
-
-Para desarrollo local con Expo Web, coloca estas variables en `.env.local` (este archivo tiene prioridad sobre `.env` y no se sube a Git):
+Para desarrollo móvil local, coloca estas variables en `.env.local` (este archivo tiene prioridad sobre `.env` y no se sube a Git):
 
 ```env
-# Expo Web con XAMPP:
+# XAMPP:
 EXPO_PUBLIC_API_URL=http://localhost/proyecto-casalai-ca/api
-EXPO_PUBLIC_RECAPTCHA_DOMAIN=http://localhost
 ```
 
-Reinicia Expo después de cambiar las variables: `npx expo start --web --clear`. Para Android Emulator con XAMPP, cambia `localhost` en `EXPO_PUBLIC_API_URL` por `10.0.2.2`. En un teléfono físico, `localhost` apunta al teléfono y no a la PC: usa la IP LAN de la PC en `EXPO_PUBLIC_API_URL` y conserva `EXPO_PUBLIC_RECAPTCHA_DOMAIN=http://localhost`. Para la APK de producción, usa `https://casalai.alwaysdata.net/api` y `EXPO_PUBLIC_RECAPTCHA_DOMAIN=casalai.alwaysdata.net`; vuelve a compilar después de cambiar estas variables.
+Para Android Emulator con XAMPP, cambia `localhost` en `EXPO_PUBLIC_API_URL` por `10.0.2.2`. En un teléfono físico, `localhost` apunta al teléfono y no a la PC: usa la IP LAN de la PC en `EXPO_PUBLIC_API_URL`. Para la APK de producción, usa `https://casalai.alwaysdata.net/api`. Reinicia Expo o vuelve a compilar después de cambiar las variables.
 
 La clave secreta que se compartió en el chat debe considerarse expuesta: revócala y genera una nueva en Google antes de publicar. Actualiza la nueva clave únicamente en la configuración privada de AlwaysData y en el `.env` local ignorado por Git.
 

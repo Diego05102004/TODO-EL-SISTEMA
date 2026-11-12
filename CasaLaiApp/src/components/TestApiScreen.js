@@ -7,7 +7,7 @@ const TestApiScreen = () => {
   const [respuesta, setRespuesta] = useState(null);
 
   // REEMPLAZA CON LA URL DE TU HOSTING REAL O DE LOCALTUNNEL
-  const API_URL = 'https://fine-feet-wear.loca.lt/proyecto-casalai-ca/api/test_ping.php';
+  const API_URL = 'https://fine-feet-wear.loca.lt/TODO-EL-SISTEMA/proyecto-casalai-ca/api/test_ping.php';
 
   const enviarPeticionHTTPS = async () => {
     setLoading(true);

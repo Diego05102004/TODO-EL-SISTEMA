@@ -12,16 +12,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Diego05102004/proyecto-casalai-ca.git"
+    "url": "git+https://github.com/Diego05102004/TODO-EL-SISTEMA/proyecto-casalai-ca.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Diego05102004/proyecto-casalai-ca/issues"
+    "url": "https://github.com/Diego05102004/TODO-EL-SISTEMA/proyecto-casalai-ca/issues"
   },
-  "homepage": "https://github.com/Diego05102004/proyecto-casalai-ca#readme",
+  "homepage": "https://github.com/Diego05102004/TODO-EL-SISTEMA/proyecto-casalai-ca#readme",
   "devDependencies": {
     "chrome": "^0.1.0",
     "mocha": "^11.7.4",

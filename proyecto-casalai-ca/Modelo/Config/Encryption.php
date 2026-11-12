@@ -19,6 +19,7 @@ namespace Usuario\ProyectoCasalaiCa\Config;
 class Encryption {
     private $rsaPublicKey;
     private $rsaPrivateKey;
+    private $rsaLegacyPrivateKeys = [];
     private $aesMethod = 'AES-256-CBC';
 
     /**
@@ -32,6 +33,15 @@ class Encryption {
     private function loadRSAKeys() {
         $publicKey = getenv('RSA_PUBLIC_KEY');
         $privateKey = getenv('RSA_PRIVATE_KEY');
+        $legacyPrivateKey = getenv('RSA_LEGACY_PRIVATE_KEY');
+        $envPath = dirname(__DIR__, 2) . '/.env';
+        $content = '';
+        if (is_file($envPath)) {
+            $content = file_get_contents($envPath);
+            if ($content === false) {
+                throw new \RuntimeException('No se pudo leer el archivo de configuración RSA.');
+            }
+        }
 
         $normalizeKey = static function($key) {
             return trim(str_replace(['\\n', "\r\n", "\r"], ["\n", "\n", "\n"], $key));
@@ -42,17 +52,16 @@ class Encryption {
             @openssl_pkey_get_private($normalizeKey($privateKey)) !== false;
 
         if (!$configuredKeysAreParseable) {
-            $envPath = dirname(__DIR__, 2) . '/.env';
-            if (is_file($envPath)) {
-                $content = file_get_contents($envPath);
-                if ($content === false) {
-                    throw new \RuntimeException('No se pudo leer el archivo de configuración RSA.');
-                }
-                preg_match('/RSA_PUBLIC_KEY="(.+?)"/s', $content, $publicMatch);
-                preg_match('/RSA_PRIVATE_KEY="(.+?)"/s', $content, $privateMatch);
+            preg_match('/RSA_PUBLIC_KEY="(.+?)"/s', $content, $publicMatch);
+            preg_match('/RSA_PRIVATE_KEY="(.+?)"/s', $content, $privateMatch);
 
-                $publicKey = $publicMatch[1] ?? $publicKey;
-                $privateKey = $privateMatch[1] ?? $privateKey;
+            $publicKey = $publicMatch[1] ?? $publicKey;
+            $privateKey = $privateMatch[1] ?? $privateKey;
+        }
+
+        if ($legacyPrivateKey === false || trim($legacyPrivateKey) === '') {
+            if (preg_match('/RSA_LEGACY_PRIVATE_KEY="(.+?)"/s', $content, $legacyMatch)) {
+                $legacyPrivateKey = $legacyMatch[1];
             }
         }
 
@@ -83,8 +92,19 @@ class Encryption {
             throw new \RuntimeException('La clave pública y la clave privada RSA no forman una pareja válida.');
         }
 
+        $legacyPrivateKeys = [];
+        if (is_string($legacyPrivateKey) && trim($legacyPrivateKey) !== '') {
+            $legacyPrivateKey = $normalizeKey($legacyPrivateKey);
+            if (@openssl_pkey_get_private($legacyPrivateKey) === false) {
+                throw new \RuntimeException('RSA_LEGACY_PRIVATE_KEY no contiene una clave PEM válida.');
+            }
+            $legacyPrivateKeys[] = $legacyPrivateKey;
+        }
+
         $this->rsaPublicKey = $publicKey;
         $this->rsaPrivateKey = $privateKey;
+        $this->rsaLegacyPrivateKeys = $legacyPrivateKeys;
+        $this->rsaLegacyPrivateKeys = $legacyPrivateKeys;
     }
     
     /**
@@ -192,32 +212,26 @@ class Encryption {
             // 3. Extraer clave AES cifrada
             $encryptedAesKey = substr($data, 4, $keyLength);
             
-            // 4. Descifrar clave AES con RSA (clave privada)
-            $aesKey = '';
-            if (!openssl_private_decrypt($encryptedAesKey, $aesKey, $this->rsaPrivateKey)) {
-                $error = openssl_error_string();
-                error_log("[ENCRYPTION] decrypt: error RSA - $error");
-                throw new \RuntimeException('Error al descifrar clave AES con RSA: ' . $error);
-            }
-            
-            error_log("[ENCRYPTION] decrypt: clave AES descifrada exitosamente");
-            
             // 5. Extraer IV (16 bytes) y datos cifrados
             $iv = substr($data, 4 + $keyLength, 16);
             $encryptedDataPart = substr($data, 4 + $keyLength + 16);
-            
-            // 6. Descifrar datos con AES-256-CBC
-            $decrypted = openssl_decrypt($encryptedDataPart, $this->aesMethod, $aesKey, OPENSSL_RAW_DATA, $iv);
-            
-            if ($decrypted === false) {
-                $error = openssl_error_string();
-                error_log("[ENCRYPTION] decrypt: error AES - $error");
-                throw new \RuntimeException('Error al descifrar datos con AES: ' . $error);
+
+            foreach (array_merge([$this->rsaPrivateKey], $this->rsaLegacyPrivateKeys) as $privateKey) {
+                $aesKey = '';
+                if (!openssl_private_decrypt($encryptedAesKey, $aesKey, $privateKey)) {
+                    continue;
+                }
+
+                $decrypted = openssl_decrypt($encryptedDataPart, $this->aesMethod, $aesKey, OPENSSL_RAW_DATA, $iv);
+                if ($decrypted !== false) {
+                    error_log("[ENCRYPTION] decrypt: datos descifrados exitosamente");
+                    return $decrypted;
+                }
             }
-            
-            error_log("[ENCRYPTION] decrypt: datos descifrados exitosamente");
-            
-            return $decrypted;
+
+            $error = openssl_error_string();
+            error_log("[ENCRYPTION] decrypt: no se pudo descifrar con las claves RSA configuradas - $error");
+            throw new \RuntimeException('No se pudo descifrar con las claves RSA configuradas.');
             
         } catch (\Exception $e) {
             // Si falla el descifrado, retornar valor original (compatibilidad)

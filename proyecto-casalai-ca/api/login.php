@@ -4,29 +4,15 @@
  * POST /api/login.php
  */
 
-error_log("[LOGIN] Archivo login.php cargado - DEBUG INICIO");
-
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/Clases/Login.php';
 require_once __DIR__ . '/Config/Encryption.php';
-require_once __DIR__ . '/Config/RecaptchaConfig.php';
 
 use Usuario\ProyectoCasalaiCa\Login;
 use Usuario\ProyectoCasalaiCa\Config\Encryption;
 
 error_log("[LOGIN] Archivos requeridos cargados exitosamente");
-
-function validarReCaptcha($token) {
-    if (!is_string($token)) {
-        return ['success' => false, 'error_codes' => ['invalid-input-response']];
-    }
-
-    return \Usuario\ProyectoCasalaiCa\Config\RecaptchaConfig::verifyToken(
-        $token,
-        $_SERVER['REMOTE_ADDR'] ?? null
-    );
-}
 
 // Solo permitir método POST
 validateMethod(['POST']);
@@ -56,8 +42,6 @@ if (!is_array($data)) {
 
 
     $usernameOrEmail = $data['email'] ?? $data['username'] ?? '';
-    $recaptchaToken  = $data['recaptcha_token'] ?? $data['recaptchaToken'] ?? '';
-
     if (empty($usernameOrEmail) || empty($data['password'])) {
         errorResponse('El correo/usuario y contraseña son obligatorios', 400);
     }
@@ -69,35 +53,6 @@ if (!is_array($data)) {
     
     if (mb_strlen($data['password']) < 6) {
         errorResponse('La contraseña debe tener al menos 6 caracteres', 400);
-    }
-
-    if (empty($recaptchaToken)) {
-        errorResponse('Es necesario completar la verificación del reCAPTCHA', 400);
-    }
-
-    $resCaptcha = validarReCaptcha($recaptchaToken);
-    if (!empty($resCaptcha['configuration_error'])) {
-        error_log('[reCAPTCHA] Configuración del API incompleta o inválida');
-        errorResponse('La verificación de reCAPTCHA no está configurada correctamente', 503);
-    }
-    if (
-        empty($resCaptcha['success']) ||
-        empty($resCaptcha['hostname_ok'])
-    ) {
-        error_log('[reCAPTCHA] Token rechazado: ' . json_encode([
-            'error_codes' => $resCaptcha['error_codes'] ?? [],
-            'hostname_ok' => $resCaptcha['hostname_ok'] ?? false,
-            'challenge_ts' => $resCaptcha['challenge_ts'] ?? null,
-        ]));
-        $errorCodes = $resCaptcha['error_codes'] ?? [];
-        if (in_array('invalid-keys', $errorCodes, true) || in_array('invalid-input-secret', $errorCodes, true)) {
-            error_log('[reCAPTCHA] Google rechazó la configuración de claves; verifica que la secret key corresponda a la site key v2.');
-            errorResponse('La configuración de reCAPTCHA no coincide. Contacta al administrador.', 503);
-        }
-        if (in_array('timeout-or-duplicate', $errorCodes, true)) {
-            errorResponse('La verificación expiró o ya fue utilizada. Completa reCAPTCHA otra vez.', 400);
-        }
-        errorResponse('La verificación de reCAPTCHA ha fallado. Completa el reto otra vez.', 400);
     }
 
     // Crear instancia de Login
@@ -123,7 +78,7 @@ if (!is_array($data)) {
     if ($resultado['resultado'] == 'existe') {
         $cedulaUsuario = $resultado['cedula'] ?? '';
         if (is_string($cedulaUsuario) && $cedulaUsuario !== '') {
-            $cedulaUsuario = $encryption->decryptIfEncrypted($cedulaUsuario);
+            $cedulaUsuario = $encryption->decrypt($cedulaUsuario);
         }
 
         $userData = [
