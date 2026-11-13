@@ -2,6 +2,8 @@ package com.casalai.app
 
 import android.os.Build
 import android.os.Bundle
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -17,6 +19,19 @@ class MainActivity : ReactActivity() {
     // This is required for expo-splash-screen.
     setTheme(R.style.AppTheme);
     super.onCreate(null)
+  }
+
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+    super.onWindowFocusChanged(hasFocus)
+
+    if (hasFocus) {
+      window.decorView.post {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+          systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+          hide(WindowInsetsCompat.Type.navigationBars())
+        }
+      }
+    }
   }
 
   /**
