@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Casa Lai",
+    "name": "CasaLai",
     "slug": "casa-lai",
     "owner": "saymon-apps",
     "version": "1.0.0",
@@ -24,7 +24,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/images/LOGO.png",
+        "foregroundImage": "./src/assets/images/LOGO_ADAPTIVE.png",
         "backgroundColor": "#FFFFFF"
       },
       "intentFilters": [
