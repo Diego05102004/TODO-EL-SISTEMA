@@ -344,6 +344,27 @@ def _feedback_priority_factor(
     return rating_factor * decision_factor
 
 
+def _apply_recommendation_feedback(
+    recommendation: dict[str, Any],
+    feedback: dict[str, dict[str, str | None]],
+) -> None:
+    response = feedback.get(str(recommendation.get("recomendacion_id", "")))
+    if not response or response.get("decision") not in {"aprobada", "rechazada"}:
+        return
+
+    decision = response["decision"]
+    factor = 0.5 if decision == "rechazada" else 1.0
+    recommendation["prioridad_ajustada"] = round(
+        float(recommendation["prioridad_ajustada"]) * factor, 3
+    )
+    recommendation_feedback = recommendation.setdefault("retroalimentacion", {})
+    recommendation_feedback.update({
+        "decision_usuario": decision,
+        "motivo_codigo": response.get("motivo_codigo"),
+        "factor_prioridad_personal": factor,
+    })
+
+
 def _prioritize_recommendations(recommendations: list[dict[str, Any]]) -> list[dict[str, Any]]:
     tiers = {"combo_estrategico": 0, "reposicion": 1, "combo": 2}
     return sorted(
@@ -1024,6 +1045,7 @@ def build_dashboard(
     feedback: dict[str, tuple[float, int]] | None = None,
     discount_adjustment: float = 0.0,
     decision_feedback: dict[str, tuple[int, int]] | None = None,
+    recommendation_feedback: dict[str, dict[str, str | None]] | None = None,
 ) -> dict[str, Any]:
     products = payload["productos"]
     sales = payload["ventas"]
@@ -1034,6 +1056,7 @@ def build_dashboard(
     today = date.today()
     feedback = feedback or {}
     decision_feedback = decision_feedback or {}
+    recommendation_feedback = recommendation_feedback or {}
     product_by_id = {int(product["id_producto"]): product for product in products}
     frozen_products = _identify_frozen_products(products, sales)
     frozen_products_info = [
@@ -1299,7 +1322,19 @@ def build_dashboard(
     
     # Combinar recomendaciones: combos estratégicos tienen prioridad sobre combos regulares
     # Los combos estratégicos se colocan primero en la lista ordenada
-    all_recommendations = inventory_actions + strategic_combos + combo_actions
+    all_recommendations = [
+        recommendation
+        for recommendation in inventory_actions + strategic_combos + combo_actions
+        if not (
+            (decision := recommendation_feedback.get(
+                str(recommendation.get("recomendacion_id", ""))
+            ))
+            and decision.get("decision") == "rechazada"
+            and decision.get("motivo_codigo") != "descuento_alto"
+        )
+    ]
+    for recommendation in all_recommendations:
+        _apply_recommendation_feedback(recommendation, recommendation_feedback)
     recommendations = _prioritize_recommendations(all_recommendations)
 
     # Generar explicaciones dinámicas basadas en el contexto actual
@@ -1429,6 +1464,48 @@ def get_feedback_decisions(user_id: int | None = None) -> dict[str, tuple[int, i
     }
 
 
+def get_feedback_recommendation_decisions(
+    user_id: int | None = None,
+) -> dict[str, dict[str, str | None]]:
+    if user_id is None or not FEEDBACK_PATH.is_file():
+        return {}
+
+    latest: dict[str, dict[str, str | None]] = {}
+    allowed_reasons = {
+        "productos_no_adecuados",
+        "descuento_alto",
+        "cantidad_inadecuada",
+        "combo_existente",
+        "otro",
+    }
+    with _feedback_lock, FEEDBACK_PATH.open("r", encoding="utf-8") as feedback_file:
+        for line_number, line in enumerate(feedback_file, start=1):
+            try:
+                entry = json.loads(line)
+                if not isinstance(entry, dict):
+                    raise TypeError("El feedback no es un objeto")
+                if str(entry.get("usuario_id") or "anonimo") != str(user_id):
+                    continue
+                decision = entry.get("decision")
+                if decision not in {"aprobada", "rechazada"}:
+                    continue
+                recommendation_id = str(entry["recomendacion_id"])
+                recommendation_type = str(entry["tipo"])
+                if not recommendation_id.startswith(f"{recommendation_type}:"):
+                    raise ValueError("El tipo no coincide con la recomendación")
+                reason_code = entry.get("motivo_codigo")
+                if reason_code not in allowed_reasons:
+                    reason_code = None
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                logging.warning("Se omite feedback inválido en línea %s", line_number)
+                continue
+            latest[recommendation_id] = {
+                "decision": decision,
+                "motivo_codigo": reason_code,
+            }
+    return latest
+
+
 def get_discount_adjustment(user_id: int | None = None) -> float:
     if not FEEDBACK_PATH.is_file():
         return 0.0
@@ -1441,6 +1518,12 @@ def get_discount_adjustment(user_id: int | None = None) -> float:
                 if entry.get("tipo") != "combo_estrategico":
                     continue
                 preference = entry.get("descuento_feedback")
+                if (
+                    preference not in {"adecuado", "mucho", "poco"}
+                    and entry.get("decision") == "rechazada"
+                    and entry.get("motivo_codigo") == "descuento_alto"
+                ):
+                    preference = "mucho"
                 if preference not in {"adecuado", "mucho", "poco"}:
                     continue
                 key = (

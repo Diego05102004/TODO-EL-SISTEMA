@@ -15,6 +15,7 @@ from modelo.analitica_predictiva import (
     get_discount_adjustment,
     get_feedback_averages,
     get_feedback_decisions,
+    get_feedback_recommendation_decisions,
     train_models,
 )
 
@@ -82,6 +83,13 @@ class FeedbackRequest(BaseModel):
     descuento_feedback: Literal["adecuado", "mucho", "poco"] | None = None
     descuento_sugerido: float | None = Field(default=None, ge=0, le=100)
     descuento_aplicado: float | None = Field(default=None, ge=0, le=100)
+    motivo_codigo: Literal[
+        "productos_no_adecuados",
+        "descuento_alto",
+        "cantidad_inadecuada",
+        "combo_existente",
+        "otro",
+    ] | None = None
     motivo: str | None = Field(default=None, max_length=500)
     usuario_id: int | None = Field(default=None, gt=0)
 
@@ -104,6 +112,8 @@ class FeedbackRequest(BaseModel):
             raise ValueError("Debe proporcionar una valoración o una respuesta de feedback.")
         if not self.recomendacion_id.startswith(f"{self.tipo}:"):
             raise ValueError("El tipo no coincide con la recomendación.")
+        if self.decision == "rechazada" and self.motivo_codigo is None:
+            raise ValueError("Un rechazo debe incluir un motivo.")
         return self
 
 
@@ -119,6 +129,7 @@ def dashboard(request: DashboardRequest) -> dict:
         get_feedback_averages(request.usuario_id),
         get_discount_adjustment(request.usuario_id),
         get_feedback_decisions(request.usuario_id),
+        get_feedback_recommendation_decisions(request.usuario_id),
     )
 
 

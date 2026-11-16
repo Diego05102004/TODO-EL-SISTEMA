@@ -2317,6 +2317,78 @@ function eliminarFilaProducto(id_producto) {
             return result;
         }
 
+        const cainFeedbackReasonLabels = {
+            productos_no_adecuados: 'Los productos no son adecuados para combinarlos',
+            descuento_alto: 'El descuento sugerido es demasiado alto',
+            cantidad_inadecuada: 'La cantidad o proporción no es adecuada',
+            combo_existente: 'Ya existe un combo similar',
+            otro: 'Otro motivo'
+        };
+
+        async function requestCainFeedbackReason() {
+            const reasonForm = document.createElement('div');
+            reasonForm.className = 'analytics-feedback-reason-form';
+            const introduction = document.createElement('p');
+            introduction.textContent = 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le convence?';
+            const reasonLabel = document.createElement('label');
+            reasonLabel.textContent = '¿Cuál es el motivo principal?';
+            const reasonSelect = document.createElement('select');
+            reasonSelect.setAttribute('aria-label', 'Motivo principal del rechazo');
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Seleccione un motivo';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            reasonSelect.appendChild(placeholder);
+            Object.entries(cainFeedbackReasonLabels).forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                reasonSelect.appendChild(option);
+            });
+
+            const detailLabel = document.createElement('label');
+            detailLabel.textContent = 'Detalle opcional';
+            const reasonInput = document.createElement('textarea');
+            reasonInput.maxLength = 500;
+            reasonInput.placeholder = 'Si lo desea, agregue un comentario…';
+            reasonInput.setAttribute('aria-label', 'Detalle del rechazo');
+            reasonForm.append(introduction, reasonLabel, reasonSelect, detailLabel, reasonInput);
+
+            const response = await Swal.fire({
+                title: 'CAIN · Su opinión',
+                html: reasonForm,
+                imageUrl: cainMoodImages.triste,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: 'CAIN triste',
+                showCancelButton: true,
+                confirmButtonText: 'Enviar respuesta',
+                cancelButtonText: 'Cancelar',
+                focusConfirm: false,
+                preConfirm: () => {
+                    if (!reasonSelect.value) {
+                        Swal.showValidationMessage('Seleccione el motivo principal para continuar.');
+                        return false;
+                    }
+                    const reason = reasonInput.value.trim();
+                    if (reasonSelect.value === 'otro' && !reason) {
+                        Swal.showValidationMessage('Describa brevemente el otro motivo.');
+                        return false;
+                    }
+                    return { reasonCode: reasonSelect.value, reason };
+                }
+            });
+            if (response.isConfirmed) {
+                return {
+                    submitted: true,
+                    reasonCode: response.value.reasonCode,
+                    reason: response.value.reason
+                };
+            }
+            return { submitted: false, reasonCode: '', reason: '' };
+        }
+
         async function postControllerAction(url, values) {
             const form = new FormData();
             Object.entries(values).forEach(([key, value]) => {
@@ -2537,16 +2609,114 @@ function eliminarFilaProducto(id_producto) {
                     ? 'Mi señor@, faltan costos de recepción para verificar todos los productos. Revise el detalle antes de continuar.'
                     : 'Según las recepciones registradas, el descuento no dejaría el combo por debajo de su costo de compra.';
             analysisContent.appendChild(introduction);
-            const productList = document.createElement('ul');
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'analytics-profitability-table-wrap';
+            const comparisonTable = document.createElement('table');
+            comparisonTable.className = 'analytics-profitability-table';
+            const caption = document.createElement('caption');
+            caption.textContent = 'Comparativa por producto. Margen unitario = precio con descuento menos costo de recepción.';
+            comparisonTable.appendChild(caption);
+
+            const tableHead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Producto', 'Cant.', 'Precio actual', 'Costo recepción', 'Precio con descuento', 'Margen unitario', 'Resultado']
+                .forEach(label => {
+                    const header = document.createElement('th');
+                    header.scope = 'col';
+                    header.textContent = label;
+                    headerRow.appendChild(header);
+                });
+            tableHead.appendChild(headerRow);
+            comparisonTable.appendChild(tableHead);
+
+            const tableBody = document.createElement('tbody');
+            let totalQuantity = 0;
             profitability.productos.forEach(product => {
-                const item = document.createElement('li');
-                const receiptCost = product.costo_recepcion_unitario === null
-                    ? 'sin recepción habilitada registrada'
-                    : `costo de recepción ${formatMoney(product.costo_recepcion_unitario)} por unidad, última recepción ${product.fecha_ultima_recepcion}${product.por_debajo_del_costo ? '; quedaría por debajo del costo' : ''}`;
-                item.textContent = `${product.nombre} × ${product.cantidad}: precio actual ${formatMoney(product.precio_venta_unitario)} por unidad; precio con descuento ${formatMoney(product.precio_con_descuento_unitario)} por unidad; ${receiptCost}.`;
-                productList.appendChild(item);
+                totalQuantity += Number(product.cantidad) || 0;
+                const hasCost = product.costo_recepcion_unitario !== null;
+                const difference = hasCost
+                    ? Math.round((Number(product.precio_con_descuento_unitario) - Number(product.costo_recepcion_unitario)) * 100) / 100
+                    : null;
+                const row = document.createElement('tr');
+                row.className = !hasCost
+                    ? 'is-unknown'
+                    : difference < 0
+                        ? 'is-loss'
+                        : difference === 0
+                            ? 'is-break-even'
+                            : 'is-profitable';
+
+                const nameCell = document.createElement('th');
+                nameCell.scope = 'row';
+                nameCell.textContent = product.nombre;
+                row.appendChild(nameCell);
+
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = String(product.cantidad);
+                row.appendChild(quantityCell);
+
+                [
+                    product.precio_venta_unitario,
+                    product.costo_recepcion_unitario,
+                    product.precio_con_descuento_unitario
+                ].forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value === null ? 'Sin dato' : formatMoney(value);
+                    if (index === 1 && hasCost && product.fecha_ultima_recepcion) {
+                        const date = document.createElement('small');
+                        date.textContent = `Última: ${product.fecha_ultima_recepcion}`;
+                        cell.appendChild(date);
+                    }
+                    row.appendChild(cell);
+                });
+
+                const differenceCell = document.createElement('td');
+                differenceCell.textContent = difference === null
+                    ? 'Sin dato'
+                    : `${difference > 0 ? '+' : difference < 0 ? '−' : ''}${formatMoney(Math.abs(difference))}`;
+                row.appendChild(differenceCell);
+
+                const statusCell = document.createElement('td');
+                statusCell.textContent = !hasCost
+                    ? 'Sin recepción'
+                    : difference < 0
+                        ? 'Bajo costo'
+                        : difference === 0
+                            ? 'En equilibrio'
+                            : 'Sobre costo';
+                row.appendChild(statusCell);
+                tableBody.appendChild(row);
             });
-            analysisContent.appendChild(productList);
+            comparisonTable.appendChild(tableBody);
+
+            const tableFoot = document.createElement('tfoot');
+            const totalsRow = document.createElement('tr');
+            const totalsLabel = document.createElement('th');
+            totalsLabel.colSpan = 2;
+            totalsLabel.scope = 'row';
+            totalsLabel.textContent = `Totales del combo (${totalQuantity} unidades)`;
+            totalsRow.appendChild(totalsLabel);
+            [
+                profitability.precio_base_combo,
+                profitability.costo_total_recepcion,
+                profitability.ingreso_proyectado,
+                profitability.ganancia_bruta_proyectada
+            ].forEach(value => {
+                const cell = document.createElement('td');
+                cell.textContent = value === null ? 'Sin dato' : formatMoney(value);
+                totalsRow.appendChild(cell);
+            });
+            const totalStatus = document.createElement('td');
+            totalStatus.textContent = profitability.genera_perdida
+                ? 'Revisar pérdidas'
+                : !profitability.costos_completos
+                    ? 'Incompleto'
+                    : 'Con margen';
+            totalsRow.appendChild(totalStatus);
+            tableFoot.appendChild(totalsRow);
+            comparisonTable.appendChild(tableFoot);
+            tableWrapper.appendChild(comparisonTable);
+            analysisContent.appendChild(tableWrapper);
 
             const summary = document.createElement('p');
             summary.textContent = `Ingreso proyectado con ${response.value}% de descuento: ${formatMoney(profitability.ingreso_proyectado)}.`;
@@ -2586,6 +2756,7 @@ function eliminarFilaProducto(id_producto) {
                 imageWidth: 112,
                 imageHeight: 112,
                 imageAlt: causesLoss || hasIncompleteCosts ? 'CAIN triste' : 'CAIN pensativo',
+                width: 'min(980px, 96vw)',
                 showCancelButton: true,
                 confirmButtonText: causesLoss || hasIncompleteCosts ? 'Guardar de todos modos' : 'Confirmar descuento',
                 cancelButtonText: 'Revisar descuento'
@@ -2901,6 +3072,16 @@ function eliminarFilaProducto(id_producto) {
                     card.append(title, renderExistingComboCard(existingCombo));
                 } else if (item.tipo === 'combo_estrategico') {
                     card.append(title, renderStrategicExplanation(item.explicacion || item.senal));
+                    if (item.retroalimentacion?.decision_usuario === 'rechazada') {
+                        const personalizedFeedback = document.createElement('p');
+                        personalizedFeedback.className = 'analytics-personal-feedback-note';
+                        const reasonLabel = cainFeedbackReasonLabels[item.retroalimentacion.motivo_codigo];
+                        const reduction = Math.round(
+                            (1 - Number(item.retroalimentacion.factor_prioridad_personal || 0.5)) * 100
+                        );
+                        personalizedFeedback.textContent = `Tomé en cuenta su rechazo anterior${reasonLabel ? `: ${reasonLabel.toLowerCase()}` : ''}. Reduje la prioridad de esta combinación para usted en ${reduction}%.`;
+                        card.appendChild(personalizedFeedback);
+                    }
                 } else {
                     explanation.textContent = item.explicacion || item.senal || 'Consulte los datos de inventario para conocer más detalles.';
                     card.append(title, explanation);
@@ -2986,7 +3167,7 @@ function eliminarFilaProducto(id_producto) {
 
             if (productId && categoryId) {
                 setAnalyticsStatus('Selecciona un producto o una categoría, pero no ambos.', 'error');
-                return;
+                return false;
             }
 
             const button = document.getElementById('runAnalytics');
@@ -3056,7 +3237,7 @@ function eliminarFilaProducto(id_producto) {
                     renderAnalyticsRecommendations([]);
                     setCainMood('alegre', 'No encontré productos activos para este filtro, Mi señor@. Pruebe otra selección.');
                     setAnalyticsStatus('El producto o categoría seleccionado no tiene productos activos.');
-                    return;
+                    return true;
                 }
                 if (result.calidad?.estado === 'sin_ventas') {
                     analyticsKpis.hidden = true;
@@ -3072,7 +3253,7 @@ function eliminarFilaProducto(id_producto) {
                                 ? 'No hay ventas suficientes para el pronóstico de esta selección. Se conservan las recomendaciones estratégicas del análisis general del inventario.'
                                 : 'No hay ventas de facturas pagadas para este filtro en los últimos 365 días.'
                     );
-                    return;
+                    return true;
                 }
 
                 analyticsKpis.hidden = false;
@@ -3109,8 +3290,10 @@ function eliminarFilaProducto(id_producto) {
                 } else {
                     setAnalyticsStatus(`Modelo ${quality.modelo || ''} · entrenamiento ${quality.fecha_entrenamiento || 'sin fecha'} · ${result.horizonte_dias} días.`);
                 }
+                return true;
             } catch (error) {
                 setAnalyticsStatus(error.message, 'error');
+                return false;
             } finally {
                 button.disabled = false;
             }
@@ -3235,24 +3418,24 @@ function eliminarFilaProducto(id_producto) {
             if (feedbackButton && !feedbackButton.disabled) {
                 const feedbackPanel = feedbackButton.closest('.analytics-feedback');
                 const feedbackButtons = feedbackPanel.querySelectorAll('button[data-feedback-action]');
-                feedbackButtons.forEach(actionButton => { actionButton.disabled = true; });
                 const payload = {
                     recomendacion_id: feedbackButton.dataset.recommendationId,
                     tipo: feedbackButton.dataset.recommendationType,
                     descuento_sugerido: feedbackButton.dataset.suggestedDiscount || ''
                 };
                 const feedbackAction = feedbackButton.dataset.feedbackAction;
-                let reason = '';
-                if (feedbackAction === 'rechazada') {
-                    const enteredReason = prompt('Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
-                    reason = enteredReason === null ? '' : enteredReason.trim();
-                    payload.decision = 'rechazada';
-                    payload.motivo = reason;
-                } else {
-                    payload.descuento_feedback = feedbackButton.dataset.discountFeedback;
-                }
-
                 try {
+                    if (feedbackAction === 'rechazada') {
+                        const reasonResponse = await requestCainFeedbackReason();
+                        if (!reasonResponse.submitted) return;
+                        payload.decision = 'rechazada';
+                        payload.motivo_codigo = reasonResponse.reasonCode;
+                        payload.motivo = reasonResponse.reason;
+                    } else {
+                        payload.descuento_feedback = feedbackButton.dataset.discountFeedback;
+                    }
+
+                    feedbackButtons.forEach(actionButton => { actionButton.disabled = true; });
                     await postAnalytics('analitica_feedback', payload);
                     if (feedbackAction === 'rechazada') {
                         setCainMood('triste', 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
@@ -3274,9 +3457,23 @@ function eliminarFilaProducto(id_producto) {
                     const feedbackResult = document.createElement('p');
                     feedbackResult.className = 'analytics-feedback-result';
                     feedbackResult.textContent = feedbackAction === 'rechazada'
-                        ? 'Rechazo guardado.'
+                        ? payload.motivo_codigo === 'descuento_alto'
+                            ? 'Rechazo guardado. Reduciré el descuento y la prioridad de esta combinación en su próximo análisis.'
+                            : 'Rechazo guardado. Retiraré esta combinación de sus próximas recomendaciones.'
                         : 'Respuesta guardada. Puede continuar con la creación del combo.';
                     feedbackPanel.appendChild(feedbackResult);
+                    if (feedbackAction === 'rechazada') {
+                        const refreshed = await loadAnalytics();
+                        if (refreshed) {
+                            const removePair = payload.motivo_codigo !== 'descuento_alto';
+                            setCainMood('pensativo', removePair
+                                ? 'He considerado su respuesta, Mi señor@. Retiré esta pareja de sus recomendaciones y revisaré otras combinaciones.'
+                                : 'He considerado su respuesta, Mi señor@. Actualicé la sugerencia y reduciré el descuento y la prioridad de esta combinación.');
+                            setAnalyticsStatus(removePair
+                                ? 'Rechazo aplicado. Esta pareja ya no aparecerá en sus recomendaciones; se mostrarán otras alternativas disponibles.'
+                                : 'Rechazo aplicado. La prioridad personalizada ya se refleja en este análisis.', 'success');
+                        }
+                    }
                 } catch (error) {
                     feedbackButtons.forEach(actionButton => { actionButton.disabled = false; });
                     setAnalyticsStatus(error.message, 'error');
@@ -3287,19 +3484,21 @@ function eliminarFilaProducto(id_producto) {
             const button = event.target.closest('button[data-recommendation-id]');
             if (!button || button.disabled) return;
             const group = button.parentElement;
-            group.querySelectorAll('button').forEach(star => { star.disabled = true; });
             const stars = Number(button.dataset.stars);
             const feedback = {
                 recomendacion_id: button.dataset.recommendationId,
                 tipo: button.dataset.recommendationType,
                 estrellas: button.dataset.stars
             };
-            if (stars <= 2) {
-                const enteredReason = prompt('Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
-                feedback.decision = 'rechazada';
-                feedback.motivo = enteredReason === null ? '' : enteredReason.trim();
-            }
             try {
+                if (stars <= 2) {
+                    const reasonResponse = await requestCainFeedbackReason();
+                    if (!reasonResponse.submitted) return;
+                    feedback.decision = 'rechazada';
+                    feedback.motivo_codigo = reasonResponse.reasonCode;
+                    feedback.motivo = reasonResponse.reason;
+                }
+                group.querySelectorAll('button').forEach(star => { star.disabled = true; });
                 await postAnalytics('analitica_feedback', feedback);
                 group.querySelectorAll('button').forEach(star => {
                     if (Number(star.dataset.stars) <= stars) star.classList.add('selected');
@@ -3308,6 +3507,13 @@ function eliminarFilaProducto(id_producto) {
                     setCainMood('triste', 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
                 }
                 setAnalyticsStatus('Valoración guardada. Se tendrá en cuenta al priorizar futuras recomendaciones.', 'success');
+                if (stars <= 2) {
+                    const refreshed = await loadAnalytics();
+                    if (refreshed) {
+                        setCainMood('pensativo', 'He considerado su valoración y actualicé la prioridad de las recomendaciones para usted, Mi señor@.');
+                        setAnalyticsStatus('Valoración aplicada. La prioridad personalizada ya se refleja en este análisis.', 'success');
+                    }
+                }
             } catch (error) {
                 group.querySelectorAll('button').forEach(star => { star.disabled = false; });
                 setAnalyticsStatus(error.message, 'error');

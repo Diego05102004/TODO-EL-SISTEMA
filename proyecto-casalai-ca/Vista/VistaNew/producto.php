@@ -66,7 +66,7 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/javascript/datatable.js"></script>
 <script src="assets/public/js/chart.js"></script>
-<script src="assets/javascript/producto.js"></script>
+<script src="assets/javascript/producto.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/producto.js'); ?>"></script>
 <link rel="stylesheet" href="assets/styles/analitica_cain.css">
 
 <!-- Summary Cards para Productos -->

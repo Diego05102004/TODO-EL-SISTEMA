@@ -599,6 +599,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $estrellas = $estrellasRaw === '' ? null : filter_var($estrellasRaw, FILTER_VALIDATE_INT);
             $decision = is_string($_POST['decision'] ?? null) ? $_POST['decision'] : '';
             $descuentoFeedback = is_string($_POST['descuento_feedback'] ?? null) ? $_POST['descuento_feedback'] : '';
+            $motivoCodigo = is_string($_POST['motivo_codigo'] ?? null) ? $_POST['motivo_codigo'] : '';
             $descuentoSugeridoInput = array_key_exists('descuento_sugerido', $_POST) ? $_POST['descuento_sugerido'] : '';
             $descuentoAplicadoInput = array_key_exists('descuento_aplicado', $_POST) ? $_POST['descuento_aplicado'] : '';
             $descuentoSugeridoRaw = is_scalar($descuentoSugeridoInput) ? trim((string)$descuentoSugeridoInput) : '';
@@ -614,17 +615,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $decisionValida = $decision === '' || in_array($decision, ['aprobada', 'rechazada'], true);
             $descuentoFeedbackValido = $descuentoFeedback === '' ||
                 in_array($descuentoFeedback, ['adecuado', 'mucho', 'poco'], true);
+            $motivoCodigoValido = $motivoCodigo === '' || in_array($motivoCodigo, [
+                'productos_no_adecuados',
+                'descuento_alto',
+                'cantidad_inadecuada',
+                'combo_existente',
+                'otro'
+            ], true);
             $descuentoSugeridoValido = $descuentoSugeridoRaw === '' ||
                 ($descuentoSugerido !== false && $descuentoSugerido >= 0 && $descuentoSugerido <= 100);
             $descuentoAplicadoValido = $descuentoAplicadoRaw === '' ||
                 ($descuentoAplicado !== false && $descuentoAplicado >= 0 && $descuentoAplicado <= 100);
             $feedbackPresente = $estrellas !== null || $decision !== '' || $descuentoFeedback !== '' ||
                 $descuentoAplicado !== null || $motivo !== '';
+            $rechazoConMotivo = $decision !== 'rechazada' || $motivoCodigo !== '';
             if (!$recomendacionValida || !$tipoValido || !$estrellasValidas || !$decisionValida ||
-                !$descuentoFeedbackValido || !$descuentoSugeridoValido || !$descuentoAplicadoValido ||
-                !$feedbackPresente || $longitudMotivo > 500) {
+                !$descuentoFeedbackValido || !$motivoCodigoValido || !$descuentoSugeridoValido || !$descuentoAplicadoValido ||
+                !$feedbackPresente || !$rechazoConMotivo || $longitudMotivo > 500) {
                 http_response_code(400);
-                echo json_encode(['detail' => 'La respuesta de la recomendación no es válida.'], JSON_UNESCAPED_UNICODE);
+                $mensajeError = !$rechazoConMotivo
+                    ? 'Seleccione el motivo del rechazo para actualizar las recomendaciones.'
+                    : 'La respuesta de la recomendación no es válida.';
+                echo json_encode(['detail' => $mensajeError], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
@@ -634,6 +646,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     'tipo' => $tipo,
                     'estrellas' => $estrellas,
                     'decision' => $decision !== '' ? $decision : null,
+                    'motivo_codigo' => $motivoCodigo !== '' ? $motivoCodigo : null,
                     'descuento_feedback' => $descuentoFeedback !== '' ? $descuentoFeedback : null,
                     'descuento_sugerido' => $descuentoSugerido,
                     'descuento_aplicado' => $descuentoAplicado,

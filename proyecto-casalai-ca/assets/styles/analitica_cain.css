@@ -393,6 +393,50 @@
     color: #166534;
 }
 
+.analytics-personal-feedback-note {
+    margin: 10px 0;
+    padding: 9px 12px;
+    border-left: 4px solid #2563eb;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 0.86rem;
+}
+
+.analytics-feedback-reason-form {
+    display: grid;
+    gap: 8px;
+    text-align: left;
+}
+
+.analytics-feedback-reason-form p {
+    margin: 0 0 4px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.analytics-feedback-reason-form label {
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.analytics-feedback-reason-form select,
+.analytics-feedback-reason-form textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+}
+
+.analytics-feedback-reason-form textarea {
+    min-height: 84px;
+    resize: vertical;
+}
+
 .analytics-feedback button:disabled {
     cursor: wait;
     opacity: 0.6;
@@ -402,6 +446,81 @@
     margin: 0 0 12px;
     color: #334155;
     line-height: 1.5;
+}
+
+.analytics-profitability-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 14px 0;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.analytics-profitability-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    color: #334155;
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+.analytics-profitability-table caption {
+    padding: 10px 12px;
+    color: #1e3a8a;
+    font-weight: 700;
+    text-align: left;
+}
+
+.analytics-profitability-table th,
+.analytics-profitability-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.analytics-profitability-table thead th {
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.analytics-profitability-table tbody th {
+    white-space: normal;
+}
+
+.analytics-profitability-table td small {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.analytics-profitability-table tbody tr.is-loss {
+    background: #fff1f2;
+    color: #991b1b;
+}
+
+.analytics-profitability-table tbody tr.is-profitable {
+    background: #f0fdf4;
+}
+
+.analytics-profitability-table tbody tr.is-break-even {
+    background: #fffbeb;
+}
+
+.analytics-profitability-table tbody tr.is-unknown {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+.analytics-profitability-table tfoot {
+    background: #e2e8f0;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 .cain-duplicate-dialog {

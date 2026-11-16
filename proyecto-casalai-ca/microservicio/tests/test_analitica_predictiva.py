@@ -231,6 +231,142 @@ class AnaliticaPredictivaTest(unittest.TestCase):
         self.assertEqual(decisions["combo_estrategico"], (1, 1))
         self.assertAlmostEqual(factor, 0.85)
 
+    def test_rejected_unsuitable_pair_is_removed_from_that_users_next_dashboard(self):
+        products = [
+            {**self.products[0], "stock": 8, "stock_minimo": 2},
+            {**self.products[1], "stock": 20, "stock_minimo": 2},
+        ]
+        sales = [
+            {
+                "id_factura": 4000 + index,
+                "id_producto": 1,
+                "fecha": (date.today() - timedelta(days=index)).isoformat(),
+                "cantidad": 3,
+            }
+            for index in range(16)
+        ]
+        payload = {
+            "producto_id": None,
+            "categoria_id": None,
+            "frecuencia": "diaria",
+            "horizonte": 15,
+            "productos": products,
+            "ventas": sales,
+        }
+        recommendation_id = "combo_estrategico:1,2"
+        baseline = analytics.build_dashboard(payload)
+        analytics.append_feedback({
+            "recomendacion_id": recommendation_id,
+            "tipo": "combo_estrategico",
+            "decision": "rechazada",
+            "motivo_codigo": "productos_no_adecuados",
+            "usuario_id": 7,
+        })
+        adjusted_for_user = analytics.build_dashboard(
+            payload,
+            recommendation_feedback=analytics.get_feedback_recommendation_decisions(7),
+        )
+        unchanged_for_other_user = analytics.build_dashboard(
+            payload,
+            recommendation_feedback=analytics.get_feedback_recommendation_decisions(8),
+        )
+        self.assertIn(
+            recommendation_id,
+            [item["recomendacion_id"] for item in baseline["recomendaciones"]],
+        )
+        self.assertNotIn(
+            recommendation_id,
+            [item["recomendacion_id"] for item in adjusted_for_user["recomendaciones"]],
+        )
+        self.assertIn(
+            recommendation_id,
+            [item["recomendacion_id"] for item in unchanged_for_other_user["recomendaciones"]],
+        )
+
+    def test_legacy_rejection_without_reason_does_not_repeat_the_same_pair(self):
+        products = [
+            {**self.products[0], "stock": 8, "stock_minimo": 2},
+            {**self.products[1], "stock": 20, "stock_minimo": 2},
+        ]
+        sales = [
+            {
+                "id_factura": 4000 + index,
+                "id_producto": 1,
+                "fecha": (date.today() - timedelta(days=index)).isoformat(),
+                "cantidad": 3,
+            }
+            for index in range(16)
+        ]
+        recommendation_id = "combo_estrategico:1,2"
+        analytics.append_feedback({
+            "recomendacion_id": recommendation_id,
+            "tipo": "combo_estrategico",
+            "decision": "rechazada",
+            "usuario_id": 7,
+        })
+
+        dashboard = analytics.build_dashboard(
+            {
+                "producto_id": None,
+                "categoria_id": None,
+                "frecuencia": "diaria",
+                "horizonte": 15,
+                "productos": products,
+                "ventas": sales,
+            },
+            recommendation_feedback=analytics.get_feedback_recommendation_decisions(7),
+        )
+
+        self.assertNotIn(
+            recommendation_id,
+            [item["recomendacion_id"] for item in dashboard["recomendaciones"]],
+        )
+
+    def test_rejection_reason_about_discount_lowers_future_discount(self):
+        analytics.append_feedback({
+            "recomendacion_id": "combo_estrategico:1,2",
+            "tipo": "combo_estrategico",
+            "decision": "rechazada",
+            "motivo_codigo": "descuento_alto",
+            "usuario_id": 7,
+        })
+
+        self.assertAlmostEqual(analytics.get_discount_adjustment(7), -1.0)
+        self.assertEqual(analytics.get_discount_adjustment(8), 0.0)
+
+    def test_recommendation_decisions_use_the_latest_vote_per_user(self):
+        recommendation_id = "combo_estrategico:1,2"
+        analytics.append_feedback({
+            "recomendacion_id": recommendation_id,
+            "tipo": "combo_estrategico",
+            "decision": "rechazada",
+            "motivo_codigo": "productos_no_adecuados",
+            "usuario_id": 7,
+        })
+        analytics.append_feedback({
+            "recomendacion_id": recommendation_id,
+            "tipo": "combo_estrategico",
+            "decision": "aprobada",
+            "usuario_id": 7,
+        })
+        analytics.append_feedback({
+            "recomendacion_id": recommendation_id,
+            "tipo": "combo_estrategico",
+            "decision": "rechazada",
+            "motivo_codigo": "combo_existente",
+            "usuario_id": 8,
+        })
+
+        self.assertEqual(
+            analytics.get_feedback_recommendation_decisions(7),
+            {recommendation_id: {"decision": "aprobada", "motivo_codigo": None}},
+        )
+        self.assertEqual(
+            analytics.get_feedback_recommendation_decisions(8),
+            {recommendation_id: {"decision": "rechazada", "motivo_codigo": "combo_existente"}},
+        )
+        self.assertEqual(analytics.get_feedback_recommendation_decisions(), {})
+
     def test_strategic_frozen_stock_recommendations_precede_other_actions(self):
         recommendations = [
             {"tipo": "combo", "prioridad_ajustada": 100.0},
