@@ -7,12 +7,14 @@ from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from modelo.analitica_predictiva import (
     append_feedback,
     build_dashboard,
+    get_discount_adjustment,
     get_feedback_averages,
+    get_feedback_decisions,
     train_models,
 )
 
@@ -60,6 +62,7 @@ class SaleRow(BaseModel):
 class DashboardRequest(BaseModel):
     producto_id: int | None = Field(default=None)
     categoria_id: int | None = Field(default=None)
+    usuario_id: int | None = Field(default=None, gt=0)
     frecuencia: Literal["diaria", "semanal", "mensual"]
     horizonte: Literal[15, 30, 60, 90]
     productos: list[ProductRow] = Field(max_length=5000)
@@ -73,16 +76,35 @@ class TrainingRequest(BaseModel):
 
 class FeedbackRequest(BaseModel):
     recomendacion_id: str = Field(min_length=1, max_length=100)
-    tipo: Literal["combo", "reposicion"]
-    estrellas: int = Field(ge=1, le=5)
+    tipo: Literal["combo", "combo_estrategico", "reposicion"]
+    estrellas: int | None = Field(default=None, ge=1, le=5)
+    decision: Literal["aprobada", "rechazada"] | None = None
+    descuento_feedback: Literal["adecuado", "mucho", "poco"] | None = None
+    descuento_sugerido: float | None = Field(default=None, ge=0, le=100)
+    descuento_aplicado: float | None = Field(default=None, ge=0, le=100)
+    motivo: str | None = Field(default=None, max_length=500)
     usuario_id: int | None = Field(default=None, gt=0)
 
     @field_validator("recomendacion_id")
     @classmethod
     def validate_recommendation_id(cls, value: str) -> str:
-        if not re.fullmatch(r"(combo|reposicion):[0-9,]+", value):
+        if not re.fullmatch(r"(combo_estrategico|combo|reposicion):[0-9,]+", value):
             raise ValueError("Identificador de recomendación inválido.")
         return value
+
+    @model_validator(mode="after")
+    def validate_feedback(self):
+        if all(value is None for value in (
+            self.estrellas,
+            self.decision,
+            self.descuento_feedback,
+            self.descuento_aplicado,
+            self.motivo,
+        )):
+            raise ValueError("Debe proporcionar una valoración o una respuesta de feedback.")
+        if not self.recomendacion_id.startswith(f"{self.tipo}:"):
+            raise ValueError("El tipo no coincide con la recomendación.")
+        return self
 
 
 @router.post("/dashboard", dependencies=[Depends(validar_token_analitica)])
@@ -92,7 +114,12 @@ def dashboard(request: DashboardRequest) -> dict:
     if (request.producto_id is not None) and (request.categoria_id is not None):
         raise HTTPException(status_code=422, detail="Indique exactamente un producto o una categoría, no ambos.")
     payload = request.model_dump()
-    return build_dashboard(payload, get_feedback_averages())
+    return build_dashboard(
+        payload,
+        get_feedback_averages(request.usuario_id),
+        get_discount_adjustment(request.usuario_id),
+        get_feedback_decisions(request.usuario_id),
+    )
 
 
 @router.post("/entrenar", dependencies=[Depends(validar_token_analitica)])

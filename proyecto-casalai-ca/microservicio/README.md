@@ -72,7 +72,7 @@ uvicorn controlador.api_recepcion:app --host 0.0.0.0 --port 8000 --reload
 | GET | `/fase1/estadisticas` | Estadísticas de uso |
 | POST | `/api/v1/analitica/dashboard` | Histórico, inferencia y recomendaciones |
 | POST | `/api/v1/analitica/entrenar` | Entrenar modelos locales |
-| POST | `/api/v1/analitica/feedback` | Registrar una valoración de 1–5 estrellas |
+| POST | `/api/v1/analitica/feedback` | Registrar valoración, aprobación/rechazo, motivo y preferencia de descuento |
 
 El módulo PHP invoca estos endpoints a través de `Modelo/Servicio/RecepcionIAProxy.php`; PHP debe tener habilitada la extensión cURL. La URL base se configura con `RECEPCION_IA_URL` y por defecto es `http://127.0.0.1:8000`. El proxy aplica timeout total de 7,5 segundos, un reintento limitado para fallos de conexión/HTTP transitorios y un circuit breaker compartido en el host PHP: tres fallos consecutivos abren el circuito por dos minutos. El frontend aplica además un timeout de 8 segundos y activa el registro manual cuando detecta indisponibilidad.
 

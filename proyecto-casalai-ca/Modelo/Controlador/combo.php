@@ -25,6 +25,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $accion = $_POST['accion'];
 
         switch ($accion) {
+            case 'validar_nombre_combo':
+                $productosModel = new Productos();
+                $validacionNombre = $productosModel->validarNombreCombo($_POST['nombre_combo'] ?? '');
+                if (!$validacionNombre['valido']) {
+                    echo json_encode([
+                        'status' => 'error',
+                        'message' => $validacionNombre['mensaje'],
+                        'duplicado' => $validacionNombre['duplicado'] ?? false
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                echo json_encode(['status' => 'success'], JSON_UNESCAPED_UNICODE);
+                exit;
+
+            case 'obtener_estadisticas_combo':
+                try {
+                    $id_combo = filter_var($_POST['id_combo'] ?? null, FILTER_VALIDATE_INT);
+                    if ($id_combo === false || $id_combo <= 0) {
+                        throw new InvalidArgumentException('El identificador del combo no es válido.');
+                    }
+                    $productosModel = new Productos();
+                    $combo = $productosModel->obtenerComboPorId($id_combo);
+                    if (!$combo) {
+                        throw new RuntimeException('El combo ya no está disponible.');
+                    }
+                    echo json_encode([
+                        'status' => 'success',
+                        'combo' => $combo,
+                        'estadisticas' => $productosModel->obtenerEstadisticasCombo($id_combo)
+                    ], JSON_UNESCAPED_UNICODE);
+                } catch (\Throwable $e) {
+                    http_response_code(400);
+                    echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                }
+                exit;
+
             case 'consultar_combo':
                 try {
                     $id_combo = $_POST['id_combo'] ?? '';
@@ -87,6 +123,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                     $descuentoRaw = $_POST['descuento'] ?? null;
                     $productosJson = (string)($_POST['productos'] ?? '');
                     $productos = json_decode($productosJson, true, 512, JSON_THROW_ON_ERROR);
+                    $productosModel = new Productos();
+                    $validacionNombre = $productosModel->validarNombreCombo($nombre);
+                    if (!$validacionNombre['valido']) {
+                        echo json_encode([
+                            'status' => 'error',
+                            'code' => !empty($validacionNombre['duplicado']) ? 'duplicate_name' : 'invalid_name',
+                            'message' => $validacionNombre['mensaje']
+                        ], JSON_UNESCAPED_UNICODE);
+                        exit;
+                    }
 
                     if (!is_numeric($descuentoRaw) || (float)$descuentoRaw < 0 || (float)$descuentoRaw > 100) {
                         throw new InvalidArgumentException('El descuento sugerido debe ser un porcentaje entre 0 y 100.');
@@ -111,7 +157,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                         exit;
                     }
 
-                    $productosModel = new Productos();
                     $productosValidos = [];
                     foreach ($productos as $producto) {
                         $idProducto = (int)$producto['id'];
@@ -125,12 +170,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                         ];
                     }
 
-                    $id_combo = $productosModel->crearCombo(
+                    $resultadoCreacion = $productosModel->crearComboVerificandoDuplicados(
                         trim($nombre),
                         trim($descripcion),
                         $productosValidos,
                         $descuento
                     );
+                    if ($resultadoCreacion['estado'] === 'productos_duplicados') {
+                        echo json_encode([
+                            'status' => 'duplicate',
+                            'message' => 'Ya existe un combo con exactamente los mismos productos.',
+                            'combo' => $resultadoCreacion['combo']
+                        ], JSON_UNESCAPED_UNICODE);
+                        exit;
+                    }
+                    if ($resultadoCreacion['estado'] === 'nombre_duplicado') {
+                        echo json_encode([
+                            'status' => 'error',
+                            'code' => 'duplicate_name',
+                            'message' => 'Ya existe un combo con ese nombre. Elija otro nombre.'
+                        ], JSON_UNESCAPED_UNICODE);
+                        exit;
+                    }
+                    $id_combo = $resultadoCreacion['id_combo'];
                     if ((int)$id_combo <= 0) {
                         throw new RuntimeException('No se pudo confirmar el registro del combo en la base de datos.');
                     }
