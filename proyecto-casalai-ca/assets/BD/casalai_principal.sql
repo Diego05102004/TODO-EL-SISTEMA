@@ -915,6 +915,7 @@ CREATE TABLE `tbl_recepcion_productos` (
   `porcentaje_iva` decimal(7,2) DEFAULT NULL,
   `monto_iva` decimal(12,2) DEFAULT NULL,
   `total_factura` decimal(12,2) DEFAULT NULL,
+  `stock_aplicado` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_recepcion`),
   KEY `fk_recepcion_proveedor` (`id_proveedor`),
   CONSTRAINT `fk_recepcion_proveedor` FOREIGN KEY (`id_proveedor`) REFERENCES `tbl_proveedores` (`id_proveedor`),
@@ -928,7 +929,7 @@ CREATE TABLE `tbl_recepcion_productos` (
 
 LOCK TABLES `tbl_recepcion_productos` WRITE;
 /*!40000 ALTER TABLE `tbl_recepcion_productos` DISABLE KEYS */;
-INSERT INTO `tbl_recepcion_productos` VALUES (10,2,'2025-07-22','938215','habilitado',2624.00,16.00,419.84,3043.84),(11,1,'2025-07-27','012537','habilitado',160.00,16.00,25.60,185.60),(12,4,'2026-11-17','852914','habilitado',4611.50,16.00,737.84,5349.34),(13,4,'2026-11-17','749281','habilitado',4072.50,16.00,651.60,4724.10),(14,2,'2026-11-17','841030','habilitado',2516.00,16.00,402.56,2918.56),(15,2,'2026-11-17','841029','habilitado',2461.00,16.00,393.76,2854.76),(16,1,'2026-11-17','938210','habilitado',1014.50,16.00,162.32,1176.82),(17,4,'2026-11-17','216573','habilitado',3750.00,16.00,600.00,4350.00);
+INSERT INTO `tbl_recepcion_productos` VALUES (10,2,'2025-07-22','938215','habilitado',2624.00,16.00,419.84,3043.84,0),(11,1,'2025-07-27','012537','habilitado',160.00,16.00,25.60,185.60,0),(12,4,'2026-11-17','852914','habilitado',4611.50,16.00,737.84,5349.34,0),(13,4,'2026-11-17','749281','habilitado',4072.50,16.00,651.60,4724.10,0),(14,2,'2026-11-17','841030','habilitado',2516.00,16.00,402.56,2918.56,0),(15,2,'2026-11-17','841029','habilitado',2461.00,16.00,393.76,2854.76,0),(16,1,'2026-11-17','938210','habilitado',1014.50,16.00,162.32,1176.82,0),(17,4,'2026-11-17','216573','habilitado',3750.00,16.00,600.00,4350.00,0);
 /*!40000 ALTER TABLE `tbl_recepcion_productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1163,6 +1164,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_recepcion`(
 BEGIN
     DECLARE v_id_recepcion INT DEFAULT NULL;
     DECLARE v_estado VARCHAR(20) DEFAULT NULL;
+    DECLARE v_stock_aplicado TINYINT DEFAULT 0;
+    DECLARE v_productos_reversion INT DEFAULT 0;
     DECLARE v_existe INT DEFAULT 0;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -1182,7 +1185,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción no existe.';
     END IF;
 
-    SELECT id_recepcion, estado INTO v_id_recepcion, v_estado
+    SELECT id_recepcion, estado, stock_aplicado
+    INTO v_id_recepcion, v_estado, v_stock_aplicado
     FROM tbl_recepcion_productos
     WHERE correlativo = p_correlativo
     ORDER BY id_recepcion DESC
@@ -1193,6 +1197,27 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción ya está anulada.';
     END IF;
 
+    IF v_stock_aplicado = 1 THEN
+        SELECT COUNT(DISTINCT id_producto)
+        INTO v_productos_reversion
+        FROM tbl_detalle_recepcion_productos
+        WHERE id_recepcion = v_id_recepcion;
+
+        UPDATE tbl_productos p
+        INNER JOIN (
+            SELECT id_producto, SUM(cantidad) AS cantidad
+            FROM tbl_detalle_recepcion_productos
+            WHERE id_recepcion = v_id_recepcion
+            GROUP BY id_producto
+        ) d ON d.id_producto = p.id_producto
+        SET p.stock = COALESCE(p.stock, 0) - d.cantidad
+        WHERE COALESCE(p.stock, 0) >= d.cantidad;
+
+        IF ROW_COUNT() <> v_productos_reversion THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede anular la recepción porque el stock actual no alcanza para revertirla.';
+        END IF;
+    END IF;
+
     UPDATE tbl_recepcion_productos
     SET estado = 'anulado'
     WHERE id_recepcion = v_id_recepcion;
@@ -4378,9 +4403,9 @@ BEGIN
     SET v_total_factura = ROUND(v_subtotal + v_monto_iva, 2);
 
     INSERT INTO tbl_recepcion_productos
-        (id_proveedor, fecha, correlativo, estado, subtotal_factura, porcentaje_iva, monto_iva, total_factura)
+        (id_proveedor, fecha, correlativo, estado, subtotal_factura, porcentaje_iva, monto_iva, total_factura, stock_aplicado)
     VALUES
-        (p_id_proveedor, v_fecha, TRIM(p_correlativo), p_estado, v_subtotal, p_porcentaje_iva, v_monto_iva, v_total_factura);
+        (p_id_proveedor, v_fecha, TRIM(p_correlativo), p_estado, v_subtotal, p_porcentaje_iva, v_monto_iva, v_total_factura, IF(p_estado = 'habilitado', 1, 0));
     SET p_id_recepcion = LAST_INSERT_ID();
 
     SET v_indice = 0;
@@ -4393,6 +4418,12 @@ BEGIN
         VALUES (p_id_recepcion, v_id_producto, v_cantidad, v_costo);
         SET v_id_detalle = LAST_INSERT_ID();
 
+        IF p_estado = 'habilitado' THEN
+            UPDATE tbl_productos
+            SET stock = COALESCE(stock, 0) + v_cantidad
+            WHERE id_producto = v_id_producto;
+        END IF;
+
         SELECT nombre_producto INTO v_nombre_producto
         FROM tbl_productos
         WHERE id_producto = v_id_producto;
