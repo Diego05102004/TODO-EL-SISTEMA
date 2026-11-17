@@ -33,7 +33,7 @@ Esta versión unificada incorpora las siguientes mejoras implementadas:
 2. **Adaptador de base de datos dinámico**: Sistema de adaptadores para cargar catálogo de productos y proveedores desde MySQL
 3. **Sistema de adaptadores versátil**: Arquitectura extensible para integrar con diferentes sistemas (MySQL, CSV, otros)
 4. **Eliminación de feedback al anular**: Eliminación automática de registros del feedback_dataset.csv al anular recepciones
-5. **Reentrenamiento automático**: Reentrenamiento del modelo cuando se elimina feedback y quedan >=10 registros
+5. **Reentrenamiento automático**: Se intenta entrenar al insertar cada feedback desde el quinto registro y tras eliminar feedback; el modelo solo se publica si hay al menos 5 registros y ambas clases
 6. **Prevención de contaminación de datos**: Garantía de que el dataset de entrenamiento solo contenga recepciones válidas
 
 ### 1.2 Cambios desde Versión 2
@@ -49,7 +49,7 @@ Esta versión unificada incorpora las siguientes mejoras implementadas:
 
 | Aspecto | Versión 1 | Versión 2 | Versión 3 | Versión 4 |
 |---------|-----------|-----------|-----------|-----------|
-| Features de entrenamiento | 6 (errores + confianza) | 1 (solo confianza) | 1 (solo confianza) | 1 (solo confianza) |
+| Features del clasificador de confiabilidad | 6 (errores + confianza) | 1 (solo confianza) | 1 (solo confianza) | 1 (confianza OCR) + reglas de corrección separadas |
 | Modelo en inferencia | No usado | Sí usado | Sí usado | Sí usado |
 | Autenticación API | No | Token HMAC | Token HMAC | Token HMAC |
 | Alertas de confiabilidad | No | Sí (basadas en ML) | Sí (basadas en ML) | Sí (basadas en ML) |
@@ -60,6 +60,7 @@ Esta versión unificada incorpora las siguientes mejoras implementadas:
 | Degradación sin modelo | No definido | Graceful | Graceful | Graceful |
 | Eliminación de feedback | No | No | No | Sí (al anular) |
 | Reentrenamiento automático | Manual | Manual | Manual | Automático |
+| Correcciones aprendidas por campo | No | No | No | Sí, con sugerencia confirmable |
 
 ---
 
@@ -125,7 +126,7 @@ BD_TIPO=mysql
 BD_HOST=localhost
 BD_PORT=3306
 BD_USER=MicroserviceCAI
-BD_PASSWORD=MSagente#26
+BD_PASSWORD=<redactado>
 BD_DATABASE=casalai_principal
 ```
 
@@ -202,16 +203,17 @@ El cliente enviará automáticamente el token en el header `X-Auditor-Token` en 
 
 **Características del Modelo**:
 - **Tipo de modelo**: Clasificación binaria (Random Forest)
-- **Objetivo**: Predecir si una extracción OCR es confiable (error_total < 0.3) basándose únicamente en la confianza OCR
+- **Objetivo**: Predecir si una extracción OCR es confiable, según el promedio de errores de proveedor, correlativo, productos, subtotal y total, basándose únicamente en la confianza OCR
 - **Features de entrada**: 1 característica (confianza_ocr_promedio)
-- **Mínimo de muestras**: 10 registros en feedback_dataset.csv
+- **Mínimo de muestras**: 5 registros en feedback_dataset.csv, con al menos un ejemplo de cada clase
 - **Algoritmo base**: Tesseract OCR + Regex contextual
 - **Integración**: Modelo cargado y usado durante la extracción en tiempo real
 
 **Ecuación del Modelo**:
 ```
-target = 1 si error_total < 0.3 (extracción confiable)
-target = 0 si error_total >= 0.3 (extracción no confiable)
+error_promedio_extraccion = promedio de los cinco errores por campo
+target = 1 si error_promedio_extraccion < 0.3 (extracción confiable)
+target = 0 si error_promedio_extraccion >= 0.3 (extracción no confiable)
 
 feature = confianza_ocr_promedio (0.0 a 1.0)
 prediccion = modelo.predict_proba([[confianza_ocr_promedio]])
@@ -232,7 +234,7 @@ confiabilidad_ml = prediccion[1] (probabilidad de ser confiable)
 - **Fórmula**: `error = 1 si prediccion != ground_truth, 0 si coinciden`
 - **Implementación**: Calculado en PHP (`agregarFeedbackDataset()`)
 - **Significado**: Proporción de extracciones incorrectas por campo
-- **Uso**: Target para entrenamiento del modelo de clasificación
+- **Uso**: El reentrenador promedia los cinco errores por campo para calcular la etiqueta de confiabilidad
 
 **Confianza OCR Promedio**:
 - **Fórmula**: Promedio de confianza de Tesseract por campo extraído
@@ -241,7 +243,7 @@ confiabilidad_ml = prediccion[1] (probabilidad de ser confiable)
 - **Uso**: Feature principal para entrenamiento y predicción
 
 **Muestras de Entrenamiento**:
-- **Requisito mínimo**: 10 registros en feedback_dataset.csv
+- **Requisito mínimo**: 5 registros en feedback_dataset.csv, con ejemplos confiables y no confiables
 - **Fuente de datos**: Recepciones registradas con microservicio activado
 - **Acumulación**: Cada registro de recepción añade una fila al dataset
 
@@ -258,7 +260,10 @@ El modelo expone las siguientes métricas en el artefacto JSON (`metricas_reentr
   "error_promedio_productos": 0.67,
   "error_promedio_subtotal": 0.0,
   "error_promedio_total": 0.0,
+  "error_promedio_extraccion": 0.20,
   "confianza_promedio": 0.85,
+  "distribucion_clases": {"no_confiable": 4, "confiable": 11},
+  "accuracy_entrenamiento": 0.93,
   "precision_modelo": 0.93
 }
 ```
@@ -267,8 +272,10 @@ El modelo expone las siguientes métricas en el artefacto JSON (`metricas_reentr
 - `fecha_reentrenamiento`: Timestamp del último reentrenamiento
 - `num_registros`: Cantidad de muestras usadas para entrenar
 - `error_promedio_*`: Promedio de error por campo en el dataset
+- `error_promedio_extraccion`: Promedio de todos los errores de campo; se usa para formar la etiqueta
+- `distribucion_clases`: Conteos de ejemplos confiables y no confiables
 - `confianza_promedio`: Confianza OCR promedio del dataset
-- `precision_modelo`: Precisión del RandomForest en el conjunto de entrenamiento
+- `accuracy_entrenamiento` y `precision_modelo`: Accuracy sobre el mismo conjunto usado para entrenar; no representa una evaluación de generalización
 
 ### 3.3 Métricas de Validación
 
@@ -332,8 +339,8 @@ El modelo expone las siguientes métricas en el artefacto JSON (`metricas_reentr
 | **Real: No Confiable (0)** | Falsos Positivos (FP) | Verdaderos Negativos (VN) |
 
 **Definición de clases**:
-- **Clase positiva (1)**: Extracción con error_total < 0.3 (confiable)
-- **Clase negativa (0)**: Extracción con error_total >= 0.3 (no confiable)
+- **Clase positiva (1)**: Extracción con promedio de errores por campo < 0.3 (confiable)
+- **Clase negativa (0)**: Extracción con promedio de errores por campo >= 0.3 (no confiable)
 
 **Métricas derivadas**:
 - **Precisión (Precision)**: VP / (VP + FP) - De las predichas como confiables, cuántas lo son realmente
@@ -841,7 +848,7 @@ class FabricaAdaptadores:
                     host=os.getenv('BD_HOST', 'localhost'),
                     port=int(os.getenv('BD_PORT', 3306)),
                     user=os.getenv('BD_USER', 'root'),
-                    password=os.getenv('BD_PASSWORD', ''),
+                    password=os.getenv('BD_PASSWORD', "[REDACTADO]"),
                     database=os.getenv('BD_DATABASE', 'casalai_principal')
                 )
             except Exception as e:
@@ -944,7 +951,7 @@ Sigue este orden al leer el código:
 12. **Registro de recepción**: `Modelo/Controlador/recepcion.php` registra la recepción en la base de datos MariaDB.
 13. **Guardado de feedback**: `Modelo/Usuario/ProyectoCasalaiCa/Clases/Recepcion.php` calcula errores entre predicción y ground truth, y guarda en `microservicio/entrenamiento/feedback_dataset.csv`.
 14. **Eliminación de feedback**: Al anular una recepción, se elimina el registro correspondiente del feedback_dataset.csv.
-15. **Reentrenamiento automático**: Si al eliminar feedback quedan >=10 registros, se reentrena automáticamente el modelo.
+15. **Reentrenamiento automático**: Al guardar feedback, PHP cuenta los registros CSV y ejecuta `retrain.py` desde que hay 5 registros, en cada inserción posterior. Al eliminar feedback también lo ejecuta si quedan al menos 5. Apache/PHP debe poder ejecutar Python; se puede definir `PYTHON_EXECUTABLE` con la ruta al intérprete. El script valida ambas clases y deja el artefacto anterior intacto si no puede entrenar.
 16. **Reentrenamiento manual**: `microservicio/retrain.py` lee el feedback_dataset.csv, entrena un modelo RandomForest con solo la confianza OCR como feature, y guarda en `microservicio/modelo/modelo_actual.pkl`.
 
 ### 6.2 Selección de Factura por el Usuario
@@ -1026,7 +1033,7 @@ El microservicio devuelve un JSON con:
       "marca": "HP",
       "serial": "0002",
       "cantidad": 2,
-      "costo_unitario": 1520.0,
+      "costo": 1520.0,
       "confianza": 0.9
     }
   ],
@@ -1136,13 +1143,17 @@ El JavaScript recibe los datos y:
 **Proceso**:
 1. Compara datos extraídos por IA con datos confirmados por usuario
 2. Calcula error por campo (0 si coincide, 1 si no coincide)
-3. Calcula error_total como promedio de errores por campo
+3. Calcula y guarda un error independiente para cada campo; el reentrenador calcula el promedio de esos errores para etiquetar la extracción
 4. Guarda fila en `microservicio/entrenamiento/feedback_dataset.csv`
+
+Para que la comparación de productos produzca feedback correcto, `sp_obtener_productos_recepcion` debe devolver el nombre bajo `nombre_producto`. La consulta canónica está en `assets/BD/casalai_principal.sql`; en bases ya instaladas hay que ejecutar la migración [`actualizar_sp_obtener_productos_recepcion.sql`](../migraciones/actualizar_sp_obtener_productos_recepcion.sql) antes de registrar nuevas recepciones con IA.
+
+La respuesta del endpoint `/fase1/extraer` serializa el precio unitario como `costo`, que es la clave consumida por `calcularErrorProductos()`. El atributo interno de Python sigue llamándose `costo_unitario`; la conversión se hace en la frontera HTTP.
 
 **Formato del CSV**:
 ```csv
 timestamp,id_recepcion,id_factura,prediccion_proveedor,ground_truth_proveedor,error_proveedor,prediccion_correlativo,ground_truth_correlativo,error_correlativo,prediccion_productos,ground_truth_productos,error_productos,prediccion_subtotal,ground_truth_subtotal,error_subtotal,prediccion_total,ground_truth_total,error_total,discrepancias_corregidas,confianza_ocr_promedio
-2026-10-27 22:13:19,12,498231,eBay,ebay,0,498231,498231,0,"[{""nombre"":""HP DeskJet 2775"",""modelo"":""DeskJet 2775"",""marca"":""HP"",""serial"":""0002"",""cantidad"":2,""costo_unitario"":1520,""confianza"":0.9}]","[{""nombre"":"""",""cantidad"":2,""costo"":1520}]",1,5340,5340,0,6194.4,6194.4,0,[],0.94
+2026-10-27 22:13:19,12,498231,eBay,ebay,0,498231,498231,0,"[{""nombre"":""HP DeskJet 2775"",""modelo"":""DeskJet 2775"",""marca"":""HP"",""serial"":""0002"",""cantidad"":2,""costo"":1520,""confianza"":0.9}]","[{""nombre"":""HP DeskJet 2775"",""cantidad"":2,""costo"":1520}]",0,5340,5340,0,6194.4,6194.4,0,[],0.94
 ```
 
 ### 8.2 Validar que Feedback se Acumula
@@ -1232,8 +1243,8 @@ private function del_FeedbackDataset($idRecepcion) {
     $registrosRestantes = count($datos);
     error_log("Eliminado registro de feedback para recepción ID: $idRecepcion. Registros restantes: $registrosRestantes");
     
-    // Si hay más de 10 registros, reentrenar el modelo
-    if ($registrosRestantes >= 10) {
+    // Reentrenar si quedan al menos 5 registros (el script valida ambas clases)
+    if ($registrosRestantes >= 5) {
         $this->reentrenarModelo();
     }
     
@@ -1362,7 +1373,7 @@ Anular recepción en BD (estado = 'anulado')
     ↓
 Eliminar registro de feedback_dataset.csv
     ↓
-¿Registros restantes >= 10?
+¿Registros restantes >= 5 y existen ejemplos de ambas clases?
     ↓ Sí
 Ejecutar retrain.py (reentrenar modelo)
     ↓
@@ -1374,7 +1385,7 @@ Notificación creada
 ### 9.5 Beneficios
 
 1. **Prevención de contaminación**: Registros anulados (posibles errores del usuario) no afectan el entrenamiento
-2. **Reentrenamiento automático**: El modelo se actualiza automáticamente cuando hay suficientes datos
+2. **Reentrenamiento automático**: Se intenta reentrenar al insertar cada nuevo feedback desde el quinto registro; el modelo se actualiza solo si el dataset tiene ambas clases
 3. **Logging**: Todos los pasos se registran en logs para auditoría
 4. **Manejo de errores**: Si falla la eliminación del feedback, no afecta la anulación de la recepción
 5. **Dataset limpio**: Garantiza que el dataset de entrenamiento solo contenga recepciones válidas
@@ -1388,9 +1399,12 @@ Notificación creada
 **Archivo**: `microservicio/retrain.py`
 
 **Requisitos**:
-- Al menos 10 registros en `feedback_dataset.csv`
+- Al menos 5 registros válidos en `feedback_dataset.csv`
+- Al menos un ejemplo con promedio de errores por campo < 0.3 y otro con promedio >= 0.3
+- Todas las columnas de error y confianza deben ser numéricas y estar entre 0 y 1
 - Python con dependencias instaladas
 - El microservicio no necesita estar ejecutándose
+- Si falta una de las clases, el entrenamiento se rechaza, no se actualizan el modelo ni las métricas y el proceso termina con error
 
 ### 10.2 Ejecutar Reentrenamiento
 
@@ -1404,7 +1418,7 @@ python retrain.py
 
 1. **Lectura del dataset**:
    - Lee `entrenamiento/feedback_dataset.csv`
-   - Verifica que haya al menos 10 registros
+   - Verifica que haya al menos 5 registros válidos y las dos clases
 
 2. **Cálculo de métricas**:
    - Calcula error promedio por campo
@@ -1417,8 +1431,9 @@ python retrain.py
    - **Justificación**: Los errores no están disponibles durante la extracción
 
 4. **Construcción de target**:
-   - target = 1 si error_total < 0.3 (extracción confiable)
-   - target = 0 si error_total >= 0.3 (extracción no confiable)
+   - Calcula el promedio de `error_proveedor`, `error_correlativo`, `error_productos`, `error_subtotal` y `error_total`
+   - target = 1 si ese promedio < 0.3 (extracción confiable)
+   - target = 0 si ese promedio >= 0.3 (extracción no confiable)
 
 5. **Entrenamiento del modelo**:
    - Usa RandomForestClassifier
@@ -1426,6 +1441,8 @@ python retrain.py
    - Entrena para predecir confiabilidad basándose solo en confianza OCR
 
 6. **Guardado del modelo**:
+   - Resuelve las rutas desde la ubicación de `retrain.py`, no desde el directorio actual
+   - Valida el modelo serializado y publica el `.pkl` y las métricas mediante archivos temporales
    - Guarda en `modelo/modelo_actual.pkl`
    - Guarda métricas en `entrenamiento/metricas_reentrenamiento.json`
 
@@ -1445,14 +1462,16 @@ Confianza OCR Promedio: 85.00%
 === REENTRENAMIENTO COMPLETADO ===
 Modelo guardado en: modelo/modelo_actual.pkl
 Métricas guardadas en: entrenamiento/metricas_reentrenamiento.json
-Precisión del modelo: 93.33%
+Accuracy de entrenamiento: 93.33% (no equivale a evaluación sobre datos no vistos)
 ```
 
 ### 10.5 Uso del Modelo Entrenado
 
-**Estado actual**: El modelo entrenado **SÍ se usa en el flujo de extracción**.
+**Estado actual**: El modelo binario válido se usa en el flujo de extracción. El auditor comprueba la firma del archivo en cada predicción y carga automáticamente un reemplazo atómico sin reiniciar FastAPI. El endpoint `POST /modelo/recargar` también recarga esa misma instancia.
 
 **Ubicación**: `auditor_recepcion.py`, método `_predecir_confiabilidad()`
+
+Un artefacto con una sola clase o con un número de características distinto de uno se rechaza; en ese caso se omite `confiabilidad_ml` y el OCR continúa sin la predicción ML.
 
 **Momento de predicción**: Inmediatamente después de la extracción OCR.
 
@@ -1758,12 +1777,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
    - Cobertura: Operaciones de caché
 
 8. **test_reentrenamiento_con_suficientes_datos**
-   - Objetivo: Verificar reentrenamiento con 10+ registros
+   - Objetivo: Verificar reentrenamiento con 5+ registros y ambas clases
    - Valida: Modelo entrenado, métricas guardadas
    - Cobertura: Script retrain.py
 
 9. **test_reentrenamiento_con_insuficientes_datos**
-   - Objetivo: Verificar que reentrenamiento falla con <10 registros
+   - Objetivo: Verificar que reentrenamiento falla con <5 registros o una sola clase
    - Valida: No se entrena, mensaje de error
    - Cobertura: Script retrain.py
 
@@ -1819,7 +1838,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 20. **test_reentrenamiento_automatico** (NUEVO)
     - Objetivo: Verificar reentrenamiento automático al eliminar feedback
-    - Valida: Modelo reentrenado cuando quedan >=10 registros
+    - Valida: Modelo reentrenado cuando quedan >=5 registros y ambas clases
     - Cobertura: reentrenarModelo()
 
 **Ejecución recomendada**:
@@ -1865,7 +1884,7 @@ python -m unittest microservicio.tests.test_auditor_recepcion -v
 - Registrar recepción con microservicio
 - Anular recepción
 - Validar: Registro eliminado de feedback_dataset.csv
-- Validar: Si quedan >=10 registros, modelo reentrenado
+- Validar: Si quedan >=5 registros y existen ambas clases, el modelo se reentrena
 
 #### 14.1.3 Pruebas de Seguridad
 
@@ -2058,7 +2077,7 @@ python -m unittest microservicio.tests.test_auditor_recepcion -v
 | Confianza muy baja | Imagen de buena calidad, resolución adecuada. |
 | Discrepancias CRÍTICAS | Número de factura en la imagen coincide con el formulario. |
 | feedback_dataset.csv vacío | Se han registrado recepciones con `usar_ia = true`. |
-| Reentrenamiento falla | Hay al menos 10 registros en feedback_dataset.csv. |
+| Reentrenamiento falla | Hay al menos 5 registros válidos, con ejemplos de ambas clases y dependencias disponibles. |
 | No se muestra confiabilidad_ml | modelo_actual.pkl existe y se cargó correctamente. |
 | Modelo ML no se carga | Verificar que modelo_actual.pkl existe en microservicio/modelo/. |
 | Documento no reconocido como factura | Verificar que el documento tenga palabras clave de factura. |
@@ -2179,7 +2198,7 @@ try:
         host=os.getenv('BD_HOST', 'localhost'),
         port=int(os.getenv('BD_PORT', 3306)),
         user=os.getenv('BD_USER', 'root'),
-        password=os.getenv('BD_PASSWORD', ''),
+        password=os.getenv('BD_PASSWORD', "[REDACTADO]"),
         database=os.getenv('BD_DATABASE', 'casalai_principal')
     )
 except Exception as e:
@@ -2285,8 +2304,8 @@ try {
 | `recepcion.php` (controlador) | Backend PHP | ✅ Activo - Registra recepción y captura feedback |
 | `Recepcion.php` (modelo) | Modelo PHP | ✅ Activo - `agregarFeedbackDataset()`, `eliminarFeedbackDataset()` |
 | `feedback_dataset.csv` | Dataset de feedback | ✅ Activo - Acumula predicciones vs ground truth |
-| `retrain.py` | Script de reentrenamiento | ✅ Activo - Entrena RandomForest con 1 feature |
-| `modelo_actual.pkl` | Modelo entrenado | ✅ Activo - Usado en extracción |
+| `retrain.py` | Script de reentrenamiento | ✅ Activo - Valida mínimo 5 registros y ambas clases; genera clasificador de confiabilidad y reglas de corrección por campo |
+| `modelo_actual.pkl` | Bundle versionado | ✅ Activo - Incluye el clasificador de confiabilidad y reglas de corrección; el auditor detecta y carga el archivo actualizado |
 | `main.py` | Punto de entrada FastAPI | ✅ Activo - Configura rate limiting global |
 | `config.py` | Configuración Pydantic | ✅ Activo - Carga tokens desde variables de entorno |
 | `.env` | Variables de entorno | ✅ Activo - Almacena tokens y configuración BD para FastAPI |
@@ -2302,7 +2321,7 @@ try {
 |---------|-----|--------|
 | `feedback_store.py` | Almacenamiento de feedback en JSONL | ❌ No usado - PHP escribe directamente al CSV |
 | `model_registry.py` | Gestión de versiones de modelos | ❌ No usado - Modelo se guarda directamente como .pkl |
-| `entrenar_modelo.py` | Orquestador de reentrenamiento | ❌ No usado - `retrain.py` hace el reentrenamiento |
+| `entrenar_modelo.py` | Entrada opcional de compatibilidad | ⚙️ No invocado automáticamente; si se ejecuta, delega a `retrain.py` |
 | `logger.py` | Función de logging de predicciones | ❌ No usado - PHP escribe directamente al CSV |
 
 ---
@@ -2346,8 +2365,18 @@ try {
 12. **Catálogo siempre actualizado**: Productos y proveedores desde MySQL en tiempo real
 13. **Arquitectura extensible**: Sistema de adaptadores permite integrar con otros sistemas
 14. **Dataset limpio**: Eliminación automática de feedback erróneo al anular recepciones
-15. **Reentrenamiento automático**: Modelo se actualiza automáticamente cuando se elimina feedback
+15. **Reentrenamiento automático**: Modelo se actualiza automáticamente al alcanzar el umbral configurado de feedback válido
 16. **Fallback robusto**: Si MySQL falla, usa CSV automáticamente
+
+### 17.3 Aprendizaje de correcciones por campo
+
+- El bundle versión 3 conserva el clasificador de confiabilidad basado en la confianza OCR y añade reglas para campos de factura y atributos de productos.
+- Cada recepción nueva puede guardar, junto con el feedback existente, snapshots de los campos predichos y confirmados. Las filas históricas sin snapshots siguen siendo válidas para confiabilidad, pero no aportan correcciones por campo.
+- Una regla requiere coincidencias consistentes en al menos dos recepciones independientes. Las sugerencias numéricas también requieren contexto coincidente de proveedor y productos.
+- Las sugerencias se muestran para revisión y requieren confirmación explícita; no modifican silenciosamente la recepción ni el OCR original.
+- El auditor comprueba cambios en `modelo_actual.pkl` durante la extracción y carga las reglas actualizadas antes de generar sugerencias, sin reiniciar el proceso de la API.
+- La fecha de factura se excluye del formulario de aprendizaje y de las reglas de corrección, ya que no forma parte de los datos registrados en la recepción.
+- `metricas_reentrenamiento.json` incluye reglas activas y evaluación por campo. Con pocos ejemplos, una métrica de entrenamiento no representa precisión de generalización.
 
 ---
 

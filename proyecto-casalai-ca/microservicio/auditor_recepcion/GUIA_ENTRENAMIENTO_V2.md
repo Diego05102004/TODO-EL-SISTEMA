@@ -204,7 +204,7 @@ Sin cambios significativos respecto a la versión anterior.
 **Archivo**: `microservicio/retrain.py`
 
 **Requisitos**:
-- Al menos 10 registros en `feedback_dataset.csv`
+- Al menos 5 registros válidos en `feedback_dataset.csv`, con ejemplos confiables y no confiables
 - Python con dependencias instaladas
 - El microservicio no necesita estar ejecutándose
 
@@ -220,7 +220,7 @@ python retrain.py
 
 1. **Lectura del dataset**:
    - Lee `entrenamiento/feedback_dataset.csv`
-   - Verifica que haya al menos 10 registros
+   - Verifica que haya al menos 5 registros y las dos clases
 
 2. **Cálculo de métricas**:
    - Calcula error promedio por campo
@@ -233,8 +233,9 @@ python retrain.py
    - **Justificación**: Los errores no están disponibles durante la extracción
 
 4. **Construcción de target**:
-   - target = 1 si error_total < 0.3 (extracción confiable)
-   - target = 0 si error_total >= 0.3 (extracción no confiable)
+   - Calcula el promedio de los cinco errores por campo
+   - target = 1 si el promedio < 0.3 (extracción confiable)
+   - target = 0 si el promedio >= 0.3 (extracción no confiable)
 
 5. **Entrenamiento del modelo**:
    - Usa RandomForestClassifier
@@ -328,7 +329,7 @@ Después de cada extracción con el microservicio activado, confirma:
 | Confianza muy baja | Imagen de buena calidad, resolución adecuada. |
 | Discrepancias CRÍTICAS | Número de factura en la imagen coincide con el formulario. |
 | feedback_dataset.csv vacío | Se han registrado recepciones con `usar_ia = true`. |
-| Reentrenamiento falla | **Hay al menos 10 registros en feedback_dataset.csv** y el token está configurado. |
+| Reentrenamiento falla | **Hay al menos 5 registros válidos y ejemplos de ambas clases** y las dependencias están instaladas. |
 | **No se muestra confiabilidad_ml (NUEVO)** | modelo_actual.pkl existe y se cargó correctamente. |
 | **Modelo ML no se carga (NUEVO)** | Verificar que modelo_actual.pkl existe en microservicio/modelo/. |
 
@@ -354,7 +355,7 @@ Después de cada extracción con el microservicio activado, confirma:
 |---------|-----|--------|
 | `feedback_store.py` | Almacenamiento de feedback en JSONL | ❌ No usado - PHP escribe directamente al CSV |
 | `model_registry.py` | Gestión de versiones de modelos | ❌ No usado - Modelo se guarda directamente como .pkl |
-| `entrenar_modelo.py` | Orquestador de reentrenamiento | ❌ No usado - `retrain.py` hace el reentrenamiento |
+| `entrenar_modelo.py` | Entrada opcional de compatibilidad | ⚙️ No invocado automáticamente; si se ejecuta, delega a `retrain.py` |
 | `logger.py` | Función de logging de predicciones | ❌ No usado - PHP escribe directamente al CSV |
 
 ## 12. Seguridad y operación (Actualizado)

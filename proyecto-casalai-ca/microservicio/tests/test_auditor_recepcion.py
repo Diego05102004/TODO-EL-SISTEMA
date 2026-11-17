@@ -4,6 +4,12 @@ from microservicio.modelo.auditor_recepcion import AuditorRecepcion
 
 
 class ExtraccionProductosFacturaTest(unittest.TestCase):
+    def crear_auditor_sin_bd(self):
+        auditor = AuditorRecepcion.__new__(AuditorRecepcion)
+        auditor.patrones = auditor.PATRONES_POR_DEFECTO
+        auditor.adaptador_bd = None
+        return auditor
+
     def test_extrae_items_multilinea_y_reconcilia_precio_ocr(self):
         texto_ocr = """DESCRIPCION / MODELO MARCA SERIAL UNITARIO CANT. TOTAL
 HP. DeskJet.2775 HP 0002 $4520.00 2 $3040.00
@@ -15,7 +21,7 @@ Sublime
 Subtotal: $5340.00,
 IVA (16%): $854.40
 Total: $6194.40"""
-        auditor = AuditorRecepcion.__new__(AuditorRecepcion)
+        auditor = self.crear_auditor_sin_bd()
 
         productos = auditor._extraer_productos(texto_ocr)
 
@@ -43,7 +49,7 @@ Sublime
 Subtotal: $5340.00,
 IVA (16%): $854.40
 Total: $6194.40"""
-        auditor = AuditorRecepcion.__new__(AuditorRecepcion)
+        auditor = self.crear_auditor_sin_bd()
 
         factura = auditor._extraer_campos_factura(texto_ocr)
 
@@ -60,7 +66,7 @@ Tinta HP Original GT HP. 0013 $250.00 6 $1500.00
 662
 Tarjeta SD Kingston -Azon 0008 $80.00 10 $800.00
 Sublime"""
-        auditor = AuditorRecepcion.__new__(AuditorRecepcion)
+        auditor = self.crear_auditor_sin_bd()
         auditor.config = {"tolerancia_costo": 0.05}
         productos_factura = auditor._extraer_productos(texto_ocr)
         productos_formulario = [
@@ -82,7 +88,7 @@ Sublime"""
 Cable USB HP 0001 $10.00 2 $20.00
 Subtotal: $20.00
 Total: $20.00"""
-        auditor = AuditorRecepcion.__new__(AuditorRecepcion)
+        auditor = self.crear_auditor_sin_bd()
 
         factura = auditor._extraer_campos_factura(texto_ocr)
 

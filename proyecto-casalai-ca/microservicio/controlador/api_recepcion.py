@@ -49,6 +49,19 @@ class FeedbackPayload(BaseModel):
     ground_truth: dict
     ruta_archivo: str
 
+
+def _serializar_producto(producto):
+    return {
+        "nombre": producto.nombre,
+        "modelo": producto.modelo,
+        "marca": producto.marca,
+        "serial": producto.serial,
+        "cantidad": producto.cantidad,
+        "costo": producto.costo_unitario,
+        "confianza": producto.confianza,
+    }
+
+
 @router.get("/health")
 def health_check():
     """Endpoint de health check para el JavaScript"""
@@ -138,21 +151,18 @@ def registrar_feedback(payload: FeedbackPayload):
 @router.post("/modelo/recargar")
 def recargar_modelo():
     """
-    Permite sincronizar la API con la versión más reciente del modelo 
-    registrada en disco sin necesidad de reiniciar el contenedor o servidor.
+    Recarga el modelo que utiliza el auditor sin reiniciar FastAPI.
     """
-    try:
-        active_v, info = registry.get_active_model_info()
-        logger.info(f"Modelo recargado en caliente de forma exitosa. Versión activa: {active_v}")
-        return {
-            "status": "success",
-            "active_version": active_v,
-            "detalles": info,
-            "message": "Modelo recargado exitosamente en caliente."
-        }
-    except Exception as e:
-        logger.error(f"Error al intentar recargar el modelo: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error al recargar modelo: {str(e)}")
+    if not auditor.recargar_modelo(force=True):
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo cargar un modelo binario válido desde modelo/modelo_actual.pkl.",
+        )
+    return {
+        "status": "success",
+        "modelo_ml_cargado": True,
+        "message": "Modelo de auditoría recargado exitosamente.",
+    }
 
 # Endpoints compatibles con el proxy PHP original
 @router.post("/fase1/extraer", dependencies=[Depends(validar_token_auditor)])
@@ -182,25 +192,17 @@ async def fase1_extraer(request: Request, imagen: UploadFile = File(...)):
             "numero_factura": resultado.numero_factura,
             "nombre_proveedor": resultado.nombre_proveedor,
             "fecha_factura": resultado.fecha_factura,
-            "productos": [
-                {
-                    "nombre": p.nombre,
-                    "modelo": p.modelo,
-                    "marca": p.marca,
-                    "serial": p.serial,
-                    "cantidad": p.cantidad,
-                    "costo_unitario": p.costo_unitario,
-                    "confianza": p.confianza
-                }
-                for p in resultado.productos
-            ],
+            "productos": [_serializar_producto(producto) for producto in resultado.productos],
             "subtotal_factura": resultado.subtotal_factura,
             "porcentaje_iva": resultado.porcentaje_iva,
             "monto_iva": resultado.monto_iva,
             "total_factura": resultado.total_factura,
             "confianza_promedio": resultado.metadatos_extraccion.get('confianza_promedio', 0.0),
             "es_factura_valida": resultado.metadatos_extraccion.get('es_factura_valida', True),
-            "mensaje_validacion": resultado.metadatos_extraccion.get('mensaje_validacion', '')
+            "mensaje_validacion": resultado.metadatos_extraccion.get('mensaje_validacion', ''),
+            "sugerencias_autocorreccion": resultado.metadatos_extraccion.get(
+                'sugerencias_autocorreccion', []
+            ),
         }
         
         # Incluir confiabilidad ML si está disponible

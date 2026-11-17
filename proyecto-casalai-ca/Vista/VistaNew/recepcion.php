@@ -124,25 +124,35 @@ ob_start();
         </div>
         <div class="modal-body">
             <form id="recepcionForm" enctype="multipart/form-data">
-                <!-- Información General -->
+                <!-- CAI -->
                 <div class="form-section">
-                    <div class="section-title">
-                        <i class="fas fa-info-circle"></i>
-                        <h3>Información General</h3>
-                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="fotoFacturaRecepcion">
                                 <i class="fas fa-robot"></i>
-                                Factura para análisis asistido
+                                Factura para análisis asistido por CAI
                             </label>
                             <input type="file" id="fotoFacturaRecepcion" name="foto_factura" accept="image/*,.pdf">
-                            <small>Adjunte una imagen o PDF (máximo 5 MB). <br>
-                                El análisis rellenará los datos detectados.</small>
+                            <small>Adjunte una imagen o PDF (máximo 5 MB). El análisis rellenará los datos detectados.</small>
                         </div>
+                    </div>
+                    <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
+                        <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
+                        <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
+                    </div>
+                    <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
+                    <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
+                </div>
+
+                <!-- Información General -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>Información Principal</h3>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="correlativo">
-                                <i class="fas fa-file-invoice"></i>
                                 Número de Factura*
                             </label>
                             <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" maxlength="6">
@@ -150,7 +160,6 @@ ob_start();
                         </div>
                         <div class="form-group">
                             <label for="proveedor">
-                                <i class="fas fa-building"></i>
                                 Proveedor*
                             </label>
                             <select id="proveedor" name="proveedor" class="input-select">
@@ -168,12 +177,6 @@ ob_start();
                             <span class="span-value" id="sproveedor"></span>
                         </div>
                     </div>
-                    <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
-                        <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
-                        <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
-                    </div>
-                    <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
-                    <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
                 </div>
                 
                 <!-- Productos de la Recepción -->

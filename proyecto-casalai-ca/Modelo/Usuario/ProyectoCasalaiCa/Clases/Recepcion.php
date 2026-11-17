@@ -19,6 +19,7 @@ class Recepcion extends BD{
     
     // Constantes de validación
     const MAX_REGISTROS_PAGINA = 100;
+    const MINIMUM_FEEDBACK_SAMPLES = 5;
     const MAX_RANGO_FECHAS_DIAS = 365;
     const CAMPOS_OBLIGATORIOS = ['idproveedor', 'correlativo'];
     
@@ -930,18 +931,32 @@ class Recepcion extends BD{
         return $this->agg_FeedbackDataset($datosFeedback);
     }
 
+    protected function rutaFeedbackDataset() {
+        return dirname(__DIR__, 4) . '/microservicio/entrenamiento/feedback_dataset.csv';
+    }
+
     private function agg_FeedbackDataset($datosFeedback) {
-        // Ruta hacia el feedback_dataset.csv dentro del microservicio
-        $rutaCsv = dirname(__DIR__, 4) . '/microservicio/entrenamiento/feedback_dataset.csv';
+        $rutaCsv = $this->rutaFeedbackDataset();
 
         if (!file_exists($rutaCsv)) {
             error_log("CRítico: No se encontró el feedback_dataset.csv en: " . $rutaCsv);
             return false;
         }
 
-        $fp = fopen($rutaCsv, 'a');
+        $fp = fopen($rutaCsv, 'c+');
         if ($fp === false) {
             error_log("CRítico: No se pudo abrir el archivo feedback_dataset.csv para escritura.");
+            return false;
+        }
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            error_log("CRítico: No se pudo bloquear feedback_dataset.csv para escritura.");
+            return false;
+        }
+        if (fseek($fp, 0, SEEK_END) !== 0) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            error_log("CRítico: No se pudo posicionar al final de feedback_dataset.csv.");
             return false;
         }
 
@@ -970,7 +985,11 @@ class Recepcion extends BD{
         $gtTotal = $datosFeedback['ground_truth_total'] ?? 0;
         $errorTotal = $this->calcularErrorNumerico($predTotal, $gtTotal);
         
-        $discrepanciasCorregidas = $datosFeedback['discrepancias_corregidas'] ?? [];
+        $discrepanciasCorregidas = [
+            'discrepancias' => $datosFeedback['discrepancias_corregidas'] ?? [],
+            'campos_predichos' => $datosFeedback['campos_predichos'] ?? [],
+            'campos_confirmados' => $datosFeedback['campos_confirmados'] ?? []
+        ];
 
         $fila = [
             $timestamp,
@@ -995,9 +1014,49 @@ class Recepcion extends BD{
             $datosFeedback['confianza_ocr_promedio'] ?? 0
         ];
 
-        fputcsv($fp, $fila);
+        $registroGuardado = fputcsv($fp, $fila) !== false && fflush($fp);
+        $registrosFeedback = $registroGuardado ? $this->contarRegistrosFeedback($fp) : null;
+        flock($fp, LOCK_UN);
         fclose($fp);
+
+        if (!$registroGuardado) {
+            error_log("CRítico: No se pudo escribir el registro en feedback_dataset.csv.");
+            return false;
+        }
+        if ($registrosFeedback === null) {
+            error_log("CRítico: No se pudo contar los registros de feedback después de guardarlos.");
+            return false;
+        }
+
+        error_log("Feedback guardado correctamente. Registros disponibles: $registrosFeedback.");
+        if ($registrosFeedback >= self::MINIMUM_FEEDBACK_SAMPLES) {
+            error_log("Umbral de " . self::MINIMUM_FEEDBACK_SAMPLES . " registros alcanzado; iniciando reentrenamiento.");
+            if (!$this->reentrenarModelo()) {
+                error_log("CRítico: El feedback se guardó, pero el reentrenamiento no se completó.");
+            }
+        }
+
         return true;
+    }
+
+    private function contarRegistrosFeedback($fp) {
+        if (!rewind($fp)) {
+            return null;
+        }
+
+        $encabezadoLeido = false;
+        $registros = 0;
+        while (($fila = fgetcsv($fp)) !== false) {
+            if (!$encabezadoLeido) {
+                $encabezadoLeido = true;
+                continue;
+            }
+            if ($fila !== [null]) {
+                $registros++;
+            }
+        }
+
+        return $encabezadoLeido ? $registros : null;
     }
 
     public function eliminarFeedbackDataset($idRecepcion) {
@@ -1005,8 +1064,7 @@ class Recepcion extends BD{
     }
 
     private function del_FeedbackDataset($idRecepcion) {
-        // Ruta hacia el feedback_dataset.csv dentro del microservicio
-        $rutaCsv = dirname(__DIR__, 4) . '/microservicio/entrenamiento/feedback_dataset.csv';
+        $rutaCsv = $this->rutaFeedbackDataset();
 
         if (!file_exists($rutaCsv)) {
             error_log("ADVERTENCIA: No se encontró el feedback_dataset.csv en: " . $rutaCsv);
@@ -1058,15 +1116,14 @@ class Recepcion extends BD{
         $registrosRestantes = count($datos);
         error_log("Eliminado registro de feedback para recepción ID: $idRecepcion. Registros restantes: $registrosRestantes");
         
-        // Si hay más de 5 registros, reentrenar el modelo
-        if ($registrosRestantes >= 5) {
+        if ($registrosRestantes >= self::MINIMUM_FEEDBACK_SAMPLES) {
             $this->reentrenarModelo();
         }
         
         return true;
     }
 
-    private function reentrenarModelo() {
+    protected function reentrenarModelo() {
         // Ruta hacia el script de reentrenamiento
         $rutaScript = dirname(__DIR__, 4) . '/microservicio/retrain.py';
         
@@ -1075,8 +1132,13 @@ class Recepcion extends BD{
             return false;
         }
 
-        // Ejecutar el script de reentrenamiento
-        $comando = 'python "' . $rutaScript . '"';
+        if (!function_exists('exec')) {
+            error_log("CRítico: La función exec no está disponible; no se pudo iniciar el reentrenamiento.");
+            return false;
+        }
+
+        $python = getenv('PYTHON_EXECUTABLE') ?: 'python';
+        $comando = escapeshellarg($python) . ' ' . escapeshellarg($rutaScript) . ' 2>&1';
         $salida = [];
         $codigoRetorno = 0;
         
@@ -1088,7 +1150,7 @@ class Recepcion extends BD{
             return false;
         }
         
-        error_log("Modelo reentrenado exitosamente después de eliminar feedback.");
+        error_log("Modelo reentrenado exitosamente.");
         return true;
     }
 

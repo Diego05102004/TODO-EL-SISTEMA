@@ -1,11 +1,115 @@
 {
-  "fecha_reentrenamiento": "2026-10-29T21:21:30.169379",
-  "num_registros": 6,
-  "error_promedio_proveedor": 0.8843323586744632,
-  "error_promedio_correlativo": 0.6666666666666666,
-  "error_promedio_productos": 1.0,
-  "error_promedio_subtotal": 0.02067302580266504,
-  "error_promedio_total": 0.0405255037249945,
-  "confianza_promedio": 0.87298199023199,
-  "precision_modelo": 1.0
+  "fecha_reentrenamiento": "2026-11-17T06:54:58.455895",
+  "num_registros": 5,
+  "distribucion_clases": {
+    "no_confiable": 4,
+    "confiable": 1
+  },
+  "error_promedio_extraccion": 0.4174471365121041,
+  "error_promedio_proveedor": 0.886198830409356,
+  "error_promedio_correlativo": 0.8,
+  "error_promedio_productos": 0.327409863945578,
+  "error_promedio_subtotal": 0.02490899819281705,
+  "error_promedio_total": 0.0487179900127694,
+  "confianza_promedio": 0.856001465201466,
+  "accuracy_entrenamiento": 1.0,
+  "precision_modelo": 1.0,
+  "correcciones_activas": {
+    "por_campo": {
+      "proveedor": 0,
+      "numero_factura": 0,
+      "producto": 1,
+      "producto.nombre": 1,
+      "producto.modelo": 0,
+      "producto.marca": 0,
+      "producto.serial": 0,
+      "producto.cantidad": 0,
+      "producto.costo": 0,
+      "subtotal_factura": 0,
+      "porcentaje_iva": 0,
+      "monto_iva": 0,
+      "total_factura": 0
+    }
+  },
+  "politica_autocorreccion": {
+    "soporte_minimo_recepciones": 2,
+    "requiere_confirmacion_humana": true,
+    "campos_numericos_solo_con_contexto_exactamente_coincidente": true,
+    "aplica_sugerencias_automaticamente": false
+  },
+  "evaluacion_correcciones": {
+    "metodo": "leave_one_reception_out",
+    "documentos_evaluados": 5,
+    "documentos_con_sugerencias": 1,
+    "campos_con_error": 39,
+    "campos_sugeridos": 1,
+    "campos_sugeridos_correctamente": 0,
+    "precision_campos_sugeridos": 0.0,
+    "cobertura_campos_evaluables": 0.02564102564102564,
+    "por_campo": {
+      "monto_iva": {
+        "evaluables": 2,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "porcentaje_iva": {
+        "evaluables": 1,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "producto.cantidad": {
+        "evaluables": 3,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "producto.costo": {
+        "evaluables": 3,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "producto.nombre": {
+        "evaluables": 9,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "producto.serial": {
+        "evaluables": 11,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "proveedor": {
+        "evaluables": 5,
+        "sugeridos": 1,
+        "correctos": 0,
+        "precision": 0.0,
+        "cobertura": 0.2
+      },
+      "subtotal_factura": {
+        "evaluables": 3,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      },
+      "total_factura": {
+        "evaluables": 2,
+        "sugeridos": 0,
+        "correctos": 0,
+        "precision": null,
+        "cobertura": 0.0
+      }
+    }
+  }
 }

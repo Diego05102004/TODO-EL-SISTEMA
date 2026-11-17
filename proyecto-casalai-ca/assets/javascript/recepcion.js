@@ -477,6 +477,220 @@ function buscarOpcionCatalogo(select, texto) {
     return parciales.length === 1 ? parciales[0] : null;
 }
 
+function buscarOpcionCatalogoPorDatos(select, producto) {
+    if (!select) return null;
+    const campos = [
+        ['nombre', opcion => opcion.textContent],
+        ['modelo', opcion => opcion.dataset.modelo],
+        ['marca', opcion => opcion.dataset.marca],
+        ['serial', opcion => opcion.dataset.serial]
+    ].filter(([campo]) => producto[campo]);
+    if (!campos.length) return null;
+
+    const coincidencias = Array.from(select.options).filter(opcion =>
+        opcion.value && campos.every(([campo, obtenerValor]) =>
+            normalizarTextoRecepcion(obtenerValor(opcion)) ===
+            normalizarTextoRecepcion(producto[campo])
+        )
+    );
+    return coincidencias.length === 1 ? coincidencias[0] : null;
+}
+
+function mostrarSugerenciasAutocorreccion(factura) {
+    const resultado = document.getElementById('resultadoIARecepcion');
+    if (!resultado) return;
+
+    const sugerencias = Array.isArray(factura.sugerencias_autocorreccion)
+        ? factura.sugerencias_autocorreccion
+        : [];
+    if (!sugerencias.length) return;
+
+    const titulo = document.createElement('h4');
+    titulo.textContent = 'Sugerencias aprendidas por campo (requieren confirmación)';
+    resultado.appendChild(titulo);
+
+    const lista = document.createElement('ul');
+    sugerencias.forEach(sugerencia => {
+        const elemento = document.createElement('li');
+        const evidencia = `Evidencia: ${Number(sugerencia.evidencia) || 0} recepciones`;
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'btn btn-sm btn-outline-primary';
+
+        if (sugerencia.campo === 'proveedor') {
+            const proveedor = document.getElementById('proveedor');
+            const opcion = buscarOpcionCatalogo(proveedor, sugerencia.valor_sugerido);
+            elemento.appendChild(document.createTextNode(
+                `Proveedor: "${sugerencia.valor_actual}" → "${sugerencia.valor_sugerido}". ${evidencia} `
+            ));
+            boton.textContent = 'Aceptar proveedor';
+            boton.disabled = !opcion;
+            boton.addEventListener('click', () => {
+                if (!proveedor || !opcion) return;
+                proveedor.value = opcion.value;
+                proveedor.dispatchEvent(new Event('change', { bubbles: true }));
+                boton.disabled = true;
+                boton.textContent = 'Proveedor actualizado';
+            });
+        } else if (sugerencia.campo === 'numero_factura') {
+            const correlativo = document.getElementById('correlativo');
+            elemento.appendChild(document.createTextNode(
+                `Número de factura: "${sugerencia.valor_actual}" → ` +
+                `"${sugerencia.valor_sugerido}". ${evidencia} `
+            ));
+            boton.textContent = 'Aceptar número';
+            boton.disabled = !correlativo;
+            boton.addEventListener('click', () => {
+                if (!correlativo) return;
+                correlativo.value = sugerencia.valor_sugerido;
+                correlativo.dispatchEvent(new Event('input', { bubbles: true }));
+                boton.disabled = true;
+                boton.textContent = 'Número actualizado';
+            });
+        } else if (sugerencia.campo === 'porcentaje_iva') {
+            const iva = document.getElementById('porcentajeIvaRecepcion');
+            elemento.appendChild(document.createTextNode(
+                `Porcentaje de IVA: "${sugerencia.valor_actual}" → ` +
+                `"${sugerencia.valor_sugerido}". ${evidencia} `
+            ));
+            boton.textContent = 'Aceptar IVA';
+            boton.disabled = !iva;
+            boton.addEventListener('click', () => {
+                if (!iva) return;
+                iva.value = sugerencia.valor_sugerido;
+                iva.dispatchEvent(new Event('input', { bubbles: true }));
+                calcularTotal();
+                boton.disabled = true;
+                boton.textContent = 'IVA actualizado';
+            });
+        } else if (['subtotal_factura', 'monto_iva', 'total_factura'].includes(sugerencia.campo)) {
+            const etiquetas = {
+                subtotal_factura: 'Subtotal',
+                monto_iva: 'Monto de IVA',
+                total_factura: 'Total'
+            };
+            elemento.textContent =
+                `${etiquetas[sugerencia.campo]} sugerido para comparar: ` +
+                `"${sugerencia.valor_sugerido}". ${evidencia} ` +
+                'El formulario calcula este valor a partir de sus componentes.';
+            lista.appendChild(elemento);
+            return;
+        } else if (sugerencia.campo === 'producto') {
+            const camposNombre = {
+                nombre: 'nombre',
+                modelo: 'modelo',
+                marca: 'marca',
+                serial: 'serial',
+                cantidad: 'cantidad',
+                costo: 'costo'
+            };
+            const camposSugeridos = Object.entries(sugerencia.valor_sugerido || {})
+                .map(([campo, valor]) => `${camposNombre[campo] || campo}: "${valor}"`)
+                .join(', ');
+            const camposActuales = Object.entries(sugerencia.valor_actual || {})
+                .map(([campo, valor]) => `${camposNombre[campo] || campo}: "${valor}"`)
+                .join(', ');
+            const selectores = document.querySelectorAll('#productosList .producto-select');
+            const selector = selectores[sugerencia.indice_producto];
+            const target = sugerencia.valor_sugerido || {};
+            const camposCatalogo = ['nombre', 'modelo', 'marca', 'serial'];
+            const requiereCatalogo = camposCatalogo.some(campo => target[campo]);
+            const opcion = requiereCatalogo
+                ? buscarOpcionCatalogoPorDatos(selector, target)
+                : null;
+            const fila = selector && selector.closest('.producto-row');
+            const campoCantidad = fila && fila.querySelector('input[name="cantidad[]"]');
+            const campoCosto = fila && fila.querySelector('input[name="costo[]"]');
+            const puedeAplicar = Boolean(selector) &&
+                (!requiereCatalogo || Boolean(opcion)) &&
+                (!target.cantidad || Boolean(campoCantidad)) &&
+                (!target.costo || Boolean(campoCosto));
+            elemento.appendChild(document.createTextNode(
+                `Producto ${Number(sugerencia.indice_producto) + 1}: ` +
+                `${camposActuales ? `${camposActuales} → ` : ''}` +
+                `${camposSugeridos || 'sin campos disponibles'}. ${evidencia} `
+            ));
+            boton.textContent = 'Aceptar campos';
+            boton.disabled = !puedeAplicar;
+            boton.addEventListener('click', () => {
+                if (!puedeAplicar) return;
+                if (opcion && selector) {
+                    selector.value = opcion.value;
+                    seleccionarProducto(selector);
+                    selector.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                if (target.cantidad && campoCantidad) {
+                    campoCantidad.value = target.cantidad;
+                    campoCantidad.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (target.costo && campoCosto) {
+                    campoCosto.value = Number(target.costo).toFixed(2);
+                    calcularSubtotal(campoCosto);
+                }
+                boton.disabled = true;
+                boton.textContent = 'Campos actualizados';
+            });
+        } else {
+            return;
+        }
+
+        elemento.appendChild(boton);
+        lista.appendChild(elemento);
+    });
+
+    if (lista.childElementCount) resultado.appendChild(lista);
+}
+
+function construirFeedbackCamposIA(prediccion) {
+    if (!prediccion) return;
+    const productos = Array.from(document.querySelectorAll('#productosList .producto-row'))
+        .map(fila => {
+            const selector = fila.querySelector('.producto-select');
+            const opcion = selector && selector.selectedOptions[0];
+            return {
+                id_producto: selector ? selector.value : '',
+                nombre: opcion && selector.value ? opcion.textContent.trim() : '',
+                modelo: opcion && selector.value ? opcion.dataset.modelo || '' : '',
+                marca: opcion && selector.value ? opcion.dataset.marca || '' : '',
+                serial: opcion && selector.value ? opcion.dataset.serial || '' : '',
+                cantidad: Number(fila.querySelector('input[name="cantidad[]"]')?.value || 0),
+                costo: Number(fila.querySelector('input[name="costo[]"]')?.value || 0)
+            };
+        })
+        .filter(producto => producto.id_producto);
+
+    const nombreProveedor = document.querySelector('#proveedor option:checked')?.textContent?.trim() || '';
+    const subtotal = productos.reduce(
+        (suma, producto) => suma + producto.cantidad * producto.costo,
+        0
+    );
+    const porcentajeIva = Number(
+        document.getElementById('porcentajeIvaRecepcion')?.value || 0
+    );
+    const montoIva = Math.round(
+        (subtotal * porcentajeIva / 100 + Number.EPSILON) * 100
+    ) / 100;
+
+    prediccion.campos_predichos = {
+        numero_factura: prediccion.numero_factura || '',
+        nombre_proveedor: prediccion.nombre_proveedor || '',
+        productos: Array.isArray(prediccion.productos) ? prediccion.productos : [],
+        subtotal_factura: Number(prediccion.subtotal_factura || 0),
+        porcentaje_iva: Number(prediccion.porcentaje_iva || 0),
+        monto_iva: Number(prediccion.monto_iva || 0),
+        total_factura: Number(prediccion.total_factura || 0)
+    };
+    prediccion.campos_confirmados = {
+        numero_factura: document.getElementById('correlativo')?.value?.trim() || '',
+        nombre_proveedor: nombreProveedor,
+        productos,
+        subtotal_factura: Number(subtotal.toFixed(2)),
+        porcentaje_iva: Number(porcentajeIva.toFixed(2)),
+        monto_iva: Number(montoIva.toFixed(2)),
+        total_factura: Number((subtotal + montoIva).toFixed(2))
+    };
+}
+
 function rellenarRecepcionDesdeFactura(factura) {
     if (!factura) return;
     datosFacturaExtraidaIA = factura;
@@ -595,6 +809,7 @@ function rellenarRecepcionDesdeFactura(factura) {
             `IVA: ${Number(factura.porcentaje_iva || 0).toFixed(2)}% ($${Number(factura.monto_iva || 0).toFixed(2)})\n` +
             `Total factura: $${Number(factura.total_factura || 0).toFixed(2)}\n` +
             `Confianza OCR: ${(Number(factura.confianza_promedio || 0) * 100).toFixed(1)}%`;
+        mostrarSugerenciasAutocorreccion(factura);
         resultadoIARecepcionEl.hidden = false;
     }
 }
@@ -626,7 +841,7 @@ function limpiarFacturaIARecepcion() {
     if (previewFac) previewFac.hidden = true;
     if (prevImg) { prevImg.hidden = true; prevImg.removeAttribute('src'); }
     if (prevPdf) { prevPdf.hidden = true; prevPdf.removeAttribute('src'); }
-    if (resIA) { resIA.textContent = ''; resIA.hidden = true; }
+    if (resIA) { resIA.replaceChildren(); resIA.hidden = true; }
     establecerEstadoIARecepcion('');
 }
 
@@ -1252,6 +1467,7 @@ async function saveRecepcion(event) {
         }
         // Enviar datos de predicción de la IA para feedback de aprendizaje
         if (prediccionIA) {
+            construirFeedbackCamposIA(prediccionIA);
             formData.append('ia_prediccion', JSON.stringify(prediccionIA));
         }
 

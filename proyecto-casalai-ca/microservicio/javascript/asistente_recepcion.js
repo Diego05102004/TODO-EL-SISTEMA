@@ -351,7 +351,7 @@ if (error.name === 'AbortError') {
                     <td>${this._escaparHtml(p.marca || '-')}</td>
                     <td>${this._escaparHtml(p.serial || '-')}</td>
                     <td>${p.cantidad}</td>
-                    <td>${p.costo_unitario ? '$' + p.costo_unitario.toFixed(2) : '-'}</td>
+                    <td>${p.costo ? '$' + p.costo.toFixed(2) : '-'}</td>
                     <td>
                         <span class="badge bg-${p.confianza >= 0.7 ? 'success' : p.confianza >= 0.4 ? 'warning' : 'danger'}">
                             ${(p.confianza * 100).toFixed(0)}%

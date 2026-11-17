@@ -67,15 +67,17 @@
     background: rgba(33, 150, 243, 0.03);
     border-radius: 12px;
     padding: 20px;
+    margin-bottom: 20px;
     border: 1px solid rgba(33, 150, 243, 0.1);
     text-align: center;
 }
 
 .detalle-grid {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin: 0 10px;
+    justify-content:space-around;
+    align-items: center;
+    margin: 0 20px;
+    gap: 15px;
 }
 
 .detalle-item {

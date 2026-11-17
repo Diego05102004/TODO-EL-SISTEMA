@@ -398,11 +398,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $productosGt = [];
                         foreach ($productosRegistrados as $prod) {
                             $productosGt[] = [
+                                'id_producto' => $prod['codigo'] ?? $prod['id_producto'] ?? '',
                                 'nombre' => $prod['nombre_producto'] ?? $prod['descripcion'] ?? '',
+                                'modelo' => $prod['modelo'] ?? '',
+                                'marca' => $prod['marca'] ?? '',
+                                'serial' => $prod['serial'] ?? '',
                                 'cantidad' => intval($prod['cantidad'] ?? 0),
                                 'costo' => floatval($prod['costo'] ?? 0)
                             ];
                         }
+
+                        $camposConfirmados = $prediccionIA['campos_confirmados'] ?? [];
+                        if (!is_array($camposConfirmados)) {
+                            $camposConfirmados = [];
+                        }
+                        $camposConfirmados = array_merge($camposConfirmados, [
+                            'numero_factura' => $_POST['correlativo'] ?? '',
+                            'nombre_proveedor' => $recepcionRegistrada['nombre_proveedor'] ?? '',
+                            'productos' => $productosGt,
+                            'subtotal_factura' => $subtotalFacturaCalc,
+                            'porcentaje_iva' => (float)$porcentajeIva,
+                            'monto_iva' => $montoIvaCalc,
+                            'total_factura' => $totalFacturaCalc
+                        ]);
 
                         $datosFeedback = [
                             'id_recepcion' => $recepcionRegistrada['id_recepcion'],
@@ -418,6 +436,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             'prediccion_total' => $prediccionIA['total_factura'] ?? 0,
                             'ground_truth_total' => $totalFacturaCalc,
                             'discrepancias_corregidas' => $prediccionIA['discrepancias'] ?? [],
+                            'campos_predichos' => $prediccionIA['campos_predichos'] ?? [
+                                'numero_factura' => $prediccionIA['numero_factura'] ?? '',
+                                'nombre_proveedor' => $prediccionIA['nombre_proveedor'] ?? '',
+                                'productos' => $prediccionIA['productos'] ?? [],
+                                'subtotal_factura' => $prediccionIA['subtotal_factura'] ?? 0,
+                                'porcentaje_iva' => $prediccionIA['porcentaje_iva'] ?? 0,
+                                'monto_iva' => $prediccionIA['monto_iva'] ?? 0,
+                                'total_factura' => $prediccionIA['total_factura'] ?? 0
+                            ],
+                            'campos_confirmados' => $camposConfirmados,
                             'confianza_ocr_promedio' => $prediccionIA['confianza_promedio'] ?? 0
                         ];
 
