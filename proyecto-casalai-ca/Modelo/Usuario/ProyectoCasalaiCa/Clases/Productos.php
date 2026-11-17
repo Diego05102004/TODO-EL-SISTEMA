@@ -1654,6 +1654,303 @@ class Productos extends BD{
     public function crearCombo($nombre, $descripcion, $productos, $descuento = 0) {
         return $this->c_crearCombo($nombre, $descripcion, $productos, $descuento);
     }
+
+    public function validarNombreCombo($nombre, $excluirId = null) {
+        $nombre = is_string($nombre) ? trim($nombre) : '';
+        $patronesNoPermitidos = [
+            '/<\s*\/?\s*[a-z!][^>]*>/i',
+            '/\bjavascript\s*:|\bon[a-z]+\s*=/i',
+            '/(?:\b(?:union\s+select|select\s+.+\s+from|insert\s+into|update\s+\w+\s+set|delete\s+from|drop\s+(?:table|database))\b|--|\/\*|\*\/|\b(?:or|and)\b\s+[\'"]?[\w\'"]+\s*=\s*[\'"]?[\w\'"]+)/i'
+        ];
+        foreach ($patronesNoPermitidos as $patron) {
+            if (preg_match($patron, $nombre) === 1) {
+                return ['valido' => false, 'mensaje' => 'El contenido ingresado no está permitido.'];
+            }
+        }
+        if ($nombre === '' || preg_match('/^[\p{L}\p{N}][\p{L}\p{N}\s._\'-]{0,99}$/u', $nombre) !== 1) {
+            return ['valido' => false, 'mensaje' => 'El nombre debe tener entre 1 y 100 caracteres válidos.'];
+        }
+
+        $comboExistente = $this->buscarComboPorNombre($nombre, $excluirId);
+        if ($comboExistente) {
+            return [
+                'valido' => false,
+                'duplicado' => true,
+                'mensaje' => 'Ya existe un combo con ese nombre. Elija otro nombre.',
+            ];
+        }
+        return ['valido' => true, 'nombre' => $nombre];
+    }
+
+    public function buscarComboPorNombre($nombre, $excluirId = null) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($nombre, $excluirId) {
+            return $this->buscarComboPorNombreConConexion($pdo, $nombre, $excluirId);
+        });
+    }
+
+    private function buscarComboPorNombreConConexion(PDO $pdo, $nombre, $excluirId = null) {
+        $sql = "SELECT id_combo, nombre_combo, descripcion, descuento, activo
+                FROM tbl_combo
+                WHERE LOWER(TRIM(nombre_combo)) = LOWER(TRIM(:nombre))
+                    AND activo <> 2";
+        $params = [':nombre' => $nombre];
+        if ($excluirId !== null && (int)$excluirId > 0) {
+            $sql .= " AND id_combo <> :excluir_id";
+            $params[':excluir_id'] = (int)$excluirId;
+        }
+        $sql .= " LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $combo = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $combo ?: null;
+    }
+
+    public function crearComboVerificandoDuplicados($nombre, $descripcion, $productos, $descuento = 0) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($nombre, $descripcion, $productos, $descuento) {
+            if (!is_numeric($descuento) || (float)$descuento < 0 || (float)$descuento > 100) {
+                throw new \InvalidArgumentException('El descuento del combo debe estar entre 0 y 100.');
+            }
+            $productoIds = array_values(array_unique(array_map(
+                static function($producto) { return (int)$producto['id']; },
+                $productos
+            )));
+            sort($productoIds, SORT_NUMERIC);
+            if (!$productoIds) {
+                throw new \InvalidArgumentException('Debe seleccionar al menos un producto para el combo.');
+            }
+
+            $pdo->beginTransaction();
+            try {
+                $comboConNombre = $this->buscarComboPorNombreConConexion($pdo, $nombre);
+                if ($comboConNombre) {
+                    $pdo->commit();
+                    return ['estado' => 'nombre_duplicado', 'combo' => $comboConNombre];
+                }
+
+                $comboExistente = $this->buscarComboPorProductosConConexion($pdo, $productoIds);
+                if ($comboExistente) {
+                    $pdo->commit();
+                    return ['estado' => 'productos_duplicados', 'combo' => $comboExistente];
+                }
+
+                $stmt = $pdo->prepare(
+                    "INSERT INTO tbl_combo (nombre_combo, descripcion, descuento)
+                     VALUES (:nombre, :descripcion, :descuento)"
+                );
+                $stmt->execute([
+                    ':nombre' => $nombre,
+                    ':descripcion' => $descripcion,
+                    ':descuento' => (float)$descuento,
+                ]);
+                $idCombo = (int)$pdo->lastInsertId();
+                foreach ($productos as $producto) {
+                    $this->insertarProductoEnComboConConexion(
+                        $pdo,
+                        $idCombo,
+                        (int)$producto['id'],
+                        (int)$producto['cantidad']
+                    );
+                }
+                $pdo->commit();
+                return ['estado' => 'creado', 'id_combo' => $idCombo];
+            } catch (\Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                throw $e;
+            }
+        });
+    }
+
+    public function enriquecerRecomendacionesConCombosExistentes(array $recomendaciones) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($recomendaciones) {
+            foreach ($recomendaciones as &$recomendacion) {
+                if (($recomendacion['tipo'] ?? '') !== 'combo_estrategico'
+                    || !isset($recomendacion['productos'])
+                    || !is_array($recomendacion['productos'])) {
+                    continue;
+                }
+                $productoIds = array_values(array_unique(array_filter(
+                    array_map('intval', $recomendacion['productos']),
+                    static function($id) { return $id > 0; }
+                )));
+                if (!$productoIds) {
+                    continue;
+                }
+                $combo = $this->buscarComboPorProductosConConexion($pdo, $productoIds);
+                if (!$combo) {
+                    continue;
+                }
+                $combo['productos'] = $this->obtenerDetallesComboConConexion($pdo, (int)$combo['id_combo']);
+                $combo['ventas'] = $this->obtenerEstadisticasComboConConexion($pdo, (int)$combo['id_combo']);
+                $recomendacion['combo_existente'] = $combo;
+            }
+            unset($recomendacion);
+            return $recomendaciones;
+        });
+    }
+
+    public function analizarRentabilidadCombo($idCombo, $descuento) {
+        $idCombo = (int)$idCombo;
+        $descuento = (float)$descuento;
+        if ($idCombo <= 0 || !is_finite($descuento) || $descuento < 0 || $descuento > 100) {
+            throw new \InvalidArgumentException('El combo o el descuento no son válidos.');
+        }
+
+        return $this->ejecutarConConexionSegura(function($pdo) use ($idCombo, $descuento) {
+            $sql = "SELECT cd.id_producto, cd.cantidad, p.nombre_producto, p.precio,
+                           dr.costo AS costo_unitario_recepcion, r.fecha AS fecha_ultima_recepcion
+                    FROM tbl_combo_detalle cd
+                    INNER JOIN tbl_productos p ON p.id_producto = cd.id_producto
+                    LEFT JOIN tbl_detalle_recepcion_productos dr
+                        ON dr.id_detalle_recepcion_productos = (
+                            SELECT dr2.id_detalle_recepcion_productos
+                            FROM tbl_detalle_recepcion_productos dr2
+                            INNER JOIN tbl_recepcion_productos r2 ON r2.id_recepcion = dr2.id_recepcion
+                            WHERE dr2.id_producto = cd.id_producto
+                                AND r2.estado = 'habilitado'
+                            ORDER BY r2.fecha DESC, r2.id_recepcion DESC,
+                                     dr2.id_detalle_recepcion_productos DESC
+                            LIMIT 1
+                        )
+                    LEFT JOIN tbl_recepcion_productos r ON r.id_recepcion = dr.id_recepcion
+                    WHERE cd.id_combo = :id_combo";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':id_combo' => $idCombo]);
+            $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!$filas) {
+                throw new \RuntimeException('No se encontraron productos para analizar en este combo.');
+            }
+
+            $precioBase = 0.0;
+            $ingresoProyectado = 0.0;
+            $costoConocido = 0.0;
+            $costosCompletos = true;
+            $hayProductoBajoCosto = false;
+            $descuentoMaximoSinPerdidas = 100.0;
+            $productos = [];
+            foreach ($filas as $fila) {
+                $cantidad = (int)$fila['cantidad'];
+                $precioUnitario = (float)$fila['precio'];
+                $precioUnitarioConDescuento = round($precioUnitario * (1 - $descuento / 100), 2);
+                $ingresoProducto = $precioUnitarioConDescuento * $cantidad;
+                $precioBase += $precioUnitario * $cantidad;
+                $ingresoProyectado += $ingresoProducto;
+
+                $costoUnitario = $fila['costo_unitario_recepcion'] === null
+                    ? null
+                    : (float)$fila['costo_unitario_recepcion'];
+                $costoProducto = $costoUnitario === null ? null : $costoUnitario * $cantidad;
+                if ($costoProducto === null) {
+                    $costosCompletos = false;
+                } else {
+                    $costoConocido += $costoProducto;
+                    $hayProductoBajoCosto = $hayProductoBajoCosto
+                        || $precioUnitarioConDescuento < $costoUnitario;
+                    $descuentoMaximoSinPerdidas = min(
+                        $descuentoMaximoSinPerdidas,
+                        $precioUnitario > 0 ? (1 - $costoUnitario / $precioUnitario) * 100 : -100
+                    );
+                }
+
+                $productos[] = [
+                    'id_producto' => (int)$fila['id_producto'],
+                    'nombre' => $fila['nombre_producto'],
+                    'cantidad' => $cantidad,
+                    'precio_venta_unitario' => $precioUnitario,
+                    'precio_con_descuento_unitario' => $precioUnitarioConDescuento,
+                    'costo_recepcion_unitario' => $costoUnitario,
+                    'fecha_ultima_recepcion' => $fila['fecha_ultima_recepcion'],
+                    'ingreso_con_descuento' => $ingresoProducto,
+                    'costo_total' => $costoProducto,
+                    'por_debajo_del_costo' => $costoUnitario !== null
+                        && $precioUnitarioConDescuento < $costoUnitario
+                ];
+            }
+
+            $precioBase = round($precioBase, 2);
+            $ingresoProyectado = round($ingresoProyectado, 2);
+            $costoConocido = round($costoConocido, 2);
+            $perdidaCombo = $costosCompletos && $ingresoProyectado < $costoConocido;
+            $perdida = $hayProductoBajoCosto || $perdidaCombo;
+            return [
+                'descuento_analizado' => $descuento,
+                'precio_base_combo' => $precioBase,
+                'ingreso_proyectado' => $ingresoProyectado,
+                'costo_total_recepcion' => $costosCompletos ? $costoConocido : null,
+                'ganancia_bruta_proyectada' => $costosCompletos ? $ingresoProyectado - $costoConocido : null,
+                'descuento_maximo_sin_perdidas' => $costosCompletos ? $descuentoMaximoSinPerdidas : null,
+                'genera_perdida_combo' => $perdidaCombo,
+                'genera_perdida_producto' => $hayProductoBajoCosto,
+                'costos_completos' => $costosCompletos,
+                'genera_perdida' => $perdida,
+                'productos' => $productos
+            ];
+        });
+    }
+
+    private function buscarComboPorProductosConConexion(PDO $pdo, array $productoIds) {
+        $productoIds = array_values(array_unique(array_filter(
+            array_map('intval', $productoIds),
+            static function($id) { return $id > 0; }
+        )));
+        if (!$productoIds) {
+            return null;
+        }
+        sort($productoIds, SORT_NUMERIC);
+        $placeholders = implode(',', array_fill(0, count($productoIds), '?'));
+        $sql = "SELECT c.id_combo, c.nombre_combo, c.descripcion, c.descuento, c.activo
+                FROM tbl_combo c
+                INNER JOIN tbl_combo_detalle cd ON cd.id_combo = c.id_combo
+                WHERE c.activo <> 2
+                GROUP BY c.id_combo, c.nombre_combo, c.descripcion, c.descuento, c.activo
+                HAVING COUNT(DISTINCT cd.id_producto) = ?
+                    AND COUNT(DISTINCT CASE
+                        WHEN cd.id_producto IN ($placeholders) THEN cd.id_producto
+                    END) = ?
+                LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array_merge([count($productoIds)], $productoIds, [count($productoIds)]));
+        $combo = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $combo ?: null;
+    }
+
+    private function obtenerDetallesComboConConexion(PDO $pdo, $idCombo) {
+        $stmt = $pdo->prepare(
+            "SELECT cd.id_producto, p.nombre_producto, cd.cantidad, cd.precio_unitario
+             FROM tbl_combo_detalle cd
+             INNER JOIN tbl_productos p ON p.id_producto = cd.id_producto
+             WHERE cd.id_combo = :id_combo
+             ORDER BY p.nombre_producto"
+        );
+        $stmt->execute([':id_combo' => (int)$idCombo]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function obtenerEstadisticasComboConConexion(PDO $pdo, $idCombo) {
+        $stmt = $pdo->prepare(
+            "SELECT COUNT(DISTINCT fd.factura_id) AS facturas,
+                    COALESCE(SUM(fd.cantidad), 0) AS unidades_componentes,
+                    COALESCE(SUM(fd.cantidad * fd.precio_unitario), 0) AS ingresos
+             FROM tbl_factura_detalle fd
+             INNER JOIN tbl_facturas f ON f.id_factura = fd.factura_id
+             WHERE fd.id_combo = :id_combo
+                AND f.estatus IN ('Pagada', 'Pagada Presencialmente', 'Pago Procesado')"
+        );
+        $stmt->execute([':id_combo' => (int)$idCombo]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [
+            'facturas' => 0,
+            'unidades_componentes' => 0,
+            'ingresos' => 0,
+        ];
+    }
+
+    public function obtenerEstadisticasCombo($idCombo) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($idCombo) {
+            return $this->obtenerEstadisticasComboConConexion($pdo, $idCombo);
+        });
+    }
+
     private function c_crearCombo($nombre, $descripcion, $productos, $descuento) {
         return $this->ejecutarConConexionSegura(function($pdo) use ($nombre, $descripcion, $productos, $descuento){
             try {

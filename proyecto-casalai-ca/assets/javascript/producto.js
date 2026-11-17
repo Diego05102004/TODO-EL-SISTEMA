@@ -2235,7 +2235,65 @@ function eliminarFilaProducto(id_producto) {
         const analyticsKpis = document.getElementById('analyticsKpis');
         const analyticsRecommendations = document.getElementById('analyticsRecommendations');
         const analyticsCanvas = document.getElementById('analyticsChart');
+        const cainAssistant = document.getElementById('cainAssistant');
+        const cainPortrait = document.getElementById('cainPortrait');
+        const cainPortraitFrame = document.getElementById('cainPortraitFrame');
+        const cainMessage = document.getElementById('cainMessage');
+        const cainFrozenStock = document.getElementById('cainFrozenStock');
+        const cainFrozenProducts = document.getElementById('cainFrozenProducts');
+        const cainMoodImages = cainAssistant ? JSON.parse(cainAssistant.dataset.images || '{}') : {};
         let analyticsChart = null;
+        let globalFrozenProducts = null;
+        let globalStrategicCombos = [];
+
+        function setCainMood(mood, message) {
+            if (!cainAssistant) return;
+            cainAssistant.dataset.mood = mood;
+            cainMessage.textContent = message;
+            const imagePath = cainMoodImages[mood];
+            if (imagePath) {
+                cainPortrait.src = imagePath;
+                cainPortrait.hidden = false;
+                cainPortraitFrame.querySelector('.cain-fallback').hidden = true;
+            } else {
+                cainPortrait.hidden = true;
+                cainPortraitFrame.querySelector('.cain-fallback').hidden = false;
+            }
+        }
+
+        function renderFrozenProducts(products) {
+            if (!cainFrozenStock || !cainFrozenProducts) return;
+            cainFrozenProducts.replaceChildren();
+            if (!Array.isArray(products) || products.length === 0) {
+                cainFrozenStock.hidden = true;
+                return;
+            }
+
+            products.forEach(product => {
+                const item = document.createElement('li');
+                const stock = Number(product.stock_actual);
+                const excess = Number(product.stock_excedente);
+                const rotation = Number(product.rotacion_mensual);
+                const lastSale = Number(product.dias_sin_venta);
+                const details = [
+                    Number.isFinite(stock) ? `${stock} en stock` : null,
+                    Number.isFinite(excess) ? `${excess} sobre el mínimo` : null,
+                    Number.isFinite(rotation) ? `rotación ${rotation.toFixed(2)}/mes` : null,
+                    Number.isFinite(lastSale) ? `${lastSale} días sin venta` : null
+                ].filter(Boolean);
+                item.textContent = `${product.nombre || 'Producto'}${details.length ? ` · ${details.join(' · ')}` : ''}`;
+                cainFrozenProducts.appendChild(item);
+            });
+            cainFrozenStock.hidden = false;
+        }
+
+        if (cainPortrait) {
+            cainPortrait.addEventListener('error', function () {
+                this.hidden = true;
+                cainPortraitFrame.querySelector('.cain-fallback').hidden = false;
+            });
+        }
+        setCainMood('alegre', 'Buenos días, Mi señor@. Estoy listo para analizar el inventario.');
 
         function setAnalyticsStatus(message, type = '') {
             analyticsStatus.textContent = message;
@@ -2247,11 +2305,502 @@ function eliminarFilaProducto(id_producto) {
             form.append('accion', action);
             Object.entries(values).forEach(([key, value]) => form.append(key, String(value)));
             const response = await fetch(window.location.href, { method: 'POST', body: form });
-            const result = await response.json();
+            let result;
+            try {
+                result = JSON.parse(await response.text());
+            } catch {
+                throw new Error('El servidor devolvió una respuesta no JSON. Revise los errores PHP del controlador.');
+            }
             if (!response.ok) {
                 throw new Error(result.detail || result.message || 'No se pudo completar la solicitud.');
             }
             return result;
+        }
+
+        const cainFeedbackReasonLabels = {
+            productos_no_adecuados: 'Los productos no son adecuados para combinarlos',
+            descuento_alto: 'El descuento sugerido es demasiado alto',
+            cantidad_inadecuada: 'La cantidad o proporción no es adecuada',
+            combo_existente: 'Ya existe un combo similar',
+            otro: 'Otro motivo'
+        };
+
+        async function requestCainFeedbackReason() {
+            const reasonForm = document.createElement('div');
+            reasonForm.className = 'analytics-feedback-reason-form';
+            const introduction = document.createElement('p');
+            introduction.textContent = 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le convence?';
+            const reasonLabel = document.createElement('label');
+            reasonLabel.textContent = '¿Cuál es el motivo principal?';
+            const reasonSelect = document.createElement('select');
+            reasonSelect.setAttribute('aria-label', 'Motivo principal del rechazo');
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Seleccione un motivo';
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            reasonSelect.appendChild(placeholder);
+            Object.entries(cainFeedbackReasonLabels).forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                reasonSelect.appendChild(option);
+            });
+
+            const detailLabel = document.createElement('label');
+            detailLabel.textContent = 'Detalle opcional';
+            const reasonInput = document.createElement('textarea');
+            reasonInput.maxLength = 500;
+            reasonInput.placeholder = 'Si lo desea, agregue un comentario…';
+            reasonInput.setAttribute('aria-label', 'Detalle del rechazo');
+            reasonForm.append(introduction, reasonLabel, reasonSelect, detailLabel, reasonInput);
+
+            const response = await Swal.fire({
+                title: 'CAIN · Su opinión',
+                html: reasonForm,
+                imageUrl: cainMoodImages.triste,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: 'CAIN triste',
+                showCancelButton: true,
+                confirmButtonText: 'Enviar respuesta',
+                cancelButtonText: 'Cancelar',
+                focusConfirm: false,
+                preConfirm: () => {
+                    if (!reasonSelect.value) {
+                        Swal.showValidationMessage('Seleccione el motivo principal para continuar.');
+                        return false;
+                    }
+                    const reason = reasonInput.value.trim();
+                    if (reasonSelect.value === 'otro' && !reason) {
+                        Swal.showValidationMessage('Describa brevemente el otro motivo.');
+                        return false;
+                    }
+                    return { reasonCode: reasonSelect.value, reason };
+                }
+            });
+            if (response.isConfirmed) {
+                return {
+                    submitted: true,
+                    reasonCode: response.value.reasonCode,
+                    reason: response.value.reason
+                };
+            }
+            return { submitted: false, reasonCode: '', reason: '' };
+        }
+
+        async function postControllerAction(url, values) {
+            const form = new FormData();
+            Object.entries(values).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach((item, index) => {
+                        Object.entries(item).forEach(([itemKey, itemValue]) => {
+                            form.append(`${key}[${index}][${itemKey}]`, String(itemValue));
+                        });
+                    });
+                } else {
+                    form.append(key, String(value));
+                }
+            });
+            const response = await fetch(url, { method: 'POST', body: form });
+            let result;
+            try {
+                result = JSON.parse(await response.text());
+            } catch {
+                throw new Error('El servidor devolvió una respuesta no JSON.');
+            }
+            if (!response.ok || result.status === 'error') {
+                throw new Error(result.message || 'No se pudo completar la solicitud.');
+            }
+            return result;
+        }
+
+        function cainAlertOptions(mood, title, text, options = {}) {
+            setCainMood(mood, text);
+            const alertOptions = {
+                title,
+                text,
+                imageUrl: cainMoodImages[mood],
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: `CAIN ${mood}`,
+                confirmButtonText: 'Entendido',
+                ...options
+            };
+            if (Object.prototype.hasOwnProperty.call(options, 'html')) delete alertOptions.text;
+            return Swal.fire(alertOptions);
+        }
+
+        function isCatalogComboNameValid(name) {
+            const namePattern = /^[\p{L}\p{N}][\p{L}\p{N}\s._'-]{0,99}$/u;
+            const forbiddenPatterns = [
+                /<\s*\/?\s*[a-z!][^>]*>/i,
+                /\bjavascript\s*:|\bon[a-z]+\s*=/i,
+                /(?:\b(?:union\s+select|select\s+.+\s+from|insert\s+into|update\s+\w+\s+set|delete\s+from|drop\s+(?:table|database))\b|--|\/\*|\*\/|\b(?:or|and)\b\s+['"]?[\w'"]+\s*=\s*['"]?[\w'"]+)/i
+            ];
+            return namePattern.test(name) && !forbiddenPatterns.some(pattern => pattern.test(name));
+        }
+
+        async function requestSuggestedComboName() {
+            setCainMood('pensativo', 'Excelente elección, Mi señor@. ¿Qué nombre desea darle a este nuevo combo antes de registrarlo?');
+            const result = await Swal.fire({
+                title: 'CAIN · Nuevo combo',
+                html: '<p class="cain-swal-message">Excelente elección, Mi señor@. ¿Qué nombre desea darle a este nuevo combo antes de registrarlo?</p>',
+                imageUrl: cainMoodImages.pensativo,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: 'CAIN pensativo',
+                input: 'text',
+                inputPlaceholder: 'Nombre del combo',
+                inputAttributes: { maxlength: '100', autocomplete: 'off', 'aria-label': 'Nombre del combo' },
+                showCancelButton: true,
+                confirmButtonText: 'Continuar',
+                cancelButtonText: 'Cancelar',
+                inputValidator: value => {
+                    const name = String(value || '').trim();
+                    if (!name) return 'El nombre del combo es obligatorio.';
+                    if (!isCatalogComboNameValid(name)) {
+                        return 'Use entre 1 y 100 caracteres: letras, números, espacios, punto, guion, apóstrofo o guion bajo.';
+                    }
+                    return undefined;
+                },
+                preConfirm: async value => {
+                    const name = String(value || '').trim();
+                    try {
+                        const validation = await postControllerAction('?pagina=combo', {
+                            accion: 'validar_nombre_combo',
+                            nombre_combo: name
+                        });
+                        if (validation.status !== 'success') {
+                            Swal.getImage()?.setAttribute('src', cainMoodImages.triste || '');
+                            Swal.showValidationMessage(validation.message || 'Ese nombre no está disponible.');
+                            return false;
+                        }
+                        return name;
+                    } catch (error) {
+                        Swal.getImage()?.setAttribute('src', cainMoodImages.triste || '');
+                        Swal.showValidationMessage(error.message);
+                        return false;
+                    }
+                }
+            });
+            return result.isConfirmed ? result.value : null;
+        }
+
+        async function showExistingSuggestedCombo(combo) {
+            const message = 'Un momento, Mi señor@. Según mis registros, ya existe un combo con exactamente estos mismos productos. En lugar de duplicarlo, debemos analizar cómo ha sido recibido por el público: comparemos sus ventas actuales para verificar si conviene ajustar el descuento o decidir si desea habilitarlo o deshabilitarlo.';
+            const content = document.createElement('div');
+            content.className = 'cain-duplicate-dialog';
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            const comboName = document.createElement('strong');
+            comboName.textContent = combo.nombre_combo;
+            const comboInfo = document.createElement('p');
+            comboInfo.append('Combo existente: ', comboName);
+            const actions = document.createElement('div');
+            actions.className = 'cain-duplicate-actions';
+            const availableActions = [['estadisticas', 'Ver ventas del combo']];
+            if (document.getElementById('analyticsActions').dataset.canCreateCombo === '1') {
+                availableActions.push(
+                    ['descuento', 'Ajustar descuento'],
+                    ['estado', Number(combo.activo) === 1 ? 'Deshabilitar combo' : 'Habilitar combo']
+                );
+            }
+            availableActions.forEach(([action, label]) => {
+                const actionButton = document.createElement('button');
+                actionButton.type = 'button';
+                actionButton.className = 'cain-duplicate-action';
+                actionButton.dataset.action = action;
+                actionButton.textContent = label;
+                actions.appendChild(actionButton);
+            });
+            content.append(messageElement, comboInfo, actions);
+
+            await Swal.fire({
+                title: 'CAIN · Combo ya registrado',
+                html: content,
+                imageUrl: cainMoodImages.pensativo,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: 'CAIN pensativo',
+                showConfirmButton: false,
+                showCloseButton: true,
+                didOpen: () => {
+                    actions.querySelectorAll('button').forEach(actionButton => {
+                        actionButton.addEventListener('click', async () => {
+                            const action = actionButton.dataset.action;
+                            actionButton.disabled = true;
+                            Swal.close();
+                            try {
+                                if (action === 'estadisticas') await showSuggestedComboStatistics(combo);
+                                if (action === 'descuento') await adjustExistingComboDiscount(combo);
+                                if (action === 'estado') await toggleExistingCombo(combo);
+                            } catch (error) {
+                                await cainAlertOptions('triste', 'No se pudo completar la acción', error.message);
+                            }
+                        });
+                    });
+                }
+            });
+        }
+
+        async function showSuggestedComboStatistics(combo) {
+            const response = await postControllerAction('?pagina=combo', {
+                accion: 'obtener_estadisticas_combo',
+                id_combo: combo.id_combo
+            });
+            const stats = response.estadisticas || {};
+            const details = document.createElement('div');
+            const intro = document.createElement('p');
+            intro.textContent = `Ventas registradas de «${combo.nombre_combo}»:`;
+            const list = document.createElement('ul');
+            [
+                `Facturas pagadas: ${Number(stats.facturas || 0).toLocaleString('es-VE')}`,
+                `Unidades de componentes: ${Number(stats.unidades_componentes || 0).toLocaleString('es-VE')}`,
+                `Ingresos registrados: ${Number(stats.ingresos || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            ].forEach(text => {
+                const item = document.createElement('li');
+                item.textContent = text;
+                list.appendChild(item);
+            });
+            details.append(intro, list);
+            await cainAlertOptions('pensativo', 'Ventas del combo', '', { html: details });
+        }
+
+        async function adjustExistingComboDiscount(combo) {
+            const response = await Swal.fire({
+                title: 'CAIN · Ajustar descuento',
+                text: `El descuento actual de «${combo.nombre_combo}» es ${combo.descuento}%.`,
+                imageUrl: cainMoodImages.pensativo,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: 'CAIN pensativo',
+                input: 'number',
+                inputValue: combo.descuento,
+                inputAttributes: { min: '0', max: '100', step: '0.01', 'aria-label': 'Nuevo descuento porcentual' },
+                showCancelButton: true,
+                confirmButtonText: 'Guardar descuento',
+                cancelButtonText: 'Cancelar',
+                inputValidator: value => {
+                    const discount = String(value || '');
+                    if (!/^\d{1,3}(?:\.\d{1,2})?$/.test(discount) || Number(discount) > 100) {
+                        return 'Ingresa un descuento entre 0 y 100, con hasta dos decimales.';
+                    }
+                    return undefined;
+                }
+            });
+            if (!response.isConfirmed) return;
+
+            const detailsResponse = await postControllerAction('?pagina=catalogo', {
+                accion: 'obtener_detalles_combo',
+                id_combo: combo.id_combo
+            });
+            const profitabilityResponse = await postControllerAction('?pagina=catalogo', {
+                accion: 'analizar_rentabilidad_combo',
+                id_combo: combo.id_combo,
+                descuento: response.value
+            });
+            const profitability = profitabilityResponse.analisis;
+            const analysisContent = document.createElement('div');
+            const introduction = document.createElement('p');
+            introduction.textContent = profitability.genera_perdida
+                ? 'Cuidado, Mi señor@: con este descuento al menos un producto quedaría por debajo del costo unitario de su última recepción.'
+                : !profitability.costos_completos
+                    ? 'Mi señor@, faltan costos de recepción para verificar todos los productos. Revise el detalle antes de continuar.'
+                    : 'Según las recepciones registradas, el descuento no dejaría el combo por debajo de su costo de compra.';
+            analysisContent.appendChild(introduction);
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'analytics-profitability-table-wrap';
+            const comparisonTable = document.createElement('table');
+            comparisonTable.className = 'analytics-profitability-table';
+            const caption = document.createElement('caption');
+            caption.textContent = 'Comparativa por producto. Margen unitario = precio con descuento menos costo de recepción.';
+            comparisonTable.appendChild(caption);
+
+            const tableHead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Producto', 'Cant.', 'Precio actual', 'Costo recepción', 'Precio con descuento', 'Margen unitario', 'Resultado']
+                .forEach(label => {
+                    const header = document.createElement('th');
+                    header.scope = 'col';
+                    header.textContent = label;
+                    headerRow.appendChild(header);
+                });
+            tableHead.appendChild(headerRow);
+            comparisonTable.appendChild(tableHead);
+
+            const tableBody = document.createElement('tbody');
+            let totalQuantity = 0;
+            profitability.productos.forEach(product => {
+                totalQuantity += Number(product.cantidad) || 0;
+                const hasCost = product.costo_recepcion_unitario !== null;
+                const difference = hasCost
+                    ? Math.round((Number(product.precio_con_descuento_unitario) - Number(product.costo_recepcion_unitario)) * 100) / 100
+                    : null;
+                const row = document.createElement('tr');
+                row.className = !hasCost
+                    ? 'is-unknown'
+                    : difference < 0
+                        ? 'is-loss'
+                        : difference === 0
+                            ? 'is-break-even'
+                            : 'is-profitable';
+
+                const nameCell = document.createElement('th');
+                nameCell.scope = 'row';
+                nameCell.textContent = product.nombre;
+                row.appendChild(nameCell);
+
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = String(product.cantidad);
+                row.appendChild(quantityCell);
+
+                [
+                    product.precio_venta_unitario,
+                    product.costo_recepcion_unitario,
+                    product.precio_con_descuento_unitario
+                ].forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value === null ? 'Sin dato' : formatMoney(value);
+                    if (index === 1 && hasCost && product.fecha_ultima_recepcion) {
+                        const date = document.createElement('small');
+                        date.textContent = `Última: ${product.fecha_ultima_recepcion}`;
+                        cell.appendChild(date);
+                    }
+                    row.appendChild(cell);
+                });
+
+                const differenceCell = document.createElement('td');
+                differenceCell.textContent = difference === null
+                    ? 'Sin dato'
+                    : `${difference > 0 ? '+' : difference < 0 ? '−' : ''}${formatMoney(Math.abs(difference))}`;
+                row.appendChild(differenceCell);
+
+                const statusCell = document.createElement('td');
+                statusCell.textContent = !hasCost
+                    ? 'Sin recepción'
+                    : difference < 0
+                        ? 'Bajo costo'
+                        : difference === 0
+                            ? 'En equilibrio'
+                            : 'Sobre costo';
+                row.appendChild(statusCell);
+                tableBody.appendChild(row);
+            });
+            comparisonTable.appendChild(tableBody);
+
+            const tableFoot = document.createElement('tfoot');
+            const totalsRow = document.createElement('tr');
+            const totalsLabel = document.createElement('th');
+            totalsLabel.colSpan = 2;
+            totalsLabel.scope = 'row';
+            totalsLabel.textContent = `Totales del combo (${totalQuantity} unidades)`;
+            totalsRow.appendChild(totalsLabel);
+            [
+                profitability.precio_base_combo,
+                profitability.costo_total_recepcion,
+                profitability.ingreso_proyectado,
+                profitability.ganancia_bruta_proyectada
+            ].forEach(value => {
+                const cell = document.createElement('td');
+                cell.textContent = value === null ? 'Sin dato' : formatMoney(value);
+                totalsRow.appendChild(cell);
+            });
+            const totalStatus = document.createElement('td');
+            totalStatus.textContent = profitability.genera_perdida
+                ? 'Revisar pérdidas'
+                : !profitability.costos_completos
+                    ? 'Incompleto'
+                    : 'Con margen';
+            totalsRow.appendChild(totalStatus);
+            tableFoot.appendChild(totalsRow);
+            comparisonTable.appendChild(tableFoot);
+            tableWrapper.appendChild(comparisonTable);
+            analysisContent.appendChild(tableWrapper);
+
+            const summary = document.createElement('p');
+            summary.textContent = `Ingreso proyectado con ${response.value}% de descuento: ${formatMoney(profitability.ingreso_proyectado)}.`;
+            analysisContent.appendChild(summary);
+
+            const hasIncompleteCosts = !profitability.costos_completos;
+            const causesLoss = profitability.genera_perdida;
+            if (profitability.costos_completos) {
+                const margin = document.createElement('p');
+                margin.textContent = `Costo total según las últimas recepciones habilitadas: ${formatMoney(profitability.costo_total_recepcion)}. Ganancia bruta proyectada: ${formatMoney(profitability.ganancia_bruta_proyectada)}.`;
+                analysisContent.appendChild(margin);
+
+                const breakEven = document.createElement('p');
+                if (profitability.descuento_maximo_sin_perdidas < 0) {
+                    breakEven.textContent = 'El precio actual de al menos un producto ya está por debajo de su costo de recepción, incluso sin aplicar descuento.';
+                } else {
+                    breakEven.textContent = `Descuento máximo aproximado antes de que algún producto quede por debajo del costo: ${displayMetric(profitability.descuento_maximo_sin_perdidas, '%')}.`;
+                }
+                analysisContent.appendChild(breakEven);
+            } else {
+                const missingCosts = document.createElement('p');
+                missingCosts.textContent = 'No encontré recepciones habilitadas para todos los productos. No puedo confirmar la rentabilidad total del combo.';
+                analysisContent.appendChild(missingCosts);
+            }
+            const note = document.createElement('p');
+            note.textContent = 'El cálculo considera precios actuales y costo unitario de la última recepción habilitada; no incluye impuestos ni otros gastos operativos.';
+            analysisContent.appendChild(note);
+
+            const riskConfirmation = await Swal.fire({
+                title: causesLoss
+                    ? 'CAIN · Advertencia de pérdidas'
+                    : hasIncompleteCosts
+                        ? 'CAIN · Rentabilidad no confirmada'
+                        : 'CAIN · Análisis de rentabilidad',
+                html: analysisContent,
+                imageUrl: causesLoss || hasIncompleteCosts ? cainMoodImages.triste : cainMoodImages.pensativo,
+                imageWidth: 112,
+                imageHeight: 112,
+                imageAlt: causesLoss || hasIncompleteCosts ? 'CAIN triste' : 'CAIN pensativo',
+                width: 'min(980px, 96vw)',
+                showCancelButton: true,
+                confirmButtonText: causesLoss || hasIncompleteCosts ? 'Guardar de todos modos' : 'Confirmar descuento',
+                cancelButtonText: 'Revisar descuento'
+            });
+            if (!riskConfirmation.isConfirmed) return;
+
+            const form = new FormData();
+            form.append('accion', 'actualizar_combo');
+            form.append('id_combo', String(combo.id_combo));
+            form.append('nombre_combo', combo.nombre_combo);
+            const updatedDescription = (combo.descripcion || 'Combo actualizado desde CAIN.')
+                .replace(/Descuento aplicado:\s*[\d.,]+\s*%/gi, `Descuento aplicado: ${response.value}%`);
+            form.append('descripcion', updatedDescription);
+            form.append('descuento', String(response.value));
+            (detailsResponse.detalles || []).forEach((detail, index) => {
+                form.append(`productos[${index}][id]`, String(detail.id_producto));
+                form.append(`productos[${index}][cantidad]`, String(detail.cantidad));
+            });
+            const updateResponse = await fetch('?pagina=catalogo', { method: 'POST', body: form });
+            const result = JSON.parse(await updateResponse.text());
+            if (!updateResponse.ok || result.status !== 'success') {
+                throw new Error(result.message || 'No se pudo actualizar el descuento.');
+            }
+            await cainAlertOptions('entusiasmado', 'Descuento actualizado', `He actualizado el descuento de «${combo.nombre_combo}» al ${response.value}%, Mi señor@.`);
+        }
+
+        function formatMoney(value) {
+            return Number(value).toLocaleString('es-VE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        async function toggleExistingCombo(combo) {
+            const response = await postControllerAction('?pagina=catalogo', {
+                accion: 'cambiar_estado_combo',
+                id_combo: combo.id_combo
+            });
+            const enabled = Number(response.nuevo_estado) === 1;
+            await cainAlertOptions(
+                enabled ? 'entusiasmado' : 'pensativo',
+                enabled ? 'Combo habilitado' : 'Combo deshabilitado',
+                `El combo «${combo.nombre_combo}» ahora está ${enabled ? 'habilitado' : 'deshabilitado'}, Mi señor@.`
+            );
         }
 
         function displayMetric(value, suffix = '') {
@@ -2259,6 +2808,121 @@ function eliminarFilaProducto(id_producto) {
                 return 'No disponible';
             }
             return `${Number(value).toLocaleString('es-VE', { maximumFractionDigits: 2 })}${suffix}`;
+        }
+
+        function renderStrategicExplanation(explanation) {
+            const sectionDefinitions = {
+                'PROBLEMA IDENTIFICADO': { title: 'Problema de inventario', key: 'problem' },
+                'SOLUCIÓN ESTRATÉGICA': { title: 'Propuesta de combo', key: 'solution' },
+                'EVIDENCIA HISTÓRICA': { title: 'Evidencia de ventas', key: 'evidence' },
+                'ANÁLISIS DE MERCADO': { title: 'Análisis de mercado', key: 'evidence' },
+                'IMPACTO FINANCIERO': { title: 'Impacto esperado', key: 'impact' },
+                'RECOMENDACIÓN DE EJECUCIÓN': { title: 'Cómo ponerlo en marcha', key: 'execution' },
+                'MÉTRICAS DE SEGUIMIENTO': { title: 'Seguimiento', key: 'metrics' }
+            };
+            const grid = document.createElement('div');
+            grid.className = 'analytics-explanation-grid';
+            const sections = String(explanation || '').split(/\n(?=[^\n]*\*\*[^*]+:\*\*)/);
+
+            sections.forEach(sectionText => {
+                const match = sectionText.match(/^([^\n]*?)\*\*([^*]+):\*\*\s*([\s\S]*)$/);
+                if (!match) return;
+                const definition = sectionDefinitions[match[2]];
+                const section = document.createElement('section');
+                section.className = 'analytics-explanation-section';
+                section.dataset.section = definition?.key || 'details';
+                const heading = document.createElement('h5');
+                const icon = document.createElement('span');
+                icon.className = 'analytics-explanation-icon';
+                icon.setAttribute('aria-hidden', 'true');
+                icon.textContent = match[1].trim();
+                heading.append(icon, document.createTextNode(definition?.title || match[2]));
+                const content = document.createElement('p');
+                content.textContent = match[3].trim();
+                section.append(heading, content);
+                grid.appendChild(section);
+            });
+
+            if (!grid.childElementCount) {
+                const fallback = document.createElement('section');
+                fallback.className = 'analytics-explanation-section';
+                const content = document.createElement('p');
+                content.textContent = explanation || 'Consulte los datos de inventario para conocer más detalles.';
+                fallback.appendChild(content);
+                grid.appendChild(fallback);
+            }
+            return grid;
+        }
+
+        function renderExistingComboCard(combo) {
+            const panel = document.createElement('section');
+            panel.className = 'analytics-existing-combo';
+            const heading = document.createElement('h5');
+            heading.textContent = `Combo registrado: ${combo.nombre_combo}`;
+            const status = document.createElement('span');
+            status.className = `analytics-existing-combo-status ${Number(combo.activo) === 1 ? 'is-active' : 'is-inactive'}`;
+            status.textContent = Number(combo.activo) === 1 ? 'Habilitado' : 'Deshabilitado';
+            const description = document.createElement('p');
+            const currentDiscountLabel = `Descuento actual: ${displayMetric(combo.descuento, '%')}`;
+            description.textContent = (combo.descripcion || 'Sin descripción registrada.')
+                .replace(/Descuento aplicado:\s*[\d.,]+\s*%/gi, currentDiscountLabel);
+
+            const products = document.createElement('ul');
+            products.className = 'analytics-existing-combo-products';
+            (combo.productos || []).forEach(product => {
+                const line = document.createElement('li');
+                line.textContent = `${product.cantidad} × ${product.nombre_producto}`;
+                products.appendChild(line);
+            });
+
+            const stats = combo.ventas || {};
+            const metrics = document.createElement('div');
+            metrics.className = 'analytics-existing-combo-metrics';
+            [
+                ['Descuento', displayMetric(combo.descuento, '%')],
+                ['Facturas pagadas', Number(stats.facturas || 0).toLocaleString('es-VE')],
+                ['Unidades de componentes', Number(stats.unidades_componentes || 0).toLocaleString('es-VE')],
+                ['Ingresos registrados', Number(stats.ingresos || 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })]
+            ].forEach(([label, value]) => {
+                const metric = document.createElement('div');
+                metric.className = 'analytics-existing-combo-metric';
+                const metricLabel = document.createElement('span');
+                metricLabel.textContent = label;
+                const metricValue = document.createElement('strong');
+                metricValue.textContent = value;
+                metric.append(metricLabel, metricValue);
+                metrics.appendChild(metric);
+            });
+
+            panel.append(heading, status, description, products, metrics);
+            if (document.getElementById('analyticsActions').dataset.canCreateCombo === '1') {
+                const actions = document.createElement('div');
+                actions.className = 'analytics-existing-combo-actions';
+                [
+                    ['descuento', 'Ajustar descuento'],
+                    ['estado', Number(combo.activo) === 1 ? 'Deshabilitar combo' : 'Habilitar combo']
+                ].forEach(([action, label]) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'analytics-existing-combo-action';
+                    button.textContent = label;
+                    button.addEventListener('click', async () => {
+                        button.disabled = true;
+                        try {
+                            if (action === 'descuento') await adjustExistingComboDiscount(combo);
+                            else await toggleExistingCombo(combo);
+                            await loadAnalytics();
+                        } catch (error) {
+                            await cainAlertOptions('triste', 'No se pudo actualizar el combo', error.message);
+                        } finally {
+                            button.disabled = false;
+                        }
+                    });
+                    actions.appendChild(button);
+                });
+                panel.appendChild(actions);
+            }
+            return panel;
         }
 
         function renderAnalyticsChart(data) {
@@ -2345,13 +3009,21 @@ function eliminarFilaProducto(id_producto) {
             }
 
             items.forEach(item => {
-                // Fila principal con los datos del combo
+                const existingCombo = item.tipo === 'combo_estrategico' ? item.combo_existente : null;
                 const row = document.createElement('tr');
+                row.className = 'analytics-recommendation-row';
+                row.dataset.recommendationType = item.tipo || 'reposicion';
                 const values = [
-                    item.producto || 'Producto',
-                    item.senal || '—',
-                    item.cantidad_sugerida === null || item.cantidad_sugerida === undefined ? '—' : item.cantidad_sugerida,
-                    `${item.nivel_confianza || '—'} (${Math.round((item.confianza || 0) * 100)}%)`,
+                    existingCombo?.nombre_combo || item.producto || 'Producto',
+                    existingCombo
+                        ? `${Number(existingCombo.activo) === 1 ? 'Habilitado' : 'Deshabilitado'} · Ya existe este combo`
+                        : item.senal || '—',
+                    existingCombo
+                        ? (existingCombo.productos || []).map(product => `${product.cantidad} × ${product.nombre_producto}`).join(' + ')
+                        : item.cantidad_sugerida === null || item.cantidad_sugerida === undefined ? '—' : item.cantidad_sugerida,
+                    existingCombo
+                        ? 'Combo registrado'
+                        : `${item.nivel_confianza || '—'} (${Math.round((item.confianza || 0) * 100)}%)`,
                     item.calculado_en ? new Date(item.calculado_en).toLocaleString('es-VE') : '—'
                 ];
                 values.forEach(value => {
@@ -2380,151 +3052,112 @@ function eliminarFilaProducto(id_producto) {
                 row.appendChild(ratingCell);
                 analyticsRecommendations.appendChild(row);
 
-                // Fila secundaria para la explicación
-                if (item.explicacion) {
-                    const explanationRow = document.createElement('tr');
-                    explanationRow.className = 'explanation-row';
-
-                    // Celda para la explicación que abarca las primeras 5 columnas
-                    const explanationCell = document.createElement('td');
-                    explanationCell.colSpan = 6;
-                    explanationCell.style.padding = '0';
-                    explanationCell.style.backgroundColor = '#ffffff';
-                    explanationCell.style.borderTop = '1px solid #e0e0e0';
-
-                    // Contenedor principal de la explicación
-                    const explanationContainer = document.createElement('div');
-                    explanationContainer.style.padding = '16px';
-                    explanationContainer.style.display = 'flex';
-                    explanationContainer.style.flexDirection = 'column';
-                    explanationContainer.style.gap = '12px';
-
-                    // Parsear la explicación por secciones
-                    const sections = item.explicacion.split('\n\n');
-
-                    // Agrupar secciones por tipo
-                    const problemaSection = sections.find(s => s.includes('PROBLEMA IDENTIFICADO'));
-                    const solucionSection = sections.find(s => s.includes('SOLUCIÓN ESTRATÉGICA'));
-                    const evidenciaSection = sections.find(s => s.includes('EVIDENCIA HISTÓRICA'));
-                    const impactoSection = sections.find(s => s.includes('IMPACTO FINANCIERO'));
-                    const ejecucionSection = sections.find(s => s.includes('RECOMENDACIÓN DE EJECUCIÓN'));
-                    const metricasSection = sections.find(s => s.includes('MÉTRICAS DE SEGUIMIENTO'));
-
-
-
-                    // 2. Contenedor para las 3 tarjetas intermedias (grid de 3 columnas)
-                    const middleContainer = document.createElement('div');
-                    middleContainer.style.display = 'grid';
-                    middleContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
-                    middleContainer.style.gap = '12px';
-
-                                                // 1. Tarjeta PROBLEMA IDENTIFICADO (ancho completo)
-                    if (problemaSection) {
-                        const card = document.createElement('div');
-                        card.style.padding = '12px';
-                        card.style.borderRadius = '8px';
-                        card.style.border = '1px solid #fdba74';
-                        card.style.backgroundColor = '#fff7ed';
-                        card.style.fontSize = '1.5em';
-                        card.style.lineHeight = '1.4';
-                        card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:700;font-size:1.1em;color:#9a3412;">⚠️ PROBLEMA IDENTIFICADO</div>' +
-                                       '<div style="color:#9a3412;">' + problemaSection.replace('⚠️ **PROBLEMA IDENTIFICADO:**', '').trim() + '</div>';
-                        middleContainer.appendChild(card);
+                const detailRow = document.createElement('tr');
+                detailRow.className = 'analytics-recommendation-detail';
+                const detailCell = document.createElement('td');
+                detailCell.colSpan = 6;
+                const card = document.createElement('article');
+                card.className = 'analytics-recommendation-card';
+                const title = document.createElement('h4');
+                const labels = {
+                    combo_estrategico: 'Combo para stock congelado',
+                    combo: 'Oportunidad de venta cruzada',
+                    reposicion: 'Recomendación de reposición'
+                };
+                title.textContent = existingCombo
+                    ? `Combo existente · ${existingCombo.nombre_combo}`
+                    : labels[item.tipo] || 'Recomendación de inventario';
+                const explanation = document.createElement('p');
+                if (existingCombo) {
+                    card.append(title, renderExistingComboCard(existingCombo));
+                } else if (item.tipo === 'combo_estrategico') {
+                    card.append(title, renderStrategicExplanation(item.explicacion || item.senal));
+                    if (item.retroalimentacion?.decision_usuario === 'rechazada') {
+                        const personalizedFeedback = document.createElement('p');
+                        personalizedFeedback.className = 'analytics-personal-feedback-note';
+                        const reasonLabel = cainFeedbackReasonLabels[item.retroalimentacion.motivo_codigo];
+                        const reduction = Math.round(
+                            (1 - Number(item.retroalimentacion.factor_prioridad_personal || 0.5)) * 100
+                        );
+                        personalizedFeedback.textContent = `Tomé en cuenta su rechazo anterior${reasonLabel ? `: ${reasonLabel.toLowerCase()}` : ''}. Reduje la prioridad de esta combinación para usted en ${reduction}%.`;
+                        card.appendChild(personalizedFeedback);
                     }
-                    // EVIDENCIA HISTÓRICA
-                    if (evidenciaSection) {
-                        const card = document.createElement('div');
-                        card.style.padding = '12px';
-                        card.style.borderRadius = '8px';
-                        card.style.border = '1px solid #93c5fd';
-                        card.style.backgroundColor = '#eff6ff';
-                        card.style.fontSize = '1.5em';
-                        card.style.lineHeight = '1.4';
-                        card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;color:#1e40af;">📊 EVIDENCIA HISTÓRICA</div>' +
-                                       '<div style="color:#1e40af;">' + evidenciaSection.replace('📊 **EVIDENCIA HISTÓRICA:**', '').trim() + '</div>';
-                        middleContainer.appendChild(card);
-                    }
-
-                    // IMPACTO FINANCIERO
-                    if (impactoSection) {
-                        const card = document.createElement('div');
-                        card.style.padding = '12px';
-                        card.style.borderRadius = '8px';
-                        card.style.border = '1px solid #fde047';
-                        card.style.backgroundColor = '#fef9c3';
-                        card.style.fontSize = '1.5em';
-                        card.style.lineHeight = '1.4';
-                        card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;color:#854d0e;">💰 IMPACTO FINANCIERO</div>' +
-                                       '<div style="color:#854d0e;">' + impactoSection.replace('💰 **IMPACTO FINANCIERO:**', '').trim() + '</div>';
-                        middleContainer.appendChild(card);
-                    }
-
-                    // RECOMENDACIÓN DE EJECUCIÓN
-                    /*
-                    if (ejecucionSection) {
-                        const card = document.createElement('div');
-                        card.style.padding = '12px';
-                        card.style.borderRadius = '8px';
-                        card.style.border = '1px solid #86efac';
-                        card.style.backgroundColor = '#f0fdf4';
-                        card.style.fontSize = '0.85em';
-                        card.style.lineHeight = '1.4';
-                        card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;color:#166534;">🎯 RECOMENDACIÓN DE EJECUCIÓN</div>' +
-                                       '<div style="color:#166534;">' + ejecucionSection.replace('🎯 **RECOMENDACIÓN DE EJECUCIÓN:**', '').trim() + '</div>';
-                        middleContainer.appendChild(card);
-                    }
-                    */
-                    explanationContainer.appendChild(middleContainer);
-
-                    // 3. Tarjeta SOLUCIÓN ESTRATÉGICA (ancho completo) que incluye MÉTRICAS como nota
-                    if (solucionSection) {
-                        const card = document.createElement('div');
-                        card.style.padding = '16px';
-                        card.style.borderRadius = '8px';
-                        card.style.border = '1px solid #86efac';
-                        card.style.backgroundColor = '#f0fdf4';
-                        card.style.fontSize = '1.5em';
-                        card.style.lineHeight = '1.5';
-
-                        const solucionText = (solucionSection || ejecucionSection || item.explicacion)
-                            .replace(/^(?:💡 )?\*\*SOLUCIÓN ESTRATÉGICA:\*\*/i, '').trim();
-                        const metricasText = metricasSection
-                            ? metricasSection.replace('📈 **MÉTRICAS DE SEGUIMIENTO:**', '').trim()
-                            : '';
-
-                        let innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:1.1em;color:#166534;">💡 SOLUCIÓN ESTRATÉGICA</div>' +
-                                       '<div style="color:#166534;margin-bottom:16px;">' + solucionText + '</div>' +
-                                       '<button class="add-combo-btn" data-combo-info=\'' + JSON.stringify({
-                                            productos: item.productos,
-                                            cantidad_congelada: item.cantidad_congelada,
-                                            cantidad_popular: item.cantidad_popular,
-                                            descuento: item.descuento_sugerido,
-                                            recomendacion_id: item.recomendacion_id
-                                        }).replace(/'/g, "\\'") + '\' style="background:#22c55e;color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:1em;font-weight:600;margin-bottom:16px;transition:background 0.2s;" onmouseover="this.style.background=\'#16a34a\'" onmouseout="this.style.background=\'#22c55e\'">+ Agregar Combo Recomendado</button>';
-                        /*
-                        if (metricasText) {
-                            innerHTML += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #86efac;">' +
-                                        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:600;color:#166534;font-size:0.9em;">📈 Nota: MÉTRICAS DE SEGUIMIENTO</div>' +
-                                        '<div style="color:#166534;font-size:0.85em;">' + metricasText + '</div></div>';
-                        }
-                        */
-                        card.innerHTML = innerHTML;
-                        explanationContainer.appendChild(card);
-                    }
-
-                    explanationCell.appendChild(explanationContainer);
-                    explanationRow.appendChild(explanationCell);
-
-                    // Celda vacía para la columna de valoración
-                    const emptyRatingCell = document.createElement('td');
-                    emptyRatingCell.style.padding = '0';
-                    emptyRatingCell.style.border = 'none';
-                    emptyRatingCell.style.backgroundColor = '#ffffff';
-                    emptyRatingCell.style.borderTop = '1px solid #e0e0e0';
-                    explanationRow.appendChild(emptyRatingCell);
-
-                    analyticsRecommendations.appendChild(explanationRow);
+                } else {
+                    explanation.textContent = item.explicacion || item.senal || 'Consulte los datos de inventario para conocer más detalles.';
+                    card.append(title, explanation);
                 }
+
+                if (item.tipo === 'combo_estrategico' && !existingCombo) {
+                    const feedbackPanel = document.createElement('div');
+                    feedbackPanel.className = 'analytics-feedback';
+                    const decisionCard = document.createElement('section');
+                    decisionCard.className = 'analytics-feedback-card analytics-feedback-decision';
+                    const decisionTitle = document.createElement('h5');
+                    decisionTitle.textContent = 'Su opinión sobre el combo';
+                    const decisionQuestion = document.createElement('p');
+                    decisionQuestion.textContent = '¿Le parece adecuada esta combinación para descongelar el producto?';
+                    const decisionActions = document.createElement('div');
+                    decisionActions.className = 'analytics-feedback-actions';
+
+                    if (document.getElementById('analyticsActions').dataset.canCreateCombo === '1') {
+                        const createButton = document.createElement('button');
+                        createButton.type = 'button';
+                        createButton.className = 'analytics-approve add-combo-btn';
+                        createButton.textContent = 'Aprobar y crear combo';
+                        createButton.dataset.comboInfo = JSON.stringify({
+                            productos: item.productos,
+                            producto_congelado_id: item.producto_congelado?.id,
+                            producto_popular_id: item.producto_popular?.id,
+                            cantidad_congelada: item.cantidad_congelada,
+                            cantidad_popular: item.cantidad_popular,
+                            descuento: item.descuento_sugerido,
+                            recomendacion_id: item.recomendacion_id
+                        });
+                        decisionActions.appendChild(createButton);
+                    }
+
+                    const rejectButton = document.createElement('button');
+                    rejectButton.type = 'button';
+                    rejectButton.className = 'analytics-reject';
+                    rejectButton.textContent = 'No me convence';
+                    rejectButton.dataset.feedbackAction = 'rechazada';
+                    rejectButton.dataset.recommendationId = item.recomendacion_id;
+                    rejectButton.dataset.recommendationType = item.tipo;
+                    rejectButton.dataset.suggestedDiscount = String(item.descuento_sugerido ?? '');
+                    decisionActions.appendChild(rejectButton);
+                    decisionCard.append(decisionTitle, decisionQuestion, decisionActions);
+
+                    const discountCard = document.createElement('section');
+                    discountCard.className = 'analytics-feedback-card analytics-feedback-discount';
+                    const discountTitle = document.createElement('h5');
+                    discountTitle.textContent = 'Ajuste del descuento';
+                    const discountQuestion = document.createElement('p');
+                    discountQuestion.textContent = `Descuento sugerido: ${displayMetric(item.descuento_sugerido, '%')}. ¿Cómo lo considera?`;
+                    const discountActions = document.createElement('div');
+                    discountActions.className = 'analytics-feedback-actions';
+                    [
+                        ['mucho', 'Es mucho'],
+                        ['adecuado', 'Es adecuado'],
+                        ['poco', 'Es poco']
+                    ].forEach(([value, label]) => {
+                        const discountButton = document.createElement('button');
+                        discountButton.type = 'button';
+                        discountButton.textContent = label;
+                        discountButton.dataset.feedbackAction = 'descuento';
+                        discountButton.dataset.discountFeedback = value;
+                        discountButton.dataset.recommendationId = item.recomendacion_id;
+                        discountButton.dataset.recommendationType = item.tipo;
+                        discountButton.dataset.suggestedDiscount = String(item.descuento_sugerido ?? '');
+                        discountActions.appendChild(discountButton);
+                    });
+                    discountCard.append(discountTitle, discountQuestion, discountActions);
+                    feedbackPanel.append(decisionCard, discountCard);
+                    card.appendChild(feedbackPanel);
+                }
+
+                detailCell.appendChild(card);
+                detailRow.appendChild(detailCell);
+                analyticsRecommendations.appendChild(detailRow);
             });
         }
 
@@ -2534,12 +3167,13 @@ function eliminarFilaProducto(id_producto) {
 
             if (productId && categoryId) {
                 setAnalyticsStatus('Selecciona un producto o una categoría, pero no ambos.', 'error');
-                return;
+                return false;
             }
 
             const button = document.getElementById('runAnalytics');
             button.disabled = true;
             setAnalyticsStatus('Consultando ventas y calculando el análisis…');
+            setCainMood('pensativo', 'Permítame revisar las ventas, la rotación y el stock, Mi señor@.');
             try {
                 const result = await postAnalytics('analitica_dashboard', {
                     producto_id: productId || '',
@@ -2547,18 +3181,79 @@ function eliminarFilaProducto(id_producto) {
                     frecuencia: document.getElementById('analyticsFrequency').value,
                     horizonte: document.getElementById('analyticsHorizon').value,
                 });
+                const filteredAnalysis = Boolean(productId || categoryId);
+                const responseFrozenProducts = Array.isArray(result.productos_congelados)
+                    ? result.productos_congelados
+                    : [];
+                let recommendations = result.recomendaciones || [];
+                if (!filteredAnalysis) {
+                    globalFrozenProducts = responseFrozenProducts;
+                    globalStrategicCombos = recommendations.filter(item => item.tipo === 'combo_estrategico');
+                }
+
+                const frozenSource = responseFrozenProducts.length
+                    ? responseFrozenProducts
+                    : (globalFrozenProducts || []);
+                const frozenProducts = filteredAnalysis
+                    ? frozenSource.filter(product => {
+                        if (productId) return Number(product.id) === Number(productId);
+                        return Number(product.categoria_id) === Number(categoryId);
+                    })
+                    : frozenSource;
+                if (filteredAnalysis && frozenProducts.length) {
+                    const frozenIds = new Set(frozenProducts.map(product => Number(product.id)));
+                    const strategicById = new Map();
+                    [...globalStrategicCombos, ...recommendations]
+                        .filter(item =>
+                            item.tipo === 'combo_estrategico' &&
+                            frozenIds.has(Number(item.producto_congelado?.id))
+                        )
+                        .forEach(item => strategicById.set(item.recomendacion_id, item));
+                    recommendations = [...strategicById.values()]
+                        .sort((first, second) => second.prioridad_ajustada - first.prioridad_ajustada);
+                }
+                renderFrozenProducts(frozenProducts);
+                const crossSellCombo = recommendations.find(item => item.tipo === 'combo');
+                if (frozenProducts.length) {
+                    setCainMood(
+                        'pensativo',
+                        `Mi señor@, detecté ${frozenProducts.length} producto(s) con stock congelado. La lista completa aparece aquí y priorizaré estos productos antes de otras oportunidades.`
+                    );
+                } else if (filteredAnalysis && globalFrozenProducts?.length) {
+                    setCainMood(
+                        'alegre',
+                        `Mi señor@, el producto seleccionado no figura entre los congelados. Mantengo el análisis general del inventario y aquí le muestro oportunidades aplicables a su selección.`
+                    );
+                } else if (crossSellCombo) {
+                    setCainMood(
+                        'alegre',
+                        'Discúlpeme, Mi señor@. Según mi última revisión no he encontrado productos congelados en el stock, pero si busca optimizar las ventas podemos colocar los siguientes productos juntos, ya que según mi razonamiento, como se suelen comprar a menudo juntos, el agruparlos podría generar más ventas.'
+                    );
+                } else {
+                    setCainMood('alegre', 'No detecté productos congelados ni combos confiables, Mi señor@. Puede revisar las ventas históricas o entrenar el modelo.');
+                }
                 if (result.calidad?.estado === 'sin_datos') {
                     analyticsKpis.hidden = true;
                     renderAnalyticsRecommendations([]);
+                    setCainMood('alegre', 'No encontré productos activos para este filtro, Mi señor@. Pruebe otra selección.');
                     setAnalyticsStatus('El producto o categoría seleccionado no tiene productos activos.');
-                    return;
+                    return true;
                 }
                 if (result.calidad?.estado === 'sin_ventas') {
                     analyticsKpis.hidden = true;
                     renderAnalyticsChart(result);
-                    renderAnalyticsRecommendations([]);
-                    setAnalyticsStatus('No hay ventas de facturas pagadas para este filtro en los últimos 365 días.');
-                    return;
+                    renderAnalyticsRecommendations(recommendations);
+                    if (!frozenProducts.length) {
+                        setCainMood('alegre', 'No hay ventas pagadas suficientes para el pronóstico de esta selección, Mi señor@. La vista general de inventario sigue disponible.');
+                    }
+                    setAnalyticsStatus(
+                        frozenProducts.length && recommendations.length === 0
+                            ? 'Este producto está identificado como stock congelado, pero no hay una pareja con ventas para formar un combo estratégico. No se muestran combos de venta cruzada para este filtro.'
+                            : recommendations.length
+                                ? 'No hay ventas suficientes para el pronóstico de esta selección. Se conservan las recomendaciones estratégicas del análisis general del inventario.'
+                                : 'No hay ventas de facturas pagadas para este filtro en los últimos 365 días.'
+                    );
+                    return true;
                 }
 
                 analyticsKpis.hidden = false;
@@ -2583,18 +3278,22 @@ function eliminarFilaProducto(id_producto) {
                 }
                     */
                 renderAnalyticsChart(result);
-                renderAnalyticsRecommendations(result.recomendaciones || []);
+                renderAnalyticsRecommendations(recommendations);
 
                 const quality = result.calidad || {};
-                if (quality.estado === 'insuficiente_historial') {
+                if (frozenProducts.length && recommendations.length === 0) {
+                    setAnalyticsStatus('Los productos de este filtro están identificados como stock congelado, pero no hay una pareja que cumpla los criterios del combo estratégico. No se muestran combos de venta cruzada para este filtro.');
+                } else if (quality.estado === 'insuficiente_historial') {
                     setAnalyticsStatus('Historial insuficiente: se requieren al menos 24 semanas y seis semanas con ventas para entrenar el modelo.');
                 } else if (quality.estado === 'modelo_pendiente') {
                     setAnalyticsStatus('Se muestran ventas reales. Entrena el modelo local para habilitar predicciones.');
                 } else {
                     setAnalyticsStatus(`Modelo ${quality.modelo || ''} · entrenamiento ${quality.fecha_entrenamiento || 'sin fecha'} · ${result.horizonte_dias} días.`);
                 }
+                return true;
             } catch (error) {
                 setAnalyticsStatus(error.message, 'error');
+                return false;
             } finally {
                 button.disabled = false;
             }
@@ -2605,63 +3304,81 @@ function eliminarFilaProducto(id_producto) {
         // Sin filtros, el microservicio analiza el inventario completo y genera combos estratégicos.
         loadAnalytics();
 
-        // Event listener para botones "Agregar Combo Recomendado"
-        document.addEventListener('click', async function(event) {
-            if (event.target.classList.contains('add-combo-btn')) {
-                const comboInfo = JSON.parse(event.target.dataset.comboInfo);
-                const descuentoSugerido = Number(comboInfo.descuento);
-                if (
-                    comboInfo.descuento === null ||
-                    comboInfo.descuento === undefined ||
-                    String(comboInfo.descuento).trim() === '' ||
-                    !Number.isFinite(descuentoSugerido) ||
-                    descuentoSugerido < 0 ||
-                    descuentoSugerido > 100
-                ) {
-                    alert('La recomendación no incluye un descuento válido. Vuelve a consultar el análisis antes de crear el combo.');
-                    return;
-                }
+        async function createSuggestedCombo(button) {
+            const comboInfo = JSON.parse(button.dataset.comboInfo);
+            const descuentoSugerido = Number(comboInfo.descuento);
+            const frozenId = Number(comboInfo.producto_congelado_id ?? comboInfo.productos?.[0]);
+            const popularId = Number(comboInfo.producto_popular_id ?? comboInfo.productos?.[1]);
+            if (
+                comboInfo.descuento === null ||
+                comboInfo.descuento === undefined ||
+                String(comboInfo.descuento).trim() === '' ||
+                !Number.isFinite(descuentoSugerido) ||
+                descuentoSugerido < 0 ||
+                descuentoSugerido > 100 ||
+                !Number.isInteger(frozenId) ||
+                !Number.isInteger(popularId) ||
+                frozenId <= 0 ||
+                popularId <= 0 ||
+                frozenId === popularId
+            ) {
+                const message = 'La sugerencia no contiene un descuento o una composición válidos. Consulte de nuevo el análisis.';
+                setAnalyticsStatus(message, 'error');
+                await cainAlertOptions('triste', 'Sugerencia no válida', message);
+                return;
+            }
 
-                // Pedir nombre del combo al usuario
-                const nombreCombo = prompt('Ingresa el nombre para el combo:');
-                if (!nombreCombo || nombreCombo.trim() === '') {
-                    alert('El nombre del combo es obligatorio');
+            button.disabled = true;
+            let comboCreated = false;
+            try {
+                const nombreCombo = await requestSuggestedComboName();
+                if (!nombreCombo) return;
+                const descripcion = `Combo especial: ${comboInfo.cantidad_popular} unidad(es) del producto popular y ${comboInfo.cantidad_congelada} unidad(es) del producto con stock congelado. Descuento aplicado: ${descuentoSugerido}%.`;
+                const productosFormateados = [
+                    { id: popularId, cantidad: comboInfo.cantidad_popular },
+                    { id: frozenId, cantidad: comboInfo.cantidad_congelada }
+                ];
+                const result = await postControllerAction('?pagina=combo', {
+                    accion: 'crear_combo',
+                    nombre_combo: nombreCombo,
+                    descripcion,
+                    descuento: descuentoSugerido,
+                    productos: JSON.stringify(productosFormateados)
+                });
+                if (result.status === 'duplicate') {
+                    await showExistingSuggestedCombo(result.combo);
                     return;
                 }
+                if (result.status !== 'success') throw new Error(result.message || 'No se pudo crear el combo.');
+                comboCreated = true;
+                setCainMood('entusiasmado', `¡Excelente decisión, Mi señor@! El combo «${nombreCombo.trim()}» se creó correctamente. Su respuesta me ayudará a afinar el descuento.`);
+                setAnalyticsStatus(`Combo «${nombreCombo.trim()}» creado. Ahora puede indicar si el descuento fue adecuado, mucho o poco.`, 'success');
 
                 try {
-                    // Generar descripción automática
-                    const descripcion = "Combo especial que Incluye " + comboInfo.cantidad_popular + " unidad(es) del producto principal y " + comboInfo.cantidad_congelada + " unidad(es) del producto congelado. Descuento aplicado: " + descuentoSugerido + "%.";
-
-                    // Formatear productos como array de objetos con id y cantidad
-                    const productosFormateados = comboInfo.productos.map((productoId, index) => ({
-                        id: productoId,  // Usar 'id' en lugar de 'id_producto'
-                        cantidad: index === 0 ? comboInfo.cantidad_popular : comboInfo.cantidad_congelada
-                    }));
-
-                    // Enviar solicitud al controlador de combos
-                    const formData = new FormData();
-                    formData.append('accion', 'crear_combo');
-                    formData.append('nombre_combo', nombreCombo.trim());
-                    formData.append('descripcion', descripcion);
-                    formData.append('descuento', String(descuentoSugerido));
-                    formData.append('productos', JSON.stringify(productosFormateados));
-
-                    const response = await fetch('?pagina=combo', {
-                        method: 'POST',
-                        body: formData
+                    await postAnalytics('analitica_feedback', {
+                        recomendacion_id: comboInfo.recomendacion_id,
+                        tipo: 'combo_estrategico',
+                        decision: 'aprobada',
+                        descuento_sugerido: descuentoSugerido,
+                        descuento_aplicado: descuentoSugerido
                     });
-                    const result = await response.json();
-
-                    if (!response.ok || result.status === 'error') {
-                        throw new Error(result.message || 'Error al crear el combo');
-                    }
-
-                    alert('Combo creado exitosamente: ' + nombreCombo);
-                } catch (error) {
-                    alert('Error al crear el combo: ' + error.message);
+                } catch (feedbackError) {
+                    const message = `El combo se creó, pero no se pudo guardar la aprobación de CAIN: ${feedbackError.message}`;
+                    setAnalyticsStatus(message, 'error');
+                    await cainAlertOptions('triste', 'Combo creado; feedback pendiente', message);
                 }
+                await cainAlertOptions('entusiasmado', '¡Combo creado!', `¡Excelente decisión, Mi señor@! El combo «${nombreCombo}» se creó correctamente.`);
+            } catch (error) {
+                setAnalyticsStatus(`No se pudo crear el combo: ${error.message}`, 'error');
+                await cainAlertOptions('triste', 'No se pudo crear el combo', error.message);
+            } finally {
+                if (!comboCreated) button.disabled = false;
             }
+        }
+
+        document.addEventListener('click', async function(event) {
+            const button = event.target.closest('.add-combo-btn');
+            if (button && !button.disabled) await createSuggestedCombo(button);
         });
 
         analyticsProduct.addEventListener('change', function () {
@@ -2676,6 +3393,7 @@ function eliminarFilaProducto(id_producto) {
             trainAnalyticsButton.addEventListener('click', async function () {
                 this.disabled = true;
                 setAnalyticsStatus('Entrenando el modelo local con las 24 semanas completas más recientes…');
+                setCainMood('pensativo', 'Estoy actualizando mis cálculos con las ventas recientes, Mi señor@.');
                 try {
                     const result = await postAnalytics('analitica_entrenar');
                     if (result.estado === 'insuficiente_historial') {
@@ -2696,20 +3414,106 @@ function eliminarFilaProducto(id_producto) {
         }
 
         analyticsRecommendations.addEventListener('click', async function (event) {
+            const feedbackButton = event.target.closest('button[data-feedback-action]');
+            if (feedbackButton && !feedbackButton.disabled) {
+                const feedbackPanel = feedbackButton.closest('.analytics-feedback');
+                const feedbackButtons = feedbackPanel.querySelectorAll('button[data-feedback-action]');
+                const payload = {
+                    recomendacion_id: feedbackButton.dataset.recommendationId,
+                    tipo: feedbackButton.dataset.recommendationType,
+                    descuento_sugerido: feedbackButton.dataset.suggestedDiscount || ''
+                };
+                const feedbackAction = feedbackButton.dataset.feedbackAction;
+                try {
+                    if (feedbackAction === 'rechazada') {
+                        const reasonResponse = await requestCainFeedbackReason();
+                        if (!reasonResponse.submitted) return;
+                        payload.decision = 'rechazada';
+                        payload.motivo_codigo = reasonResponse.reasonCode;
+                        payload.motivo = reasonResponse.reason;
+                    } else {
+                        payload.descuento_feedback = feedbackButton.dataset.discountFeedback;
+                    }
+
+                    feedbackButtons.forEach(actionButton => { actionButton.disabled = true; });
+                    await postAnalytics('analitica_feedback', payload);
+                    if (feedbackAction === 'rechazada') {
+                        setCainMood('triste', 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
+                        setAnalyticsStatus('Rechazo y motivo guardados. Ajustaré la prioridad de recomendaciones futuras.', 'success');
+                    } else {
+                        const discountResponse = feedbackButton.dataset.discountFeedback;
+                        const messages = {
+                            mucho: 'Comprendo, Mi señor@. Tendré en cuenta que el descuento sugerido le pareció demasiado alto.',
+                            adecuado: 'Anotado, Mi señor@. Mantendré este nivel como referencia para futuras sugerencias.',
+                            poco: 'Comprendo, Mi señor@. Consideraré un descuento algo mayor en futuras recomendaciones.'
+                        };
+                        setCainMood('pensativo', messages[discountResponse]);
+                        setAnalyticsStatus('Preferencia de descuento guardada y aplicada a futuras sugerencias.', 'success');
+                    }
+                    feedbackButtons.forEach(actionButton => actionButton.remove());
+                    if (feedbackAction === 'rechazada') {
+                        feedbackPanel.querySelector('.add-combo-btn')?.remove();
+                    }
+                    const feedbackResult = document.createElement('p');
+                    feedbackResult.className = 'analytics-feedback-result';
+                    feedbackResult.textContent = feedbackAction === 'rechazada'
+                        ? payload.motivo_codigo === 'descuento_alto'
+                            ? 'Rechazo guardado. Reduciré el descuento y la prioridad de esta combinación en su próximo análisis.'
+                            : 'Rechazo guardado. Retiraré esta combinación de sus próximas recomendaciones.'
+                        : 'Respuesta guardada. Puede continuar con la creación del combo.';
+                    feedbackPanel.appendChild(feedbackResult);
+                    if (feedbackAction === 'rechazada') {
+                        const refreshed = await loadAnalytics();
+                        if (refreshed) {
+                            const removePair = payload.motivo_codigo !== 'descuento_alto';
+                            setCainMood('pensativo', removePair
+                                ? 'He considerado su respuesta, Mi señor@. Retiré esta pareja de sus recomendaciones y revisaré otras combinaciones.'
+                                : 'He considerado su respuesta, Mi señor@. Actualicé la sugerencia y reduciré el descuento y la prioridad de esta combinación.');
+                            setAnalyticsStatus(removePair
+                                ? 'Rechazo aplicado. Esta pareja ya no aparecerá en sus recomendaciones; se mostrarán otras alternativas disponibles.'
+                                : 'Rechazo aplicado. La prioridad personalizada ya se refleja en este análisis.', 'success');
+                        }
+                    }
+                } catch (error) {
+                    feedbackButtons.forEach(actionButton => { actionButton.disabled = false; });
+                    setAnalyticsStatus(error.message, 'error');
+                }
+                return;
+            }
+
             const button = event.target.closest('button[data-recommendation-id]');
             if (!button || button.disabled) return;
             const group = button.parentElement;
-            group.querySelectorAll('button').forEach(star => { star.disabled = true; });
+            const stars = Number(button.dataset.stars);
+            const feedback = {
+                recomendacion_id: button.dataset.recommendationId,
+                tipo: button.dataset.recommendationType,
+                estrellas: button.dataset.stars
+            };
             try {
-                await postAnalytics('analitica_feedback', {
-                    recomendacion_id: button.dataset.recommendationId,
-                    tipo: button.dataset.recommendationType,
-                    estrellas: button.dataset.stars
-                });
+                if (stars <= 2) {
+                    const reasonResponse = await requestCainFeedbackReason();
+                    if (!reasonResponse.submitted) return;
+                    feedback.decision = 'rechazada';
+                    feedback.motivo_codigo = reasonResponse.reasonCode;
+                    feedback.motivo = reasonResponse.reason;
+                }
+                group.querySelectorAll('button').forEach(star => { star.disabled = true; });
+                await postAnalytics('analitica_feedback', feedback);
                 group.querySelectorAll('button').forEach(star => {
-                    if (Number(star.dataset.stars) <= Number(button.dataset.stars)) star.classList.add('selected');
+                    if (Number(star.dataset.stars) <= stars) star.classList.add('selected');
                 });
+                if (stars <= 2) {
+                    setCainMood('triste', 'Lamento si mi sugerencia no fue de su agrado, Mi señor@. ¿Podría indicarme qué no le agrada de mi sugerencia?');
+                }
                 setAnalyticsStatus('Valoración guardada. Se tendrá en cuenta al priorizar futuras recomendaciones.', 'success');
+                if (stars <= 2) {
+                    const refreshed = await loadAnalytics();
+                    if (refreshed) {
+                        setCainMood('pensativo', 'He considerado su valoración y actualicé la prioridad de las recomendaciones para usted, Mi señor@.');
+                        setAnalyticsStatus('Valoración aplicada. La prioridad personalizada ya se refleja en este análisis.', 'success');
+                    }
+                }
             } catch (error) {
                 group.querySelectorAll('button').forEach(star => { star.disabled = false; });
                 setAnalyticsStatus(error.message, 'error');

@@ -290,7 +290,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
             exit;
         }
 
-        $validarDatosCombo = static function ($nombre, $descripcion, $descuentoRaw) use ($contieneEntradaNoPermitida) {
+        $validarDatosCombo = static function ($nombre, $descripcion, $descuentoRaw, $excluirId = null) use ($contieneEntradaNoPermitida, $productosModel) {
             $nombre = is_string($nombre) ? trim($nombre) : '';
             $descripcion = is_string($descripcion) ? trim($descripcion) : '';
             $descuentoRaw = is_string($descuentoRaw) || is_numeric($descuentoRaw)
@@ -303,8 +303,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
                 }
             }
 
-            if ($nombre === '' || preg_match('/^[\p{L}\p{N}][\p{L}\p{N}\s._\'-]{0,99}$/u', $nombre) !== 1) {
-                throw new Exception('El nombre debe tener entre 1 y 100 caracteres válidos');
+            $validacionNombre = $productosModel->validarNombreCombo($nombre, $excluirId);
+            if (!$validacionNombre['valido']) {
+                throw new Exception($validacionNombre['mensaje']);
             }
             if ($descripcion === '') {
                 throw new Exception('La descripción del combo es requerida');
@@ -325,6 +326,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
 
             return [$nombre, $descripcion, (float)$descuentoRaw];
         };
+
+        if ($accion == 'analizar_rentabilidad_combo') {
+            try {
+                $id_combo = isset($_POST['id_combo']) ? (int)$_POST['id_combo'] : 0;
+                $descuentoRaw = $_POST['descuento'] ?? null;
+                $descuentoRaw = is_string($descuentoRaw) || is_numeric($descuentoRaw)
+                    ? trim((string)$descuentoRaw)
+                    : '';
+
+                if ($id_combo <= 0) {
+                    throw new Exception('ID de combo no especificado o inválido');
+                }
+                if (preg_match('/^\d{1,3}(?:\.\d{1,2})?$/', $descuentoRaw) !== 1
+                    || (float)$descuentoRaw > 100) {
+                    throw new Exception('El descuento debe ser un porcentaje entre 0 y 100, con hasta dos decimales');
+                }
+
+                echo json_encode([
+                    'status' => 'success',
+                    'analisis' => $productosModel->analizarRentabilidadCombo($id_combo, (float)$descuentoRaw)
+                ], JSON_UNESCAPED_UNICODE);
+            } catch (\Throwable $e) {
+                echo json_encode(['status' => 'error', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            }
+            exit;
+        }
 
         if ($accion == 'crear_combo') {
             try {
@@ -367,7 +394,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
                     throw new Exception('Debe seleccionar al menos un producto válido para el combo');
                 }
 
-                $id_combo = $productosModel->crearCombo($nombre, $descripcion, $productosValidos, $descuento);
+                $resultadoCreacion = $productosModel->crearComboVerificandoDuplicados(
+                    $nombre,
+                    $descripcion,
+                    $productosValidos,
+                    $descuento
+                );
+                if ($resultadoCreacion['estado'] !== 'creado') {
+                    echo json_encode([
+                        'status' => 'error',
+                        'code' => $resultadoCreacion['estado'],
+                        'message' => $resultadoCreacion['estado'] === 'productos_duplicados'
+                            ? 'Ya existe un combo con exactamente los mismos productos.'
+                            : 'Ya existe un combo con ese nombre. Elija otro nombre.',
+                        'combo' => $resultadoCreacion['combo'] ?? null
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                $id_combo = $resultadoCreacion['id_combo'];
 
                 if (!defined('SKIP_SIDE_EFFECTS')) {
                     $bitacoraModel->registrarBitacora(
@@ -446,7 +490,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['accion'])) {
                     throw new Exception('ID de combo no especificado o inválido');
                 }
 
-                [$nombre, $descripcion, $descuento] = $validarDatosCombo($nombre, $descripcion, $descuentoRaw);
+                [$nombre, $descripcion, $descuento] = $validarDatosCombo($nombre, $descripcion, $descuentoRaw, $id_combo);
 
                 if (!is_array($productos) || empty($productos)) {
                     throw new Exception('Debe seleccionar al menos un producto para el combo');

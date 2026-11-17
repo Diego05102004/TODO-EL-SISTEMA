@@ -66,7 +66,8 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/javascript/datatable.js"></script>
 <script src="assets/public/js/chart.js"></script>
-<script src="assets/javascript/producto.js"></script>
+<script src="assets/javascript/producto.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/producto.js'); ?>"></script>
+<link rel="stylesheet" href="assets/styles/analitica_cain.css">
 
 <!-- Summary Cards para Productos -->
 <div class="summary-cards">
@@ -124,6 +125,37 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                         <p>Explora demanda real de facturas pagadas, patrones de compra y señales de reposición.</p>
                     </div>
                     <span class="analytics-source">Fuente: facturas pagadas</span>
+                </div>
+
+                <?php
+                $cainMoodImages = [];
+                $cainMoodFiles = [
+                    'alegre' => 'CAIN (ESTADO-ALEGRE).jpg',
+                    'pensativo' => 'CAIN (ESTADO-PENSATIVO).jpg',
+                    'entusiasmado' => 'CAIN (ESTADO-ENTUSIASMADO).jpg',
+                    'triste' => 'CAIN (ESTADO-TRISTE).jpg'
+                ];
+                foreach ($cainMoodFiles as $cainMood => $cainMoodFile) {
+                    $cainImagePath = __DIR__ . '/../../microservicio/analitica_predictiva/' . $cainMoodFile;
+                    if (is_file($cainImagePath)) {
+                        $cainMoodImages[$cainMood] = 'microservicio/analitica_predictiva/' . rawurlencode($cainMoodFile);
+                    }
+                }
+                ?>
+                <div class="cain-assistant" id="cainAssistant"
+                    data-images="<?php echo htmlspecialchars(json_encode($cainMoodImages, JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?>">
+                    <div class="cain-portrait" id="cainPortraitFrame" aria-hidden="true">
+                        <span class="cain-fallback">CAIN</span>
+                        <img id="cainPortrait" alt="" hidden>
+                    </div>
+                    <div class="cain-dialogue" id="cainDialogue" role="status" aria-live="polite">
+                        <strong>CAIN · Asistente de inventario</strong>
+                        <p id="cainMessage">Buenos días, Mi señor@. Estoy listo para analizar el inventario.</p>
+                        <div class="cain-frozen-stock" id="cainFrozenStock" hidden>
+                            <strong>Productos con stock congelado</strong>
+                            <ul id="cainFrozenProducts"></ul>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="analytics-filters">
@@ -201,10 +233,10 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                 
                 </div>
 
-                <div class="analytics-actions">
+                <div class="analytics-actions" id="analyticsActions" data-can-create-combo="<?php echo $puedeModificarProductos ? '1' : '0'; ?>">
                     <div class="analytics-chart-heading">
                         <h3>Acciones recomendadas</h3>
-                        <span>Las valoraciones ajustan la prioridad futura por tipo de recomendación.</span>
+                        <span>Sus decisiones ajustan la prioridad y el descuento de futuras sugerencias.</span>
                     </div>
                     <div class="analytics-table-wrap">
                         <table class="analytics-table">

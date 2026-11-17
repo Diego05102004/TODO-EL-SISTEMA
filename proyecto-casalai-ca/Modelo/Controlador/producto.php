@@ -550,10 +550,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $solicitud = array_merge($datosAnalitica, [
                     'producto_id' => $hayProducto ? $productoId : null,
                     'categoria_id' => $hayCategoria ? $categoriaId : null,
+                    'usuario_id' => isset($_SESSION['id_usuario']) ? (int)$_SESSION['id_usuario'] : null,
                     'frecuencia' => $frecuencia,
                     'horizonte' => $horizonte
                 ]);
                 $resultado = (new AnaliticaPredictivaProxy())->obtenerDashboard($solicitud);
+                if (isset($resultado['recomendaciones']) && is_array($resultado['recomendaciones'])) {
+                    $resultado['recomendaciones'] = $productoModel->enriquecerRecomendacionesConCombosExistentes(
+                        $resultado['recomendaciones']
+                    );
+                }
                 echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
             } catch (\RuntimeException | \JsonException $e) {
                 error_log('Error en dashboard de analítica predictiva: ' . $e->getMessage());
@@ -586,24 +592,68 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         case 'analitica_feedback':
             header('Content-Type: application/json; charset=utf-8');
-            $recomendacionId = trim((string)($_POST['recomendacion_id'] ?? ''));
-            $tipo = $_POST['tipo'] ?? '';
-            $estrellas = filter_var($_POST['estrellas'] ?? null, FILTER_VALIDATE_INT);
-            if (!preg_match('/^(combo|reposicion):[0-9,]+$/', $recomendacionId) ||
-                !in_array($tipo, ['combo', 'reposicion'], true) ||
-                $estrellas === false || $estrellas < 1 || $estrellas > 5) {
+            $recomendacionId = is_string($_POST['recomendacion_id'] ?? null) ? trim($_POST['recomendacion_id']) : '';
+            $tipo = is_string($_POST['tipo'] ?? null) ? $_POST['tipo'] : '';
+            $estrellasInput = array_key_exists('estrellas', $_POST) ? $_POST['estrellas'] : '';
+            $estrellasRaw = is_scalar($estrellasInput) ? trim((string)$estrellasInput) : '';
+            $estrellas = $estrellasRaw === '' ? null : filter_var($estrellasRaw, FILTER_VALIDATE_INT);
+            $decision = is_string($_POST['decision'] ?? null) ? $_POST['decision'] : '';
+            $descuentoFeedback = is_string($_POST['descuento_feedback'] ?? null) ? $_POST['descuento_feedback'] : '';
+            $motivoCodigo = is_string($_POST['motivo_codigo'] ?? null) ? $_POST['motivo_codigo'] : '';
+            $descuentoSugeridoInput = array_key_exists('descuento_sugerido', $_POST) ? $_POST['descuento_sugerido'] : '';
+            $descuentoAplicadoInput = array_key_exists('descuento_aplicado', $_POST) ? $_POST['descuento_aplicado'] : '';
+            $descuentoSugeridoRaw = is_scalar($descuentoSugeridoInput) ? trim((string)$descuentoSugeridoInput) : '';
+            $descuentoAplicadoRaw = is_scalar($descuentoAplicadoInput) ? trim((string)$descuentoAplicadoInput) : '';
+            $descuentoSugerido = $descuentoSugeridoRaw === '' ? null : filter_var($descuentoSugeridoRaw, FILTER_VALIDATE_FLOAT);
+            $descuentoAplicado = $descuentoAplicadoRaw === '' ? null : filter_var($descuentoAplicadoRaw, FILTER_VALIDATE_FLOAT);
+            $motivo = is_string($_POST['motivo'] ?? null) ? trim($_POST['motivo']) : '';
+            $longitudMotivo = function_exists('mb_strlen') ? mb_strlen($motivo, 'UTF-8') : strlen($motivo);
+            $tipoValido = in_array($tipo, ['combo', 'combo_estrategico', 'reposicion'], true);
+            $recomendacionValida = preg_match('/^(combo_estrategico|combo|reposicion):[0-9,]+$/', $recomendacionId) &&
+                strpos($recomendacionId, $tipo . ':') === 0;
+            $estrellasValidas = $estrellas === null || ($estrellas !== false && $estrellas >= 1 && $estrellas <= 5);
+            $decisionValida = $decision === '' || in_array($decision, ['aprobada', 'rechazada'], true);
+            $descuentoFeedbackValido = $descuentoFeedback === '' ||
+                in_array($descuentoFeedback, ['adecuado', 'mucho', 'poco'], true);
+            $motivoCodigoValido = $motivoCodigo === '' || in_array($motivoCodigo, [
+                'productos_no_adecuados',
+                'descuento_alto',
+                'cantidad_inadecuada',
+                'combo_existente',
+                'otro'
+            ], true);
+            $descuentoSugeridoValido = $descuentoSugeridoRaw === '' ||
+                ($descuentoSugerido !== false && $descuentoSugerido >= 0 && $descuentoSugerido <= 100);
+            $descuentoAplicadoValido = $descuentoAplicadoRaw === '' ||
+                ($descuentoAplicado !== false && $descuentoAplicado >= 0 && $descuentoAplicado <= 100);
+            $feedbackPresente = $estrellas !== null || $decision !== '' || $descuentoFeedback !== '' ||
+                $descuentoAplicado !== null || $motivo !== '';
+            $rechazoConMotivo = $decision !== 'rechazada' || $motivoCodigo !== '';
+            if (!$recomendacionValida || !$tipoValido || !$estrellasValidas || !$decisionValida ||
+                !$descuentoFeedbackValido || !$motivoCodigoValido || !$descuentoSugeridoValido || !$descuentoAplicadoValido ||
+                !$feedbackPresente || !$rechazoConMotivo || $longitudMotivo > 500) {
                 http_response_code(400);
-                echo json_encode(['detail' => 'La valoración de la recomendación no es válida.'], JSON_UNESCAPED_UNICODE);
+                $mensajeError = !$rechazoConMotivo
+                    ? 'Seleccione el motivo del rechazo para actualizar las recomendaciones.'
+                    : 'La respuesta de la recomendación no es válida.';
+                echo json_encode(['detail' => $mensajeError], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
             try {
-                $resultado = (new AnaliticaPredictivaProxy())->guardarFeedback([
+                $feedback = [
                     'recomendacion_id' => $recomendacionId,
                     'tipo' => $tipo,
                     'estrellas' => $estrellas,
+                    'decision' => $decision !== '' ? $decision : null,
+                    'motivo_codigo' => $motivoCodigo !== '' ? $motivoCodigo : null,
+                    'descuento_feedback' => $descuentoFeedback !== '' ? $descuentoFeedback : null,
+                    'descuento_sugerido' => $descuentoSugerido,
+                    'descuento_aplicado' => $descuentoAplicado,
+                    'motivo' => $motivo !== '' ? $motivo : null,
                     'usuario_id' => isset($_SESSION['id_usuario']) ? (int)$_SESSION['id_usuario'] : null
-                ]);
+                ];
+                $resultado = (new AnaliticaPredictivaProxy())->guardarFeedback($feedback);
                 echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
             } catch (\RuntimeException | \JsonException $e) {
                 error_log('Error al guardar feedback de analítica predictiva: ' . $e->getMessage());

@@ -271,7 +271,7 @@ def _bucket_forecast(predictions: list[dict[str, Any]], frequency: str) -> list[
     ]
 
 
-def _feedback_averages() -> dict[str, tuple[float, int]]:
+def _feedback_averages(user_filter: int | None = None) -> dict[str, tuple[float, int]]:
     if not FEEDBACK_PATH.is_file():
         return {}
     latest_votes: dict[tuple[str, str], tuple[str, int]] = {}
@@ -279,15 +279,31 @@ def _feedback_averages() -> dict[str, tuple[float, int]]:
         for line_number, line in enumerate(feedback_file, start=1):
             try:
                 entry = json.loads(line)
+                if not isinstance(entry, dict):
+                    raise TypeError("El feedback no es un objeto")
                 recommendation_type = str(entry["tipo"])
                 recommendation_id = str(entry["recomendacion_id"])
-                stars = int(entry["estrellas"])
             except (json.JSONDecodeError, KeyError, TypeError, ValueError):
                 logging.warning("Se omite feedback inválido en línea %s", line_number)
+                continue
+            stars_value = entry.get("estrellas")
+            if stars_value is None or stars_value == "":
+                continue
+            try:
+                stars = int(stars_value)
+            except (TypeError, ValueError):
+                logging.warning("Se omite valoración inválida en línea %s", line_number)
                 continue
             if 1 <= stars <= 5:
                 user_id = str(entry.get("usuario_id") or "anonimo")
                 latest_votes[(user_id, recommendation_id)] = (recommendation_type, stars)
+
+    if user_filter is not None:
+        personal_votes = {
+            key: vote for key, vote in latest_votes.items() if key[0] == str(user_filter)
+        }
+        if personal_votes:
+            latest_votes = personal_votes
 
     totals: Counter = Counter()
     counts: Counter = Counter()
@@ -311,6 +327,53 @@ def _confidence_level(confidence: float) -> str:
     if confidence >= 0.4:
         return "media"
     return "baja"
+
+
+def _feedback_priority_factor(
+    recommendation_type: str,
+    ratings: dict[str, tuple[float, int]],
+    decisions: dict[str, tuple[int, int]],
+) -> float:
+    average_rating, rating_count = ratings.get(recommendation_type, (0.0, 0))
+    rating_factor = 1.0 if rating_count == 0 else 0.7 + 0.3 * average_rating / 5.0
+    approved, rejected = decisions.get(recommendation_type, (0, 0))
+    decision_count = approved + rejected
+    decision_factor = (
+        1.0 if decision_count == 0 else 0.7 + 0.3 * approved / decision_count
+    )
+    return rating_factor * decision_factor
+
+
+def _apply_recommendation_feedback(
+    recommendation: dict[str, Any],
+    feedback: dict[str, dict[str, str | None]],
+) -> None:
+    response = feedback.get(str(recommendation.get("recomendacion_id", "")))
+    if not response or response.get("decision") not in {"aprobada", "rechazada"}:
+        return
+
+    decision = response["decision"]
+    factor = 0.5 if decision == "rechazada" else 1.0
+    recommendation["prioridad_ajustada"] = round(
+        float(recommendation["prioridad_ajustada"]) * factor, 3
+    )
+    recommendation_feedback = recommendation.setdefault("retroalimentacion", {})
+    recommendation_feedback.update({
+        "decision_usuario": decision,
+        "motivo_codigo": response.get("motivo_codigo"),
+        "factor_prioridad_personal": factor,
+    })
+
+
+def _prioritize_recommendations(recommendations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    tiers = {"combo_estrategico": 0, "reposicion": 1, "combo": 2}
+    return sorted(
+        recommendations,
+        key=lambda item: (
+            tiers.get(item["tipo"], 3),
+            -item["prioridad_ajustada"],
+        ),
+    )[:20]
 
 
 def _generate_explanation(metrics: dict[str, Any], context: dict[str, Any], recommendation_type: str) -> dict[str, str]:
@@ -623,94 +686,73 @@ def _identify_frozen_products(products: list[dict[str, Any]], sales: list[dict[s
     return frozen_products
 
 
-def _identify_popular_products(products: list[dict[str, Any]], sales: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Identifica productos populares: alta frecuencia de ventas, alta rotación y tendencia positiva.
-
-    Args:
-        products: Lista de productos con información de stock
-        sales: Lista de ventas históricas
-
-    Returns:
-        Lista de productos populares con métricas detalladas
-    """
+def _identify_popular_products(
+    products: list[dict[str, Any]],
+    sales: list[dict[str, Any]],
+    frozen_product_ids: set[int] | None = None,
+) -> list[dict[str, Any]]:
+    """Rank sales-active products by invoice frequency and units sold in 90 days."""
     today = date.today()
     thirty_days_ago = today - timedelta(days=30)
     ninety_days_ago = today - timedelta(days=90)
-    
-    # Construir ventas por producto
     sales_by_product: dict[int, dict[str, Any]] = defaultdict(lambda: {
         "total_quantity": 0,
         "recent_quantity": 0,
         "older_quantity": 0,
-        "sale_count": 0,
-        "sale_dates": [],
+        "invoices": set(),
     })
-    
+
     for sale in sales:
-        product_id = int(sale["id_producto"])
         sale_date = date.fromisoformat(str(sale["fecha"]))
+        if sale_date < ninety_days_ago or sale_date > today:
+            continue
+        product_id = int(sale["id_producto"])
         quantity = int(sale["cantidad"])
-        
-        sales_by_product[product_id]["total_quantity"] += quantity
-        sales_by_product[product_id]["sale_count"] += 1
-        sales_by_product[product_id]["sale_dates"].append(sale_date)
-        
+        product_sales = sales_by_product[product_id]
+        product_sales["total_quantity"] += quantity
+        product_sales["invoices"].add(int(sale["id_factura"]))
         if sale_date >= thirty_days_ago:
-            sales_by_product[product_id]["recent_quantity"] += quantity
-        elif sale_date >= ninety_days_ago:
-            sales_by_product[product_id]["older_quantity"] += quantity
-    
+            product_sales["recent_quantity"] += quantity
+        else:
+            product_sales["older_quantity"] += quantity
+
+    product_by_id = {int(product["id_producto"]): product for product in products}
+    ranked_candidates = []
+    for product_id, product_sales in sales_by_product.items():
+        product = product_by_id.get(product_id)
+        if product is None or product.get("stock") is None or not product_sales["invoices"]:
+            continue
+        ranked_candidates.append((product, product_sales))
+
+    frozen_product_ids = frozen_product_ids or set()
+    non_frozen_candidates = [
+        candidate for candidate in ranked_candidates
+        if int(candidate[0]["id_producto"]) not in frozen_product_ids
+    ]
+    candidates = non_frozen_candidates or ranked_candidates
+    if not candidates:
+        return []
+
+    max_invoice_count = max(len(item["invoices"]) for _, item in candidates)
+    max_quantity = max(item["total_quantity"] for _, item in candidates)
     popular_products = []
-    min_sales_threshold = 5  # Mínimo de ventas para ser considerado
-    rotation_threshold = 1.0  # Rotación mensual mínima para ser popular
-    
-    for product in products:
+    for product, product_sales in candidates:
         product_id = int(product["id_producto"])
-        stock = product.get("stock")
-        
-        if stock is None:
-            continue
-        
-        stock = int(stock)
-        product_sales = sales_by_product.get(product_id, {})
-        total_quantity = product_sales.get("total_quantity", 0)
-        recent_quantity = product_sales.get("recent_quantity", 0)
-        older_quantity = product_sales.get("older_quantity", 0)
-        sale_count = product_sales.get("sale_count", 0)
-        
-        # Criterio 1: Mínimo de ventas
-        if sale_count < min_sales_threshold:
-            continue
-        
-        # Criterio 2: Rotación alta
-        avg_stock = max(1, stock)  # Evitar división por cero
-        monthly_rotation = (total_quantity / 3) / avg_stock if avg_stock > 0 else 0
-        
-        if monthly_rotation < rotation_threshold:
-            continue
-        
-        # Criterio 3: Tendencia positiva o estable (comparar últimos 30 días vs 30-90 días)
-        trend_pct = 0
-        if older_quantity > 0:
-            trend_pct = ((recent_quantity - older_quantity) / older_quantity) * 100
-        elif recent_quantity > 0:
-            trend_pct = 100  # Crecimiento desde cero
-        
-        # Rechazar productos con tendencia muy negativa (< -20%)
-        if trend_pct < -20:
-            continue
-        
-        # Calcular frecuencia de ventas (ventas por mes)
-        monthly_frequency = sale_count / 3
-        
-        # Calcular score de popularidad (combinación de rotación, frecuencia y tendencia)
-        popularity_score = (
-            (monthly_rotation * 0.4) +
-            (min(monthly_frequency, 10) / 10 * 0.3) +
-            (max(min(trend_pct, 100), -50) + 50) / 150 * 0.3
+        stock = int(product["stock"])
+        total_quantity = product_sales["total_quantity"]
+        invoice_count = len(product_sales["invoices"])
+        recent_quantity = product_sales["recent_quantity"]
+        older_quantity = product_sales["older_quantity"]
+        monthly_rotation = (total_quantity / 3) / max(1, stock)
+        trend_pct = (
+            ((recent_quantity - older_quantity) / older_quantity) * 100
+            if older_quantity > 0
+            else (100 if recent_quantity > 0 else 0)
         )
-        
+        popularity_score = (
+            0.7 * invoice_count / max_invoice_count
+            + 0.3 * total_quantity / max_quantity
+        )
         popular_products.append({
             "producto_id": product_id,
             "nombre_producto": product.get("nombre_producto", f"Producto {product_id}"),
@@ -719,22 +761,22 @@ def _identify_popular_products(products: list[dict[str, Any]], sales: list[dict[
             "ventas_totales_90dias": total_quantity,
             "ventas_recientes_30dias": recent_quantity,
             "ventas_anteriores_30_90dias": older_quantity,
-            "frecuencia_ventas_mensual": round(monthly_frequency, 2),
+            "frecuencia_ventas_mensual": round(invoice_count / 3, 2),
             "tendencia_pct": round(trend_pct, 1),
             "score_popularidad": round(popularity_score, 3),
             "categoria_id": product.get("id_categoria"),
         })
-    
-    # Ordenar por score de popularidad (mayor primero)
-    popular_products.sort(key=lambda x: x["score_popularidad"], reverse=True)
-    
+
+    popular_products.sort(key=lambda item: item["score_popularidad"], reverse=True)
     return popular_products
 
 
 def _generate_strategic_combos(
     frozen_products: list[dict[str, Any]],
     popular_products: list[dict[str, Any]],
-    sales: list[dict[str, Any]]
+    sales: list[dict[str, Any]],
+    discount_adjustment: float = 0.0,
+    target_frozen_id: int | None = None,
 ) -> list[dict[str, Any]]:
     """
     Genera combos estratégicos emparejando productos congelados con productos populares.
@@ -767,7 +809,12 @@ def _generate_strategic_combos(
     strategic_combos = []
     max_combos_per_frozen = 3  # Limitar combos por producto congelado
     
-    for frozen in frozen_products[:10]:  # Limitar a los 10 productos congelados más críticos
+    frozen_to_process = (
+        [item for item in frozen_products if item["producto_id"] == target_frozen_id]
+        if target_frozen_id is not None
+        else frozen_products[:10]
+    )
+    for frozen in frozen_to_process:
         frozen_id = frozen["producto_id"]
         frozen_potential = frozen["potencial_desbloqueo"]
         
@@ -814,8 +861,9 @@ def _generate_strategic_combos(
             # Calcular descuento sugerido (más agresivo para mayor potencial)
             base_discount = 0.15  # 15% base
             potential_factor = min(unlock_potential / 100, 0.20)  # Hasta 20% adicional
-            suggested_discount = base_discount + potential_factor
+            suggested_discount = base_discount + potential_factor + discount_adjustment / 100
             suggested_discount = min(suggested_discount, 0.40)  # Máximo 40%
+            suggested_discount = max(suggested_discount, 0.0)
             
             # Calcular composición del combo (proporción sin pérdidas)
             # A mayor descuento, más unidades congeladas por unidad popular
@@ -995,6 +1043,9 @@ def _generate_strategic_combo_explanation(
 def build_dashboard(
     payload: dict[str, Any],
     feedback: dict[str, tuple[float, int]] | None = None,
+    discount_adjustment: float = 0.0,
+    decision_feedback: dict[str, tuple[int, int]] | None = None,
+    recommendation_feedback: dict[str, dict[str, str | None]] | None = None,
 ) -> dict[str, Any]:
     products = payload["productos"]
     sales = payload["ventas"]
@@ -1004,7 +1055,22 @@ def build_dashboard(
     horizon = int(payload["horizonte"])
     today = date.today()
     feedback = feedback or {}
+    decision_feedback = decision_feedback or {}
+    recommendation_feedback = recommendation_feedback or {}
     product_by_id = {int(product["id_producto"]): product for product in products}
+    frozen_products = _identify_frozen_products(products, sales)
+    frozen_products_info = [
+        {
+            "id": frozen["producto_id"],
+            "nombre": frozen["nombre_producto"],
+            "stock_actual": frozen["stock_actual"],
+            "stock_excedente": frozen["stock_excedente"],
+            "rotacion_mensual": frozen["rotacion_mensual"],
+            "dias_sin_venta": frozen["dias_sin_venta"],
+            "categoria_id": frozen["categoria_id"],
+        }
+        for frozen in frozen_products
+    ]
 
     if selected_product is not None:
         selected_ids = {int(selected_product)} if int(selected_product) in product_by_id else set()
@@ -1022,7 +1088,45 @@ def build_dashboard(
         model_key = "todos:productos"
     
     if not selected_ids:
-        return {"calidad": {"estado": "sin_datos"}, "historico": [], "prediccion": [], "metricas": {}}
+        return {
+            "calidad": {"estado": "sin_datos"},
+            "historico": [],
+            "prediccion": [],
+            "metricas": {},
+            "recomendaciones": [],
+            "productos_congelados": frozen_products_info,
+        }
+
+    strategic_combos = []
+    try:
+        frozen_ids = {item["producto_id"] for item in frozen_products}
+        popular_products = _identify_popular_products(products, sales, frozen_ids)
+        target_frozen_id = (
+            int(selected_product)
+            if selected_product is not None and int(selected_product) in frozen_ids
+            else None
+        )
+        strategic_combos = _generate_strategic_combos(
+            frozen_products,
+            popular_products,
+            sales,
+            discount_adjustment,
+            target_frozen_id,
+        )
+        average_rating, rating_count = feedback.get("combo_estrategico", (0.0, 0))
+        feedback_factor_strategic = _feedback_priority_factor(
+            "combo_estrategico", feedback, decision_feedback
+        )
+        for combo in strategic_combos:
+            combo["retroalimentacion"] = {
+                "promedio": round(average_rating, 2) if rating_count else None,
+                "respuestas": rating_count,
+            }
+            combo["prioridad_ajustada"] = round(
+                combo["prioridad_ajustada"] * feedback_factor_strategic, 3
+            )
+    except Exception as e:
+        logging.warning("Error al generar combos estratégicos: %s", str(e))
 
     start_date = today - timedelta(days=365)
     daily_total, daily_by_product, invoice_products = _aggregate_sales(sales, selected_ids, start_date, today)
@@ -1042,7 +1146,8 @@ def build_dashboard(
                 "rotacion_proyectada": None,
             },
             "calidad": {"estado": "sin_ventas"},
-            "recomendaciones": [],
+            "recomendaciones": strategic_combos,
+            "productos_congelados": frozen_products_info,
         }
     historical = _bucket_history(daily_total, frequency, today)
     artifact = _load_artifact()
@@ -1130,7 +1235,7 @@ def build_dashboard(
             min(0.99, 1.0 - float(product_model["error"]) / (float(np.mean(product_weekly)) + 1.0)),
         )
         average_rating, rating_count = feedback.get("reposicion", (0.0, 0))
-        feedback_factor = 1.0 if rating_count == 0 else 0.7 + 0.3 * average_rating / 5.0
+        feedback_factor = _feedback_priority_factor("reposicion", feedback, decision_feedback)
         
         # Generar explicación individual para esta reposición
         avg_weekly_demand = float(np.mean(product_weekly))
@@ -1188,7 +1293,7 @@ def build_dashboard(
         confidence = max(first_confidence, second_confidence)
         support = pair_count / max(1, invoice_count)
         average_rating, rating_count = feedback.get("combo", (0.0, 0))
-        feedback_factor = 1.0 if rating_count == 0 else 0.7 + 0.3 * average_rating / 5.0
+        feedback_factor = _feedback_priority_factor("combo", feedback, decision_feedback)
         
         # Generar explicación individual para este combo
         combo_explicacion = (
@@ -1215,36 +1320,22 @@ def build_dashboard(
             "explicacion": combo_explicacion,
         })
     
-    # Generar combos estratégicos (Fase 2)
-    strategic_combos = []
-    try:
-        frozen_products = _identify_frozen_products(products, sales)
-        popular_products = _identify_popular_products(products, sales)
-        strategic_combos = _generate_strategic_combos(frozen_products, popular_products, sales)
-        
-        # Aplicar factor de retroalimentación a combos estratégicos
-        average_rating, rating_count = feedback.get("combo_estrategico", (0.0, 0))
-        feedback_factor_strategic = 1.0 if rating_count == 0 else 0.7 + 0.3 * average_rating / 5.0
-        
-        for combo in strategic_combos:
-            combo["retroalimentacion"] = {
-                "promedio": round(average_rating, 2) if rating_count else None,
-                "respuestas": rating_count
-            }
-            combo["prioridad_ajustada"] = round(combo["prioridad_ajustada"] * feedback_factor_strategic, 3)
-    except Exception as e:
-        # Si falla la generación de combos estratégicos, continuar sin ellos
-        logging.warning("Error al generar combos estratégicos: %s", str(e))
-        strategic_combos = []
-    
     # Combinar recomendaciones: combos estratégicos tienen prioridad sobre combos regulares
     # Los combos estratégicos se colocan primero en la lista ordenada
-    all_recommendations = inventory_actions + strategic_combos + combo_actions
-    recommendations = sorted(
-        all_recommendations,
-        key=lambda item: item["prioridad_ajustada"],
-        reverse=True,
-    )[:20]
+    all_recommendations = [
+        recommendation
+        for recommendation in inventory_actions + strategic_combos + combo_actions
+        if not (
+            (decision := recommendation_feedback.get(
+                str(recommendation.get("recomendacion_id", ""))
+            ))
+            and decision.get("decision") == "rechazada"
+            and decision.get("motivo_codigo") != "descuento_alto"
+        )
+    ]
+    for recommendation in all_recommendations:
+        _apply_recommendation_feedback(recommendation, recommendation_feedback)
+    recommendations = _prioritize_recommendations(all_recommendations)
 
     # Generar explicaciones dinámicas basadas en el contexto actual
     weekly_data = None
@@ -1305,22 +1396,6 @@ def build_dashboard(
     # Generar explicaciones dinámicas
     dynamic_explanations = _generate_explanation(metrics, explanation_context, recommendation_type)
 
-    # Si no se seleccionó producto ni categoría, agregar información de productos congelados
-    frozen_products_info = []
-    if selected_product is None and selected_category is None:
-        frozen_products = _identify_frozen_products(products, sales)
-        frozen_products_info = [
-            {
-                "id": fp["producto_id"],
-                "nombre": fp["nombre_producto"],
-                "stock_actual": fp["stock_actual"],
-                "stock_excedente": fp["stock_excedente"],
-                "rotacion_mensual": fp["rotacion_mensual"],
-                "dias_sin_venta": fp["dias_sin_venta"]
-            }
-            for fp in frozen_products[:5]  # Top 5 productos congelados
-        ]
-
     return {
         "unidad": "unidades",
         "frecuencia": frequency,
@@ -1331,7 +1406,7 @@ def build_dashboard(
         "calidad": quality,
         "recomendaciones": recommendations,
         "explicaciones": dynamic_explanations,
-        "productos_congelados": frozen_products_info if frozen_products_info else None,
+        "productos_congelados": frozen_products_info,
     }
 
 
@@ -1348,5 +1423,129 @@ def append_feedback(feedback: dict[str, Any]) -> dict[str, Any]:
     return {"guardado": True, "fecha": record["fecha"]}
 
 
-def get_feedback_averages() -> dict[str, tuple[float, int]]:
-    return _feedback_averages()
+def get_feedback_averages(user_id: int | None = None) -> dict[str, tuple[float, int]]:
+    return _feedback_averages(user_id)
+
+
+def get_feedback_decisions(user_id: int | None = None) -> dict[str, tuple[int, int]]:
+    if not FEEDBACK_PATH.is_file():
+        return {}
+
+    latest_decisions: dict[tuple[str, str], tuple[str, str]] = {}
+    with _feedback_lock, FEEDBACK_PATH.open("r", encoding="utf-8") as feedback_file:
+        for line_number, line in enumerate(feedback_file, start=1):
+            try:
+                entry = json.loads(line)
+                decision = entry.get("decision")
+                if decision not in {"aprobada", "rechazada"}:
+                    continue
+                user_key = str(entry.get("usuario_id") or "anonimo")
+                recommendation_id = str(entry["recomendacion_id"])
+                recommendation_type = str(entry["tipo"])
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                logging.warning("Se omite feedback inválido en línea %s", line_number)
+                continue
+            latest_decisions[(user_key, recommendation_id)] = (
+                recommendation_type,
+                decision,
+            )
+
+    if user_id is not None:
+        latest_decisions = {
+            key: value for key, value in latest_decisions.items() if key[0] == str(user_id)
+        }
+
+    totals: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+    for recommendation_type, decision in latest_decisions.values():
+        totals[recommendation_type][0 if decision == "aprobada" else 1] += 1
+    return {
+        recommendation_type: (counts[0], counts[1])
+        for recommendation_type, counts in totals.items()
+    }
+
+
+def get_feedback_recommendation_decisions(
+    user_id: int | None = None,
+) -> dict[str, dict[str, str | None]]:
+    if user_id is None or not FEEDBACK_PATH.is_file():
+        return {}
+
+    latest: dict[str, dict[str, str | None]] = {}
+    allowed_reasons = {
+        "productos_no_adecuados",
+        "descuento_alto",
+        "cantidad_inadecuada",
+        "combo_existente",
+        "otro",
+    }
+    with _feedback_lock, FEEDBACK_PATH.open("r", encoding="utf-8") as feedback_file:
+        for line_number, line in enumerate(feedback_file, start=1):
+            try:
+                entry = json.loads(line)
+                if not isinstance(entry, dict):
+                    raise TypeError("El feedback no es un objeto")
+                if str(entry.get("usuario_id") or "anonimo") != str(user_id):
+                    continue
+                decision = entry.get("decision")
+                if decision not in {"aprobada", "rechazada"}:
+                    continue
+                recommendation_id = str(entry["recomendacion_id"])
+                recommendation_type = str(entry["tipo"])
+                if not recommendation_id.startswith(f"{recommendation_type}:"):
+                    raise ValueError("El tipo no coincide con la recomendación")
+                reason_code = entry.get("motivo_codigo")
+                if reason_code not in allowed_reasons:
+                    reason_code = None
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                logging.warning("Se omite feedback inválido en línea %s", line_number)
+                continue
+            latest[recommendation_id] = {
+                "decision": decision,
+                "motivo_codigo": reason_code,
+            }
+    return latest
+
+
+def get_discount_adjustment(user_id: int | None = None) -> float:
+    if not FEEDBACK_PATH.is_file():
+        return 0.0
+
+    latest_preferences: dict[tuple[str, str], str] = {}
+    with _feedback_lock, FEEDBACK_PATH.open("r", encoding="utf-8") as feedback_file:
+        for line_number, line in enumerate(feedback_file, start=1):
+            try:
+                entry = json.loads(line)
+                if entry.get("tipo") != "combo_estrategico":
+                    continue
+                preference = entry.get("descuento_feedback")
+                if (
+                    preference not in {"adecuado", "mucho", "poco"}
+                    and entry.get("decision") == "rechazada"
+                    and entry.get("motivo_codigo") == "descuento_alto"
+                ):
+                    preference = "mucho"
+                if preference not in {"adecuado", "mucho", "poco"}:
+                    continue
+                key = (
+                    str(entry.get("usuario_id") or "anonimo"),
+                    str(entry["recomendacion_id"]),
+                )
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                logging.warning("Se omite feedback inválido en línea %s", line_number)
+                continue
+            latest_preferences[key] = preference
+
+    if user_id is not None:
+        personal_preferences = {
+            key: value for key, value in latest_preferences.items()
+            if key[0] == str(user_id)
+        }
+        latest_preferences = personal_preferences
+
+    adjustments = [
+        -3.0 if preference == "mucho" else 3.0 if preference == "poco" else 0.0
+        for preference in latest_preferences.values()
+    ]
+    if not adjustments:
+        return 0.0
+    return max(-3.0, min(3.0, sum(adjustments) / (len(adjustments) + 2)))
