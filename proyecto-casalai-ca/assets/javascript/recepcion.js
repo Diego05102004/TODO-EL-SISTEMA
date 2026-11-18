@@ -62,7 +62,116 @@ function actualizarProteccionSelectsProductos() {
 // ==========================================
 // 2. FUNCIONES AUXILIARES Y DE UTILIDAD
 // ==========================================
+const estadosCAIRecepcion = {
+    amigable: {
+        imagen: 'CAI (ESTADO-AMIGABLE).jpg',
+        dialogo: 'Bienvenido, como te puedo ayudar Maestr@?'
+    },
+    terca: {
+        imagen: 'CAI (ESTADO-TERCA).jpg',
+        dialogo: 'Porque no me pediste ayuda'
+    },
+    preocupada: {
+        imagen: 'CAI (ESTADO-PREOCUPADA).jpg',
+        dialogo: 'Parece que cometí un error, lo siento Maestr@... ¿Me podrías ayudar a corregirlo?'
+    },
+    regañona: {
+        imagen: 'CAI (ESTADO-REGAÑONA).jpg',
+        dialogo: 'Recuerda que debes llenar los campos antes de registrar la Recepción Maestr@, sigue las reglas.'
+    }
+};
+
+function obtenerPanelCAIRecepcion() {
+    const modal = document.getElementById('recepcionModal') ||
+        document.getElementById('registrarRecepcionModal');
+    if (!modal) return null;
+
+    let panel = modal.querySelector('.cai-recepcion');
+    if (panel) return panel;
+
+    const form = modal.querySelector('#recepcionForm, #ingresarRecepcion');
+    const destino = form?.querySelector('.form-section, .modal-body');
+    if (!destino) return null;
+
+    panel = document.createElement('aside');
+    panel.className = 'cai-recepcion';
+    panel.setAttribute('role', 'status');
+    panel.setAttribute('aria-live', 'polite');
+
+    const imagen = document.createElement('img');
+    imagen.className = 'cai-recepcion-image';
+    imagen.alt = 'CAI, asistente de recepción';
+
+    const contenido = document.createElement('div');
+    contenido.className = 'cai-recepcion-content';
+    const nombre = document.createElement('strong');
+    nombre.textContent = 'CAI · Asistente de recepción';
+    const dialogo = document.createElement('p');
+    dialogo.className = 'cai-recepcion-dialogue';
+    contenido.append(nombre, dialogo);
+    panel.append(imagen, contenido);
+    destino.insertBefore(panel, destino.firstChild);
+    return panel;
+}
+
+function actualizarCAIRecepcion(estado, dialogo) {
+    const panel = obtenerPanelCAIRecepcion();
+    const configuracion = estadosCAIRecepcion[estado];
+    if (!panel || !configuracion) return;
+
+    panel.dataset.mood = estado;
+    panel.querySelector('.cai-recepcion-dialogue').textContent =
+        dialogo || configuracion.dialogo;
+    const imagen = panel.querySelector('.cai-recepcion-image');
+    imagen.classList.remove(`cai-recepcion-image--${estado}`);
+    void imagen.offsetWidth;
+    imagen.classList.add(`cai-recepcion-image--${estado}`);
+    imagen.hidden = false;
+    imagen.onerror = () => { imagen.hidden = true; };
+    imagen.src = `microservicio/auditor_recepcion/${encodeURIComponent(configuracion.imagen)}`;
+}
+
+function mostrarAlertaCAIRecepcion(estado, titulo, mensaje, dialogo, opciones = {}) {
+    const configuracion = estadosCAIRecepcion[estado];
+    const { contenidoAdicional, ...opcionesAlerta } = opciones;
+    const textoCAI = dialogo || configuracion.dialogo;
+    const contenido = document.createElement('div');
+    contenido.className = 'cai-recepcion-swal-content';
+    const dialogoCAI = document.createElement('p');
+    dialogoCAI.className = 'cai-recepcion-swal-dialogue';
+    dialogoCAI.textContent = textoCAI;
+    contenido.appendChild(dialogoCAI);
+    if (mensaje) {
+        const detalle = document.createElement('p');
+        detalle.className = 'cai-recepcion-swal-detail';
+        detalle.textContent = mensaje;
+        contenido.appendChild(detalle);
+    }
+    if (contenidoAdicional instanceof HTMLElement) {
+        contenido.appendChild(contenidoAdicional);
+    }
+
+    actualizarCAIRecepcion(estado, textoCAI);
+    return Swal.fire({
+        ...opcionesAlerta,
+        title: titulo,
+        html: contenido,
+        imageUrl: `microservicio/auditor_recepcion/${encodeURIComponent(configuracion.imagen)}`,
+        imageWidth: 112,
+        imageHeight: 112,
+        imageAlt: `CAI ${estado}`,
+        customClass: { image: `cai-recepcion-image--${estado}` },
+        confirmButtonText: opcionesAlerta.confirmButtonText || 'Entendido'
+    });
+}
+
 function mensajes(icono, titulo, mensaje) {
+    if (icono === 'error' && (
+        document.getElementById('recepcionModal')?.style.display === 'block' ||
+        document.getElementById('registrarRecepcionModal')?.classList.contains('show')
+    )) {
+        return mostrarAlertaCAIRecepcion('regañona', titulo, mensaje);
+    }
     Swal.fire({
         icon: icono,
         title: titulo,
@@ -383,6 +492,7 @@ function validarEnvioRecepcion() {
     }
 
     if (!esValido) {
+        actualizarCAIRecepcion('regañona');
         mensajes('error', 'Campos incompletos', 'Por favor complete correctamente los campos obligatorios (*)');
     }
 
@@ -401,11 +511,13 @@ function verificaproductos() {
             }
         });
         if (!valido) {
+            actualizarCAIRecepcion('regañona');
             mensajes('error', 'Verifique los productos', 'Debe seleccionar un producto válido y asignar una cantidad mayor a 0');
             return false;
         }
         return true;
     } else {
+        actualizarCAIRecepcion('regañona');
         mensajes('error', 'Verifique los productos', 'Debe seleccionar algún producto');
         return false;
     }
@@ -425,8 +537,7 @@ function obtenerAsistenteIA() {
     if (!asistenteRecepcionIA && typeof AsistenteRecepcionIA !== 'undefined') {
         try {
             asistenteRecepcionIA = new AsistenteRecepcionIA({
-                apiUrl: 'http://127.0.0.1:8000',
-                authToken: 'V2ULrTMDqWierxYc7i71JKpewJozqORhdI_JbmbsTVo',
+                proxyUrl: 'Modelo/Controlador/recepcion.php',
                 debug: true,
                 selectores: { alertas: '#estadoIARecepcion' }
             });
@@ -697,6 +808,7 @@ function rellenarRecepcionDesdeFactura(factura) {
     
     // Validar si el documento es una factura válida
     if (factura.es_factura_valida === false) {
+        actualizarCAIRecepcion('preocupada');
         establecerEstadoIARecepcion(factura.mensaje_validacion || 'El documento no parece ser una factura válida. Por favor seleccione una factura legítima.', 'error');
         facturaValidaParaRegistro = false;
         bloquearBotonGuardar(true);
@@ -789,6 +901,7 @@ function rellenarRecepcionDesdeFactura(factura) {
     
     // Si todos los productos están fuera del catálogo, mostrar advertencia específica
     if (productos_no_en_catalogo === productosDetectados.length && productosDetectados.length > 0) {
+        actualizarCAIRecepcion('preocupada');
         establecerEstadoIARecepcion(`La factura seleccionada no se relaciona con los productos del catálogo. Factura inválida para este sistema.${nota}`, 'error');
         facturaValidaParaRegistro = false;
         bloquearBotonGuardar(true);
@@ -799,6 +912,19 @@ function rellenarRecepcionDesdeFactura(factura) {
     facturaValidaParaRegistro = true;
     bloquearBotonGuardar(false);
     establecerEstadoIARecepcion(`Análisis completado. Factura: ${factura.numero_factura || 'no detectada'}.${nota}`);
+    if (
+        camposPendientes.length ||
+        !factura.numero_factura ||
+        !factura.nombre_proveedor ||
+        !productosDetectados.length
+    ) {
+        actualizarCAIRecepcion('preocupada');
+    } else {
+        actualizarCAIRecepcion(
+            'amigable',
+            '¡Análisis listo, Maestr@! Revisemos los datos antes de registrar la recepción.'
+        );
+    }
 
     const resultadoIARecepcionEl = document.getElementById('resultadoIARecepcion');
     if (resultadoIARecepcionEl) {
@@ -861,19 +987,26 @@ async function analizarFacturaRecepcion(archivo) {
     try {
         const aiClient = obtenerAsistenteIA();
         if (!aiClient) {
+            actualizarCAIRecepcion('preocupada');
             activarContingenciaIARecepcion('Librería del microservicio no disponible.');
             return;
         }
+        actualizarCAIRecepcion(
+            'amigable',
+            'Estoy revisando la factura con cuidado, Maestr@. Enseguida le mostraré los datos detectados.'
+        );
         establecerEstadoIARecepcion('Analizando factura con OCR...');
         const resultado = await aiClient.extraerDesdeImagen(archivo);
-        if (!resultado || !resultado.exito) {
+        if (!resultado || !resultado.exito || !resultado.data) {
+            actualizarCAIRecepcion('preocupada');
             if (resultado && resultado.contingencia) activarContingenciaIARecepcion(resultado.error);
-            else establecerEstadoIARecepcion(`No se pudo analizar la factura: ${resultado?.error || 'error'}`, 'error');
+            else establecerEstadoIARecepcion(`No se pudo analizar la factura: ${resultado?.error || 'faltan datos extraídos'}`, 'error');
             return;
         }
         rellenarRecepcionDesdeFactura(resultado.data);
     } catch (error) {
         console.error('Error al analizar factura con IA:', error);
+        actualizarCAIRecepcion('preocupada');
         activarContingenciaIARecepcion(error.message || 'Error de comunicación con el microservicio.');
     }
 }
@@ -890,6 +1023,7 @@ function openModal(type) {
         if (modalTitle) modalTitle.textContent = 'Nueva Recepción';
         if (form) form.reset();
         limpiarFacturaIARecepcion();
+        actualizarCAIRecepcion('amigable');
         const filas = document.querySelectorAll('#productosList .producto-row');
         filas.forEach((fila, indice) => { if (indice > 0) fila.remove(); });
         actualizarContadorProductos();
@@ -1231,6 +1365,10 @@ function evaluarDiscrepanciasInteractivas() {
     }
 
     if (pendientes.length > 0) {
+        actualizarCAIRecepcion(
+            'preocupada',
+            'Parece que encontré diferencias en la información, Maestr@. Revisémoslas antes de continuar.'
+        );
         const detalleHTML = pendientes.map(item =>
             `<li style="margin-bottom: 3px;"><b>${item.campo}</b>: factura "${item.valor_factura}" / formulario "${item.valor_formulario}"</li>`
         ).join('');
@@ -1254,12 +1392,15 @@ async function saveRecepcion(event) {
 
     // Verificar si la factura es válida para registro
     if (!facturaValidaParaRegistro) {
+        actualizarCAIRecepcion('regañona');
         mensajes('error', 'Factura inválida', 'No se puede registrar con una factura que no ha sido validada. Por favor seleccione una factura válida.');
         return;
     }
 
-    if (!validarEnvioRecepcion()) return;
-    if (!verificaproductos()) return;
+    if (!validarEnvioRecepcion() || !verificaproductos()) {
+        actualizarCAIRecepcion('regañona');
+        return;
+    }
 
     const botonGuardar = document.querySelector('#recepcionModal .modal-footer .btn-save');
     if (botonGuardar) botonGuardar.disabled = true;
@@ -1413,20 +1554,42 @@ async function saveRecepcion(event) {
                 }
 
                 if (pendientes.length > 0) {
-                    const detalleHTML = pendientes.map(item =>
-                        `<li style="margin-bottom: 3px;"><b>${item.campo}</b>: factura "${item.valor_factura}" / formulario "${item.valor_formulario}"</li>`
-                    ).join('');
-
-                    const resultadoSwal = await Swal.fire({
-                        icon: 'warning',
-                        title: 'Diferencias detectadas',
-                        html: `La verificación encontró diferencias con la factura. ¿Deseas registrar de igual forma la recepción o volver al formulario?<br><br><div style="text-align: left; background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 0.9em;"><ul style="margin: 0; padding-left: 15px;">${detalleHTML}</ul></div>`,
-                        showCancelButton: true,
-                        confirmButtonText: 'Sí, registrar igual',
-                        cancelButtonText: 'Volver al formulario',
-                        confirmButtonColor: 'rgb(192, 218, 47)',
-                        cancelButtonColor: '#3085d6'
+                    const listaDiscrepancias = document.createElement('ul');
+                    Object.assign(listaDiscrepancias.style, {
+                        margin: '8px 0 0',
+                        padding: '10px 10px 10px 28px',
+                        maxHeight: '220px',
+                        overflowY: 'auto',
+                        borderRadius: '8px',
+                        background: '#f8f9fa',
+                        color: '#343a40',
+                        textAlign: 'left'
                     });
+                    pendientes.forEach(item => {
+                        const fila = document.createElement('li');
+                        fila.style.marginBottom = '6px';
+                        const campo = document.createElement('strong');
+                        campo.textContent = item.campo;
+                        fila.append(campo, document.createTextNode(
+                            `: factura "${item.valor_factura}" / formulario "${item.valor_formulario}"`
+                        ));
+                        listaDiscrepancias.appendChild(fila);
+                    });
+
+                    const resultadoSwal = await mostrarAlertaCAIRecepcion(
+                        'preocupada',
+                        'Diferencias detectadas',
+                        '',
+                        'Lo siento, Maestr@, he encontrado algunas diferencias entre los datos y la factura. ¿Desea registrar la recepción así o prefiere volver al formulario para corregirlas?',
+                        {
+                            contenidoAdicional: listaDiscrepancias,
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, registrar igual',
+                            cancelButtonText: 'Volver al formulario',
+                            confirmButtonColor: 'rgb(192, 218, 47)',
+                            cancelButtonColor: '#3085d6'
+                        }
+                    );
 
                     if (!resultadoSwal.isConfirmed) {
                         if (botonGuardar) botonGuardar.disabled = false;
@@ -1475,6 +1638,13 @@ async function saveRecepcion(event) {
         const data = await response.json();
 
         if (data && data.status === 'success') {
+            const registroConMicroservicio = Boolean(archivo && iaVerificada && !modoContingencia);
+            const estadoExito = registroConMicroservicio ? 'amigable' : 'terca';
+            const dialogoExito = registroConMicroservicio
+                ? '¡Lo logramos, Maestr@! Mi análisis ayudó a registrar correctamente la recepción.'
+                : '¿Porque no me pediste ayuda, Maestr@?, pero aun asi me alegra que la recepción se haya registrado correctamente.';
+            const mensajeExito = data.message || '';
+            actualizarCAIRecepcion(estadoExito, dialogoExito);
             document.getElementById('recepcionModal').style.display = 'none';
             
             if ($.fn.DataTable.isDataTable('table.table-info')) {
@@ -1507,29 +1677,20 @@ async function saveRecepcion(event) {
                 tabla.row.add($nuevaFila).draw(false);
             }
 
-            await Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: data.message || 'Recepción registrada correctamente.',
-                showConfirmButton: true,
-            });
+            await mostrarAlertaCAIRecepcion(estadoExito, 'Recepción registrada', mensajeExito, dialogoExito);
         } else {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error al registrar recepción',
-                text: data.message || 'Error desconocido',
-                showConfirmButton: true,
-            });
+            const estadoError = 'regañona';
+            const mensajeError = data.message || 'No se pudo registrar la recepción.';
+            await mostrarAlertaCAIRecepcion(estadoError, 'No se pudo registrar la recepción', mensajeError);
         }
     } catch (error) {
         console.error('Error al guardar recepción:', error);
         establecerEstadoIARecepcion(error.message || 'Error al guardar recepción.', 'error');
-        await Swal.fire({
-            icon: 'error',
-            title: 'Error al registrar recepción',
-            text: error.message || 'Por favor, intente nuevamente.',
-            showConfirmButton: true
-        });
+        await mostrarAlertaCAIRecepcion(
+            'regañona',
+            'No se pudo registrar la recepción',
+            error.message || 'Por favor, intente nuevamente.'
+        );
     } finally {
         if (botonGuardar) botonGuardar.disabled = false;
     }
@@ -1723,6 +1884,9 @@ $(document).ready(function() {
     // No duplicamos la inicialización aquí para evitar conflictos al recargar
 
     actualizarProteccionSelectsProductos();
+    $('#registrarRecepcionModal').on('shown.bs.modal', function() {
+        actualizarCAIRecepcion('amigable');
+    });
 
     $("#correlativo").on("keypress", function(e){
         validarkeypress(/^[0-9]*$/, e);
@@ -1860,7 +2024,6 @@ $(document).ready(function() {
 });
 
 const aiClient = new AsistenteRecepcionIA({
-    apiUrl: 'http://127.0.0.1:8000',
-    authToken: 'V2ULrTMDqWierxYc7i71JKpewJozqORhdI_JbmbsTVo',
+    proxyUrl: 'Modelo/Controlador/recepcion.php',
     debug: true
 });

@@ -809,7 +809,7 @@ Sin cambios significativos respecto a la versión anterior.
    ```powershell
    $env:AUDITOR_RECEPCION_TOKEN = "nuevo-token-generado"
    # O en configuración de Apache
-   SetEnv AUDITOR_RECEPCION_TOKEN "nuevo-token-generado"
+   SetEnv AUDITOR_RECEPCION_TOKEN "<configure-privately>"
    ```
 
 3. **Actualizar en entorno FastAPI**

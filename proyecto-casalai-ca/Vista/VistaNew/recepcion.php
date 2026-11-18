@@ -37,8 +37,8 @@ ob_start();
     const rolUsuarioActual = "<?php echo isset($_SESSION['nombre_rol']) ? $_SESSION['nombre_rol'] : ''; ?>";
 </script>
 <script src="microservicio/javascript/asistente_recepcion.js"></script>
-<script src="assets/javascript/recepcion.js"></script>
-<link rel="stylesheet" href="assets/styles/modal-recepcion-ia.css">
+<script src="assets/javascript/recepcion.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/recepcion.js'); ?>"></script>
+<link rel="stylesheet" href="assets/styles/modal-recepcion-ia.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/modal-recepcion-ia.css'); ?>">
 
 <!-- Recepciones Section -->
 <div class="table-section">

@@ -930,8 +930,7 @@ $(document).ready(function() {
     
     // Configuración del Asistente IA
     const asistenteIA = new AsistenteRecepcionIA({
-        apiUrl: 'http://localhost:8000',
-        authToken: 'V2ULrTMDqWierxYc7i71JKpewJozqORhdI_JbmbsTVo',
+        proxyUrl: 'Modelo/Controlador/recepcion.php',
         debug: true,
         selectores: {
             inputImagen: '#foto-factura-ia',
@@ -1385,7 +1384,7 @@ $(document).ready(function() {
 </script>
 
 <?php include 'footer.php'; ?>
-<script src="assets/javascript/recepcion.js"></script>
+<script src="assets/javascript/recepcion.js?v=<?php echo filemtime(__DIR__ . '/../assets/javascript/recepcion.js'); ?>"></script>
 <script src="assets/public/js/chart.js"></script>
 <script src="assets/public/js/html2canvas.min.js"></script>
 <script src="assets/public/js/jspdf.umd.min.js"></script>

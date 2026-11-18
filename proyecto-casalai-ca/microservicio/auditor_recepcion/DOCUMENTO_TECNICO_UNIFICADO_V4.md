@@ -109,7 +109,7 @@ $env:AUDITOR_RECEPCION_TOKEN = "pega-aqui-el-token-generado"
 
 **Configuración en .htaccess**:
 ```apache
-SetEnv AUDITOR_RECEPCION_TOKEN "tu-token-aqui"
+SetEnv AUDITOR_RECEPCION_TOKEN "<configure-privately>"
 ```
 
 **Configuración en .env (FastAPI)**:
@@ -2269,7 +2269,7 @@ try {
    ```powershell
    $env:AUDITOR_RECEPCION_TOKEN = "nuevo-token-generado"
    # O en configuración de Apache
-   SetEnv AUDITOR_RECEPCION_TOKEN "nuevo-token-generado"
+   SetEnv AUDITOR_RECEPCION_TOKEN "<configure-privately>"
    ```
 
 3. **Actualizar en entorno FastAPI**

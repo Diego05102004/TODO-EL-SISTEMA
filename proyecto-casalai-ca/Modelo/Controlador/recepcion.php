@@ -1,4 +1,12 @@
 <?php
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once dirname(__DIR__) . '/Config/loadEnv.php';
+
 // Requires organizados al inicio
 use Usuario\ProyectoCasalaiCa\Modelo\Clases\Recepcion;
 use Usuario\ProyectoCasalaiCa\Modelo\Clases\NotificacionModel;

@@ -76,6 +76,8 @@ uvicorn controlador.api_recepcion:app --host 0.0.0.0 --port 8000 --reload
 
 El módulo PHP invoca estos endpoints a través de `Modelo/Servicio/RecepcionIAProxy.php`; PHP debe tener habilitada la extensión cURL. La URL base se configura con `RECEPCION_IA_URL` y por defecto es `http://127.0.0.1:8000`. El proxy aplica timeout total de 7,5 segundos, un reintento limitado para fallos de conexión/HTTP transitorios y un circuit breaker compartido en el host PHP: tres fallos consecutivos abren el circuito por dos minutos. El frontend aplica además un timeout de 8 segundos y activa el registro manual cuando detecta indisponibilidad.
 
+Para Auditoría de Recepción, configura el mismo `AUDITOR_RECEPCION_TOKEN` (mínimo 32 caracteres) en el `.env` privado de la raíz PHP y en `microservicio/.env`. Ambos archivos están excluidos de Git; PHP los carga antes de invocar el proxy y FastAPI carga el suyo al iniciar. Reinicia FastAPI después de cambiarlo. La vista llama al controlador PHP, que agrega el encabezado secreto; no configures el token en JavaScript ni en variables `EXPO_PUBLIC_`.
+
 La vista de productos usa `Modelo/Servicio/AnaliticaPredictivaProxy.php` para comunicarse con los endpoints nuevos. Configurar `ANALITICA_PREDICTIVA_URL` (por defecto `http://127.0.0.1:8000`) y el mismo secreto privado `ANALITICA_PREDICTIVA_TOKEN` en los entornos de PHP/Apache y FastAPI. FastAPI comprueba el token en las tres rutas de analítica; no exponerlo al navegador. Mantener el servicio enlazado a `127.0.0.1` cuando se ejecuta en el host de PHP.
 
 En Apache, define el token una sola vez en la configuración activa del servidor. No agregues a `.htaccess` un `SetEnv ANALITICA_PREDICTIVA_TOKEN` con un valor de ejemplo, porque puede sobrescribir el token real heredado por PHP.
