@@ -1,6 +1,6 @@
 # 🤖 Casalai AI - Microservicio de Recepción
 
-**Fase 1: Verificación Asistida (El Guardián)**
+**Fase 3: Automatización Completa (El Piloto)**
 
 Microservicio de Inteligencia Artificial para auditoría de recepción de mercancía, basado en arquitectura MVC con FastAPI.
 
@@ -54,9 +54,7 @@ pip install -r requirements.txt
 ### 3. Iniciar servidor
 
 ```bash
-python controlador/api_recepcion.py
-# o
-uvicorn controlador.api_recepcion:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
 ## 🔌 API Endpoints
@@ -76,7 +74,7 @@ uvicorn controlador.api_recepcion:app --host 0.0.0.0 --port 8000 --reload
 
 El módulo PHP invoca estos endpoints a través de `Modelo/Servicio/RecepcionIAProxy.php`; PHP debe tener habilitada la extensión cURL. La URL base se configura con `RECEPCION_IA_URL` y por defecto es `http://127.0.0.1:8000`. El proxy aplica timeout total de 7,5 segundos, un reintento limitado para fallos de conexión/HTTP transitorios y un circuit breaker compartido en el host PHP: tres fallos consecutivos abren el circuito por dos minutos. El frontend aplica además un timeout de 8 segundos y activa el registro manual cuando detecta indisponibilidad.
 
-Para Auditoría de Recepción, configura el mismo `AUDITOR_RECEPCION_TOKEN` (mínimo 32 caracteres) en el `.env` privado de la raíz PHP y en `microservicio/.env`. Ambos archivos están excluidos de Git; PHP los carga antes de invocar el proxy y FastAPI carga el suyo al iniciar. Reinicia FastAPI después de cambiarlo. La vista llama al controlador PHP, que agrega el encabezado secreto; no configures el token en JavaScript ni en variables `EXPO_PUBLIC_`.
+Para Auditoría de Recepción, configura `AUDITOR_RECEPCION_TOKEN` una sola vez (32–256 caracteres) en el `.env` privado de la raíz del proyecto. PHP y FastAPI usan ese mismo valor; `microservicio/.env` queda reservado para las demás opciones del servicio. En producción, configura el mismo secreto como variable de entorno de los procesos PHP y FastAPI. Reinicia ambos procesos después de cambiarlo. Todos los operadores usan el proxy PHP, que agrega el encabezado secreto; no configures ni distribuyas el token en JavaScript, navegadores ni variables `EXPO_PUBLIC_`. Un token por usuario no aplica: es una credencial servicio-a-servicio.
 
 La vista de productos usa `Modelo/Servicio/AnaliticaPredictivaProxy.php` para comunicarse con los endpoints nuevos. Configurar `ANALITICA_PREDICTIVA_URL` (por defecto `http://127.0.0.1:8000`) y el mismo secreto privado `ANALITICA_PREDICTIVA_TOKEN` en los entornos de PHP/Apache y FastAPI. FastAPI comprueba el token en las tres rutas de analítica; no exponerlo al navegador. Mantener el servicio enlazado a `127.0.0.1` cuando se ejecuta en el host de PHP.
 
@@ -86,7 +84,7 @@ La factura adjunta se conserva en `comprobantes/recepcion/`, con acceso HTTP den
 
 Para actualizar una base existente con los campos fiscales, ejecutar una vez `agregar_iva_recepcion.sql` sobre la base principal. Los registros anteriores quedan con IVA no registrado; solo se completan al revisar su factura original.
 
-## 📖 Flujo de Uso (Fase 1)
+## 📖 Flujo de Uso
 
 La carga acepta PDF e imágenes de hasta 5 MB. En los PDFs se analiza cada página; Tesseract y Poppler deben estar instalados en el equipo que ejecuta la API.
 

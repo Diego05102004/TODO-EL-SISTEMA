@@ -7,7 +7,7 @@
 
 ### 1.1 Arquitectura del Sistema
 
-**Fase Actual**: Fase 1 - Verificación Asistida ("El Guardián")
+**Fase Actual**: Fase 3 - Automatización Completa (El Piloto)
 
 **Componentes Principales**:
 1. **Motor OCR**: Tesseract OCR con preprocesamiento de imagen (OpenCV)
@@ -267,7 +267,7 @@ config_tesseract = '--psm 6 --oem 3'
 
 ### 1.6 Análisis de Matriz de Confusión
 
-**Nota Importante**: El sistema actual es de **extracción y verificación**, no de clasificación supervisada. No hay modelo de ML entrenado con etiquetas ground truth en la Fase 1.
+**Nota Importante**: El sistema actual es de **extracción y verificación**, no de clasificación supervisada. No hay modelo de ML entrenado con etiquetas ground truth en la Fase 3.
 
 **Sin embargo, se puede evaluar la calidad de la extracción**:
 
@@ -323,10 +323,10 @@ F1-Score = 2 × (0.966 × 0.85) / (0.966 + 0.85) = 0.904 = 90.4%
 
 **Estado actual**: El sistema NO calcula matriz de confusión porque:
 - No hay dataset de ground truth anotado
-- La Fase 1 es asistida, no automatizada
+- La Fase 3 es asistida, no automatizada
 - El feedback manual se guarda pero no se usa para entrenar aún
 
-**Recomendación para Fase 2**:
+**Recomendación para Fase 3**:
 - Implementar recolección sistemática de ground truth
 - Calcular métricas de precisión por campo
 - Generar matriz de confusión por tipo de campo

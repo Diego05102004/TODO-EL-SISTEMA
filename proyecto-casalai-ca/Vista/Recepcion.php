@@ -920,7 +920,7 @@ $(document).on('click', '.modal .close', function() {
 });
 </script>
 
-<!-- INTEGRACIÓN GUARDIÁN IA - FASE 1: VERIFICACIÓN ASISTIDA -->
+<!-- INTEGRACIÓN GUARDIÁN IA - FASE 3: AUTOMATIZACIÓN COMPLETA (EL PILOTO) -->
 <script src="microservicio/javascript/asistente_recepcion.js"></script>
 <script>
 $(document).ready(function() {

@@ -1,14 +1,23 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
+from dotenv import dotenv_values, load_dotenv
 import os
+from pathlib import Path
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-# Cargar variables de entorno desde archivo .env
-load_dotenv()
+# Cargar la configuración local del microservicio; el token de recepción
+# se comparte con PHP desde el .env de la raíz del proyecto.
+service_dir = Path(__file__).resolve().parent
+project_env = service_dir.parent / ".env"
+environment_token = os.environ.get("AUDITOR_RECEPCION_TOKEN")
+load_dotenv(service_dir / ".env")
+if environment_token is None:
+    os.environ["AUDITOR_RECEPCION_TOKEN"] = (
+        dotenv_values(project_env).get("AUDITOR_RECEPCION_TOKEN") or ""
+    )
 
 from config import settings
 from modelo.logger import logger

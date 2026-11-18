@@ -53,6 +53,13 @@ class RecepcionIAProxy
 
     private function solicitar($endpoint, $cuerpo = null, $headers = [], $post = true)
     {
+        if ($endpoint !== '/health' && (strlen($this->authToken) < 32 || strlen($this->authToken) > 256)) {
+            return $this->respuestaError(
+                503,
+                'El token de autenticación del microservicio no está configurado correctamente en el servidor.'
+            );
+        }
+
         $estado = $this->actualizarEstadoCircuito(function ($actual) {
             if (($actual['abierto_hasta'] ?? 0) > 0 && $actual['abierto_hasta'] <= time()) {
                 return ['fallos' => 0, 'abierto_hasta' => 0];

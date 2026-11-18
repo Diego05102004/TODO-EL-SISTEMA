@@ -1,4 +1,4 @@
-"""Módulo: auditor_recepcion.py - Modelo de IA para auditoría de recepción. Fase 1: Verificación Asistida."""
+"""Módulo: auditor_recepcion.py - Modelo de IA para auditoría de recepción. Fase 3: Automatización Completa (El Piloto)."""
 
 import re
 import json
@@ -240,7 +240,7 @@ class AuditorRecepcion:
         self._modelo_ml_signature = None
         self.recargar_modelo(force=True)
         
-        logger.info("AuditorRecepcion inicializado - Fase 1: Verificación Asistida")
+        logger.info("AuditorRecepcion inicializado - Fase 3: Automatización Completa (El Piloto)")
         logger.info(f"Base de conocimiento cargada: {len(self.patrones)} campos, {len(self.catalogo_productos)} productos, {len(self.catalogo_proveedores)} proveedores")
     
     def _cargar_patrones(self) -> Dict:
@@ -1194,7 +1194,7 @@ class AuditorRecepcion:
         return None
 
     def _generar_reporte(self, discrepancias: List[Discrepancia], factura: FacturaExtraida, datos_form: Dict) -> str:
-        reporte = ["=" * 60, "REPORTE DE VERIFICACIÓN - FASE 1: EL GUARDIÁN", "=" * 60, f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ""]
+        reporte = ["=" * 60, "REPORTE DE VERIFICACIÓN - FASE 3: EL PILOTO", "=" * 60, f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ""]
         if discrepancias:
             reporte.extend([f"⚠️  RESULTADO: BLOQUEADO - {len(discrepancias)} DISCREPANCIAS ENCONTRADAS", "", "DETALLE DE DISCREPANCIAS:", "-" * 40])
             for i, disc in enumerate(discrepancias, 1):

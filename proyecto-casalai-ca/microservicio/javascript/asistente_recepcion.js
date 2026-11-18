@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * ASISTENTE IA - MÓDULO RECEPCIÓN
- * Fase 1: Verificación Asistida (El Guardián)
+ * Fase 3: Automatización Completa (El Piloto)
  * 
  * Este módulo JavaScript gestiona la integración entre el sistema PHP
  * y el microservicio de IA para auditoría de recepción de mercancía.
@@ -42,7 +42,7 @@ class AsistenteRecepcionIA {
     }
 
     _inicializar() {
-        this._log('Asistente IA inicializado - Fase 1: El Guardián');
+        this._log('Asistente IA inicializado - Fase 3: Automatización Completa (El Piloto)');
         this._verificarConexionAPI();
     }
 

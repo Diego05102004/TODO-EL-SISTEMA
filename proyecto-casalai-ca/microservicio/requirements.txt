@@ -1,5 +1,5 @@
 # Casalai AI - Microservicio de Recepción
-# Fase 1: Verificación Asistida (El Guardián)
+# Fase 3: Automatización Completa (El Piloto)
 # Dependencias Python
 
 # Framework Web

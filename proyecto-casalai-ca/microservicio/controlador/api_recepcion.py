@@ -1,4 +1,4 @@
-"""API REST FastAPI - Fase 1: Verificación Asistida."""
+"""API REST FastAPI - Fase 3: Automatización Completa (El Piloto)."""
 import hmac
 import os
 from fastapi import APIRouter, UploadFile, File, Form, Header, HTTPException, Depends, Request
@@ -28,9 +28,12 @@ def validar_token_auditor(x_auditor_token: str = Header(default="", max_length=2
     Valida el token de autenticación para el microservicio de auditoría.
     Similar al sistema de analítica predictiva.
     """
-    expected = os.getenv("AUDITOR_RECEPCION_TOKEN", "")
-    if len(expected) < 32:
-        raise HTTPException(status_code=503, detail="AUDITOR_RECEPCION_TOKEN debe tener al menos 32 caracteres.")
+    expected = os.getenv("AUDITOR_RECEPCION_TOKEN", "").strip()
+    if not 32 <= len(expected) <= 256:
+        raise HTTPException(
+            status_code=503,
+            detail="AUDITOR_RECEPCION_TOKEN debe tener entre 32 y 256 caracteres.",
+        )
     if not hmac.compare_digest(x_auditor_token.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(status_code=403, detail="Token de auditoría inválido.")
 
@@ -67,7 +70,7 @@ def health_check():
     """Endpoint de health check para el JavaScript"""
     return {
         "status": "healthy",
-        "fase": "1",
+        "fase": "3 - Automatización Completa (El Piloto)",
         "service": "Auditoría Casa Lai, C.A."
     }
 
