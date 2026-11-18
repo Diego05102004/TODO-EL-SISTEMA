@@ -469,7 +469,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 echo json_encode([
                     'status' => 'success',
-                    'message' => 'Recepción Registrada Correctamente',
                     'factura_resguardada' => $rutaFacturaResguardada !== null,
                     'procesamiento_pendiente' => ($_POST['modo_contingencia'] ?? '') === 'true',
                     'recepcion' => $recepcionRegistrada
