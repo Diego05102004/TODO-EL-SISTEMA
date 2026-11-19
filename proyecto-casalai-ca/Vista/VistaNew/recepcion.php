@@ -124,154 +124,172 @@ ob_start();
         </div>
         <div class="modal-body">
             <form id="recepcionForm" enctype="multipart/form-data">
-                <!-- CAI -->
-                <div class="form-section">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fotoFacturaRecepcion">
-                                <i class="fas fa-robot"></i>
-                                Factura para análisis asistido por CAI
-                            </label>
-                            <input type="file" id="fotoFacturaRecepcion" name="foto_factura" accept="image/*,.pdf">
-                            <small>Adjunte una imagen o PDF (máximo 5 MB). El análisis rellenará los datos detectados.</small>
-                        </div>
-                    </div>
-                    <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
-                        <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
-                        <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
-                    </div>
-                    <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
-                    <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
-                </div>
-
-                <!-- Productos de la Recepción -->
-                <div class="form-section productos-section">
-                    <div class="section-title">
-                        <i class="fas fa-info-circle"></i>
-                        <h3>Información Principal</h3>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="correlativo">
-                                Número de Factura*
-                            </label>
-                            <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
-                            <span class="span-value" id="scorrelativo"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="proveedor">Proveedor*</label>
-                            <select id="proveedor" name="proveedor" class="input-select">
-                                <option value="">Seleccione un proveedor</option>
-                                <?php if (!empty($proveedores)): ?>
-                                    <?php foreach ($proveedores as $proveedor): ?>
-                                        <option value="<?php echo $proveedor['id_proveedor'] ?? ''; ?>">
-                                            <?php echo htmlspecialchars($proveedor['nombre_proveedor'] ?? 'Sin nombre'); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <option value="">No hay proveedores disponibles</option>
-                                <?php endif; ?>
-                            </select>
-                            <span class="span-value" id="sproveedor"></span>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="section-title">
-                        <i class="fas fa-boxes"></i>
-                        <h3>Productos de la Recepción</h3>
-                        <span class="product-count">0 productos</span>
-                    </div>
-                    <div id="productosList">
-                        <div class="producto-row">
+                <div class="form-row-content">
+                    <!-- CAI -->
+                    <div class="form-section scrollable-section">
+                        <div class="form-row">
                             <div class="form-group">
-                                <label>Producto*</label>
-                                <select name="producto[]" class="producto-select input-select" onchange="seleccionarProducto(this)">
-                                    <option value="">Seleccione un producto</option>
-                                    <?php if (!empty($productos)): ?>
-                                        <?php foreach ($productos as $producto): ?>
-                                            <option value="<?php echo htmlspecialchars((string)($producto['id_producto'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-codigo="<?php echo htmlspecialchars((string)($producto['id_producto'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-marca="<?php echo htmlspecialchars($producto['nombre_marca'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-modelo="<?php echo htmlspecialchars($producto['nombre_modelo'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-serial="<?php echo htmlspecialchars($producto['serial'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                                                <?php echo htmlspecialchars($producto['nombre_producto'] ?? 'Sin nombre', ENT_QUOTES, 'UTF-8'); ?>
+                                <label for="fotoFacturaRecepcion">
+                                    <i class="fas fa-robot"></i>
+                                    Factura para análisis asistido por CAI
+                                </label>
+                                <input type="file" id="fotoFacturaRecepcion" name="foto_factura" accept="image/*,.pdf">
+                                <small>Adjunte una imagen o PDF (máximo 5 MB). El análisis rellenará los datos detectados.</small>
+                            </div>
+                        </div>
+                        <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
+                            <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
+                            <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
+                        </div>
+                        <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
+                        <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
+                    </div>
+
+                    <!-- Productos de la Recepción -->
+                    <div class="form-section productos-section scrollable-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            <h3>Información Principal</h3>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="correlativo">
+                                    Número de Factura*
+                                </label>
+                                <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
+                                <span class="span-value" id="scorrelativo"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="proveedor">Proveedor*</label>
+                                <select id="proveedor" name="proveedor" class="input-select">
+                                    <option value="">Seleccione un proveedor</option>
+                                    <?php if (!empty($proveedores)): ?>
+                                        <?php foreach ($proveedores as $proveedor): ?>
+                                            <option value="<?php echo $proveedor['id_proveedor'] ?? ''; ?>">
+                                                <?php echo htmlspecialchars($proveedor['nombre_proveedor'] ?? 'Sin nombre'); ?>
                                             </option>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <option value="">No hay productos disponibles</option>
+                                        <option value="">No hay proveedores disponibles</option>
                                     <?php endif; ?>
                                 </select>
-                                <span class="span-value sproducto-msg"></span>
+                                <span class="span-value" id="sproveedor"></span>
                             </div>
-                            <div class="form-group">
-                                <label>Código</label>
-                                <input type="text" class="producto-codigo input-textnum" readonly>
+                        </div>
+                        <br>
+                        <div class="section-title">
+                            <i class="fas fa-boxes"></i>
+                            <h3>Productos de la Recepción</h3>
+                            <span class="product-count">0 productos</span>
+                        </div>
+                        <div id="productosList">
+                            <div class="producto-row">
+                                <div class="producto-identificacion">
+                                    <span class="producto-index" aria-label="Producto 1">1</span>
+                                    <div class="form-group producto-selector-group">
+                                        <label>Producto*</label>
+                                        <select name="producto[]" class="producto-select input-select" onchange="seleccionarProducto(this)">
+                                            <option value="">Seleccione un producto</option>
+                                            <?php if (!empty($productos)): ?>
+                                                <?php foreach ($productos as $producto): ?>
+                                                    <option value="<?php echo htmlspecialchars((string)($producto['id_producto'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                            data-codigo="<?php echo htmlspecialchars((string)($producto['id_producto'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                            data-marca="<?php echo htmlspecialchars($producto['nombre_marca'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                            data-modelo="<?php echo htmlspecialchars($producto['nombre_modelo'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                            data-serial="<?php echo htmlspecialchars($producto['serial'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <?php echo htmlspecialchars($producto['nombre_producto'] ?? 'Sin nombre', ENT_QUOTES, 'UTF-8'); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <option value="">No hay productos disponibles</option>
+                                            <?php endif; ?>
+                                        </select>
+                                        <span class="span-value sproducto-msg"></span>
+                                    </div>
+                                    <button type="button" class="btn-remove-row" onclick="removeProductoRow(this)" title="Remover Producto" aria-label="Remover Producto">
+                                        <img src="assets/img/circle-x.svg" alt="">
+                                    </button>
+                                </div>
+
+                                <div class="data-producto producto-metadata">
+                                    <div class="form-data">
+                                        <label>Código</label>
+                                        <input type="text" class="producto-codigo input-textnum bloqueo" readonly>
+                                    </div>
+
+                                    <div class="form-data">
+                                        <label>Marca</label>
+                                        <input type="text" class="producto-marca input-textnum bloqueo" readonly>
+                                    </div>
+
+                                    <div class="form-data">
+                                        <label>Modelo</label>
+                                        <input type="text" class="producto-modelo input-textnum bloqueo" readonly>
+                                    </div>
+
+                                    <div class="form-data">
+                                        <label>Serial</label>
+                                        <input type="text" class="producto-serial input-textnum bloqueo" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="data-producto producto-importes">
+                                    <div class="form-group">
+                                        <label>Costo Unitario*</label>
+                                        <input type="text" name="costo[]" placeholder="0.00" class="input-with-icon input-textnum costo-input" maxlength="12" oninput="limitarDigitos(this, 9, true); limitarDosDecimales(this); calcularSubtotal(this);">
+                                        <span class="span-value scosto-msg"></span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Cantidad*</label>
+                                        <input type="text" name="cantidad[]" placeholder="0" class="input-with-icon input-textnum cantidad-input" maxlength="9" oninput="limitarDigitos(this, 9); calcularSubtotal(this)">
+                                        <span class="span-value scantidad-msg"></span>
+                                    </div>
+
+                                    <div class="form-group subtotal-group">
+                                        <label>Subtotal</label>
+                                        <input type="text" class="subtotal-display" readonly value="$0.00">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Marca</label>
-                                <input type="text" class="producto-marca input-textnum" readonly>
+                        </div>
+
+                        <button type="button" class="btn-add-row" title="Agregar Producto" onclick="addProductoRow()">
+                            <img src="assets/img/plus.svg">
+                        </button>
+
+                        <div class="productos-footer">
+                            <div class="total-section recepcion-resumen-factura">
+                                <div class="resumen-factura-item">
+                                    <span class="total-label">Subtotal:</span>
+                                    <strong class="total-value" id="subtotalRecepcion">$0.00</strong>
+                                </div>
+                                <div class="resumen-factura-item resumen-iva-tasa">
+                                    <label for="porcentajeIvaRecepcion">IVA (%)*</label>
+                                    <input type="text" id="porcentajeIvaRecepcion" placeholder="16.00" name="porcentaje_iva" class="costo-input" maxlength="5" oninput="limitarDosDecimales(this); calcularSubtotal(this);">
+                                    <span class="span-value" id="sporcentajeIva"></span>
+                                </div>
+                                <div class="resumen-factura-item">
+                                    <span class="total-label">Monto IVA:</span>
+                                    <strong class="total-value" id="montoIvaRecepcion">$0.00</strong>
+                                </div>
+                                <div class="resumen-factura-item resumen-factura-total">
+                                    <span class="total-label">Total factura:</span>
+                                    <strong class="total-value" id="totalValue">$0.00</strong>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Modelo</label>
-                                <input type="text" class="producto-modelo input-textnum" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Serial</label>
-                                <input type="text" class="producto-serial input-textnum" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Costo Unitario*</label>
-                                <input type="text" name="costo[]" placeholder="0.00" class="input-with-icon input-textnum costo-input" maxlength="12" oninput="limitarDigitos(this, 9, true); limitarDosDecimales(this); calcularSubtotal(this);">
-                                <span class="span-value scosto-msg"></span>
-                            </div>
-                            <div class="form-group">
-                                <label>Cantidad*</label>
-                                <input type="text" name="cantidad[]" placeholder="0" class="input-with-icon input-textnum cantidad-input" maxlength="9" oninput="limitarDigitos(this, 9); calcularSubtotal(this)">
-                                <span class="span-value scantidad-msg"></span>
-                            </div>
-                            <div class="form-group subtotal-group">
-                                <label>Subtotal</label>
-                                <input type="text" class="subtotal-display" readonly value="$0.00">
-                            </div>
-                            <button type="button" class="btn-remove-row" onclick="removeProductoRow(this)" title="Remover Producto">
-                                <img src="assets/img/circle-x.svg">
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="button" class="btm-confirmar btn-save" onclick="saveRecepcion()">
+                                <i class="fas fa-check"></i> Registrar
                             </button>
                         </div>
                     </div>
 
-                    <button type="button" class="btn-add-row" title="Agregar Producto" onclick="addProductoRow()">
-                        <img src="assets/img/plus.svg">
-                    </button>
-
-                    <div class="productos-footer">
-                        <div class="total-section recepcion-resumen-factura">
-                            <div class="resumen-factura-item">
-                                <span class="total-label">Subtotal:</span>
-                                <strong class="total-value" id="subtotalRecepcion">$0.00</strong>
-                            </div>
-                            <div class="resumen-factura-item resumen-iva-tasa">
-                                <label for="porcentajeIvaRecepcion">IVA (%)*</label>
-                                <input type="text" id="porcentajeIvaRecepcion" placeholder="16.00" name="porcentaje_iva" class="costo-input" maxlength="5" oninput="limitarDosDecimales(this); calcularSubtotal(this);">
-                                <span class="span-value" id="sporcentajeIva"></span>
-                            </div>
-                            <div class="resumen-factura-item">
-                                <span class="total-label">Monto IVA:</span>
-                                <strong class="total-value" id="montoIvaRecepcion">$0.00</strong>
-                            </div>
-                            <div class="resumen-factura-item resumen-factura-total">
-                                <span class="total-label">Total factura:</span>
-                                <strong class="total-value" id="totalValue">$0.00</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
-                        <i class="fas fa-times"></i> Cancelar
-                    </button>
-                    <button type="button" class="btm-confirmar btn-save" onclick="saveRecepcion()">
-                        <i class="fas fa-check"></i> Registrar
-                    </button>
                 </div>
             </form>
         </div>

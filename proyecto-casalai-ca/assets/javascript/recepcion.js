@@ -1147,9 +1147,17 @@ function calcularTotal() {
 }
 
 function actualizarContadorProductos() {
-    const count = document.querySelectorAll('.producto-row').length;
+    const filas = Array.from(document.querySelectorAll('#productosList .producto-row'));
+    const count = filas.length;
     const counterEl = document.querySelector('.product-count');
     if (counterEl) counterEl.textContent = count + ' producto' + (count !== 1 ? 's' : '');
+    filas.forEach((fila, indice) => {
+        const numero = fila.querySelector('.producto-index');
+        if (numero) {
+            numero.textContent = String(indice + 1);
+            numero.setAttribute('aria-label', `Producto ${indice + 1}`);
+        }
+    });
 }
 
 function removeProductoRow(button) {

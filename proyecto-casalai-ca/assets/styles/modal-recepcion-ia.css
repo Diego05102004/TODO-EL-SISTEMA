@@ -211,12 +211,25 @@
     font-weight: 600;
 }
 
+.form-row-content {
+    display: flex;
+    justify-content:space-around; 
+    margin: 0;
+    gap: 15px;
+}
+
+.scrollable-section {
+    max-height: 70vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 .productos-section {
     background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(25, 118, 210, 0.05) 100%);
 }
 
 #productosList {
-    overflow-x: auto;
+    overflow-x: visible;
     padding-bottom: 8px;
 }
 
@@ -229,16 +242,108 @@
 
 .producto-row {
     display: grid;
-    grid-template-columns: minmax(190px, 1.8fr) minmax(75px, 0.55fr) repeat(3, minmax(95px, 0.9fr)) minmax(125px, 1.1fr) minmax(90px, 0.8fr) minmax(95px, 0.9fr) auto;
-    min-width: 1080px;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
     margin-bottom: 15px;
-    align-items: start;
+    align-items: stretch;
     background: white;
-    padding: 20px;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(34, 72, 112, 0.08);
+    border: 1px solid rgba(33, 150, 243, 0.16);
+}
+
+.producto-identificacion {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 40px;
+    gap: 12px;
+    align-items: start;
+}
+
+.producto-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-top: 25px;
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    border-radius: 50%;
+    background: #eaf5ff;
+    color: #2196F3;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.producto-selector-group,
+.producto-row .form-group {
+    min-width: 0;
+    margin: 0;
+}
+
+.producto-row .form-group label,
+.producto-row .form-data label {
+    margin-bottom: 6px;
+    color: #2196F3;
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+.producto-selector-group .producto-select {
+    min-height: 42px;
+    border-color: #d7e4f2;
+}
+
+.producto-row .data-producto {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #edf2f7;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(33, 150, 243, 0.1);
+    background: #f8fbff;
+}
+
+.producto-row .producto-metadata {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.producto-row .form-data {
+    min-width: 0;
+}
+
+.producto-row .producto-importes {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(115px, 0.9fr);
+    align-items: start;
+}
+
+.producto-row .subtotal-group {
+    min-height: 74px;
+    justify-content: center;
+    padding: 10px 12px;
+}
+
+.producto-row .subtotal-group label {
+    color: white;
+}
+
+.producto-row .btn-remove-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-top: 25px;
+    padding: 8px;
+}
+
+.producto-row .btn-remove-row img {
+    width: 100%;
+    height: 100%;
+}
+
+.data-producto {
+    min-width: 0;
 }
 
 .subtotal-group {
@@ -372,7 +477,7 @@
     cursor: pointer;
     font-size: 0.9rem;
     align-items: center;
-    margin-top: 14px;
+    margin-top: 0;
     transition: all 0.3s ease;
 }
 
@@ -415,14 +520,47 @@
         padding-left: 0;
     }
 
-    .producto-row {
-        grid-template-columns: minmax(190px, 1.8fr) minmax(75px, 0.55fr) repeat(3, minmax(95px, 0.9fr)) minmax(125px, 1.1fr) minmax(90px, 0.8fr) minmax(95px, 0.9fr) auto;
+    #recepcionModal .producto-row .producto-metadata {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #recepcionModal .producto-row .producto-importes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #recepcionModal .producto-row .subtotal-group {
+        grid-column: 1 / -1;
     }
 }
 
 @media (max-width: 1200px) {
-    .producto-row {
-        grid-template-columns: minmax(190px, 1.8fr) minmax(75px, 0.55fr) repeat(3, minmax(95px, 0.9fr)) minmax(125px, 1.1fr) minmax(90px, 0.8fr) minmax(95px, 0.9fr) auto;
-        gap: 10px;
+    #recepcionModal .producto-row {
+        gap: 12px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    #recepcionModal .producto-row {
+        padding: 12px;
+    }
+
+    #recepcionModal .producto-identificacion {
+        grid-template-columns: 32px minmax(0, 1fr) 34px;
+        gap: 8px;
+    }
+
+    #recepcionModal .producto-index,
+    #recepcionModal .producto-row .btn-remove-row {
+        width: 32px;
+        height: 32px;
+    }
+
+    #recepcionModal .producto-index {
+        margin-top: 31px;
+    }
+
+    #recepcionModal .producto-row .btn-remove-row {
+        margin-top: 31px;
     }
 }
