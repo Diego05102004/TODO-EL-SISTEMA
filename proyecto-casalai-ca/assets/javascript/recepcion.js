@@ -493,7 +493,7 @@ function validarEnvioRecepcion() {
 
     if (!esValido) {
         actualizarCAIRecepcion('regañona');
-        mensajes('error', 'Campos incompletos', 'Por favor complete correctamente los campos obligatorios (*)');
+        mensajes('error', 'Campos incompletos');
     }
 
     return esValido;
@@ -936,13 +936,18 @@ function rellenarRecepcionDesdeFactura(factura) {
 
     const resultadoIARecepcionEl = document.getElementById('resultadoIARecepcion');
     if (resultadoIARecepcionEl) {
-        resultadoIARecepcionEl.textContent =
+        const tituloResultado = document.createElement('strong');
+        tituloResultado.textContent = 'Resultado del Análisis:';
+        resultadoIARecepcionEl.replaceChildren(tituloResultado, document.createElement('br'));
+        resultadoIARecepcionEl.appendChild(document.createTextNode(
+            `Número de factura detectado: ${factura.numero_factura || 'no detectado'}\n` +
             `Proveedor detectado: ${factura.nombre_proveedor || 'no detectado'}\n` +
             `Productos detectados: ${productosDetectados.length}\n` +
             `Subtotal: $${Number(factura.subtotal_factura || 0).toFixed(2)}\n` +
             `IVA: ${Number(factura.porcentaje_iva || 0).toFixed(2)}% ($${Number(factura.monto_iva || 0).toFixed(2)})\n` +
             `Total factura: $${Number(factura.total_factura || 0).toFixed(2)}\n` +
-            `Confianza OCR: ${(Number(factura.confianza_promedio || 0) * 100).toFixed(1)}%`;
+            `Confianza OCR: ${(Number(factura.confianza_promedio || 0) * 100).toFixed(1)}%`
+        ));
         mostrarSugerenciasAutocorreccion(factura);
         resultadoIARecepcionEl.hidden = false;
     }
@@ -1270,7 +1275,11 @@ function construirListaGranularDiscrepancias(discrepanciasRaw) {
 function obtenerDiscrepanciasRecepcionActuales() {
     if (!datosFacturaExtraidaIA) return [];
     const correlativoForm = space(document.getElementById('correlativo')?.value || '').trim();
-    const proveedorForm = document.querySelector('#proveedor option:checked')?.textContent?.trim() || '';
+    const proveedorSelect = document.getElementById('proveedor');
+    const proveedorOpcion = proveedorSelect?.selectedOptions?.[0];
+    const proveedorForm = proveedorOpcion?.value
+        ? proveedorOpcion.textContent.trim()
+        : '';
     const ivaForm = Number(document.getElementById('porcentajeIvaRecepcion')?.value || 0);
 
     const productosForm = Array.from(document.querySelectorAll('#productosList .producto-row')).map(fila => ({
@@ -1301,14 +1310,22 @@ function obtenerDiscrepanciasRecepcionActuales() {
     }
 
     if (datosFacturaExtraidaIA?.nombre_proveedor) {
-        if (normalizarTextoRecepcion(proveedorForm) !== normalizarTextoRecepcion(datosFacturaExtraidaIA.nombre_proveedor)) {
+        if (proveedorForm && normalizarTextoRecepcion(proveedorForm) !== normalizarTextoRecepcion(datosFacturaExtraidaIA.nombre_proveedor)) {
             pendientes.push({
                 tipo: 'proveedor',
                 campo: 'Proveedor',
                 valor_factura: datosFacturaExtraidaIA.nombre_proveedor,
-                valor_formulario: proveedorForm || 'Sin seleccionar'
+                valor_formulario: proveedorForm
             });
         }
+    }
+    if (!proveedorForm) {
+        pendientes.push({
+            tipo: 'proveedor',
+            campo: 'Proveedor',
+            valor_factura: datosFacturaExtraidaIA?.nombre_proveedor || 'No detectado',
+            valor_formulario: 'Sin seleccionar'
+        });
     }
 
     productosFactura.forEach((prodFactura, idxFactura) => {
@@ -1402,12 +1419,12 @@ function evaluarDiscrepanciasInteractivas() {
         ).join('');
 
         const mensajeBloqueoHTML = 
-            `<div><b>Registro bloqueado:</b> corrige las discrepancias críticas con la factura.</div>` +
+            `<div><b>Registro Inaceptable:</b> corrige las discrepancias críticas con la factura.</div>` +
             `<ul style="margin: 8px 0 0 18px; padding: 0; text-align: left; font-size: 0.9em; list-style-type: disc;">${detalleHTML}</ul>`;
 
         establecerEstadoIARecepcion(mensajeBloqueoHTML, 'error');
     } else {
-        const mensajeExitoHTML = `<b>Registro Desbloqueado:</b> discrepancias críticas corregidas, puede proceder a incluir la recepción.`;
+        const mensajeExitoHTML = `<b>Registro Aceptable:</b> no hay discrepancias pendientes, puede proceder a incluir la recepción.`;
         establecerEstadoIARecepcion(mensajeExitoHTML, 'success');
     }
 }
@@ -1596,9 +1613,15 @@ async function saveRecepcion(event) {
 
             await mostrarAlertaCAIRecepcion(estadoExito, 'Recepción registrada', mensajeExito, dialogoExito);
         } else {
-            const estadoError = 'regañona';
+            const facturaDuplicada = data.code === 'DUPLICATE_INVOICE';
+            const estadoError = facturaDuplicada ? 'preocupada' : 'regañona';
             const mensajeError = data.message || 'No se pudo registrar la recepción.';
-            await mostrarAlertaCAIRecepcion(estadoError, 'No se pudo registrar la recepción', mensajeError);
+            await mostrarAlertaCAIRecepcion(
+                estadoError,
+                'No se pudo registrar la recepción',
+                facturaDuplicada ? '' : mensajeError,
+                facturaDuplicada ? mensajeError : undefined
+            );
         }
     } catch (error) {
         console.error('Error al guardar recepción:', error);
