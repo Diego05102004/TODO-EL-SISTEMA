@@ -4,26 +4,19 @@
 
 campos:
   numero_factura:
-    descripcion: "Número de factura o documento"
+    descripcion: "Número de factura compuesto exactamente por seis dígitos"
     patrones:
-      - '(?:factura|n[°º]|nro|numero|#)\s*[.:]?\s*([A-Z0-9\-]{5,20})'
-      - '(?:factura)\s*(?:n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)'
-      - '(?:invoice|inv)\s*(?:#|n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)'
-      - '(?:bill)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)'
-      - '(?:receipt)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)'
-      - '(\d{6,10})'
-      - '#\s*([A-Z0-9\-]+)'
+      - '\b(?:factura|invoice|inv|bill|receipt)\b(?:\s+(?:n(?:ro|um|o)?\s*[°º#.]?))?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)'
+      - '\b(?:nro|numero|número|num|number|no|n)\s*[°º#.]?\s*(?:de\s*)?(?:factura|invoice|bill|receipt)?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)'
     prioridad: 1
     requerido: true
 
   proveedor:
-    descripcion: "Nombre del proveedor o vendedor"
+    descripcion: "Nombre de proveedor contrastado contra el catálogo del sistema"
     patrones:
-      - '(?:proveedor|vendedor|supplier|vendor|de|from)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+(?:S\.A|S\.R\.L|C\.A|LLC|INC|LTDA|S\.A\.S|GmbH|Ltd|Pty)?)'
-      - '(?:razon social|nombre|company|empresa)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)'
-      - '(?:sold\s*by|billed\s*by)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)'
-      - 'eBay|Amazon|MercadoLibre|AliExpress|Walmart|BestBuy|Newegg|Staples|Office Depot'
-      - '(?:HP|Canon|Epson|Brother|Xerox|Dell|Lenovo|Asus|Samsung|LG|Sony|Apple|Microsoft|Logitech|Intel|AMD|NVIDIA)\s+(?:Inc|Corp|LLC|GmbH|Ltd)?'
+      - '^\s*(?:proveedor|vendedor|supplier|vendor)\s*[:#-]\s*([^\r\n]+?)\s*$'
+      - '^\s*(?:raz[oó]n social|company|empresa)\s*[:#-]\s*([^\r\n]+?)\s*$'
+      - '^\s*(?:sold\s+by|billed\s+by|from)\s*[:#-]?\s*([^\r\n]+?)\s*$'
     prioridad: 2
     requerido: true
 

@@ -16,6 +16,7 @@ import joblib
 import yaml
 import csv
 import os
+import unicodedata
 from modelo.adaptador_bd import FabricaAdaptadores, Producto, Proveedor
 from modelo.corrector_feedback import suggest_corrections
 
@@ -149,21 +150,13 @@ class AuditorRecepcion:
     UMBRAL_CONFIANZA_MEDIA = 0.60
     PATRONES_POR_DEFECTO = {
         'numero_factura': [
-            r'(?:factura|n[°º]|nro|numero)\s*[:#]?\s*([A-Z0-9\-]{5,20})',
-            r'(?:factura)\s*(?:n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)',
-            r'(?:invoice|inv)\s*(?:#|n[°º])?\s*[.:]?\s*([A-Z0-9\-]+)',
-            r'(?:bill)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)',
-            r'(?:receipt)\s*(?:#)?\s*[.:]?\s*([A-Z0-9\-]+)',
-            r'#\s*(\d{6,10})',  # Patrón específico para #839204
-            r'(\d{6,10})',
-            r'#\s*([A-Z0-9\-]+)'
+            r'\b(?:factura|invoice|inv|bill|receipt)\b(?:\s+(?:n(?:ro|um|o)?\s*[°º#.]?))?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)',
+            r'\b(?:nro|numero|número|num|number|no|n)\s*[°º#.]?\s*(?:de\s*)?(?:factura|invoice|bill|receipt)?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)'
         ],
         'proveedor': [
-            r'(?:proveedor|vendedor|supplier|vendor|de|from)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+(?:S\.A|S\.R\.L|C\.A|LLC|INC|LTDA|S\.A\.S|GmbH|Ltd|Pty)?)',
-            r'(?:razon social|nombre|company|empresa)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)',
-            r'(?:sold\s*by|billed\s*by)[:\s]+([A-Z][A-Za-z0-9\s&.,\-]+)',
-            r'eBay|Amazon|MercadoLibre|AliExpress|Walmart|BestBuy|Newegg|Staples|Office Depot',
-            r'(?:HP|Canon|Epson|Brother|Xerox|Dell|Lenovo|Asus|Samsung|LG|Sony|Apple|Microsoft|Logitech|Intel|AMD|NVIDIA)\s+(?:Inc|Corp|LLC|GmbH|Ltd)?'
+            r'^\s*(?:proveedor|vendedor|supplier|vendor)\s*[:#-]\s*([^\r\n]+?)\s*$',
+            r'^\s*(?:raz[oó]n social|company|empresa)\s*[:#-]\s*([^\r\n]+?)\s*$',
+            r'^\s*(?:sold\s+by|billed\s+by|from)\s*[:#-]?\s*([^\r\n]+?)\s*$'
         ],
         'fecha': [
             r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
@@ -171,7 +164,7 @@ class AuditorRecepcion:
             r'(\d{1,2}\s+(?:de|of|del)\s+[A-Za-z]+\s+\d{2,4})',
             r'([A-Za-z]+\s+\d{1,2},?\s+\d{4})',
             r'(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})',
-            r'(\d{8})'  # Formato compacto DDMMYYYY
+            r'(\d{8})'
         ],
         'producto': [
             r'(?:descripcion|producto|articulo|item|product|description)[:\s]+([^\n]+)',
@@ -684,11 +677,12 @@ class AuditorRecepcion:
         factura = FacturaExtraida()
         texto_limpio = self._limpiar_texto(texto)
         
-        # Extraer número de factura y validar que sea solo dígitos
-        numero_factura_raw = self._extraer_con_patrones(texto_limpio, self.patrones.get('numero_factura', self.PATRONES_POR_DEFECTO['numero_factura']))
-        factura.numero_factura = self._validar_numero_factura(numero_factura_raw)
+        factura.numero_factura = self._extraer_numero_factura(
+            texto_limpio,
+            self.patrones.get('numero_factura', self.PATRONES_POR_DEFECTO['numero_factura']),
+        )
         
-        factura.nombre_proveedor = self._extraer_con_patrones(texto_limpio, self.patrones.get('proveedor', self.PATRONES_POR_DEFECTO['proveedor']))
+        factura.nombre_proveedor = self._extraer_proveedor_catalogo(texto_limpio)
         factura.fecha_factura = self._extraer_con_patrones(texto_limpio, self.patrones.get('fecha', self.PATRONES_POR_DEFECTO['fecha']))
         factura.productos = self._extraer_productos(texto_limpio)
         
@@ -742,110 +736,252 @@ class AuditorRecepcion:
                 return coincidencias[0].strip() if isinstance(coincidencias[0], str) else str(coincidencias[0])
         return ""
 
+    def _extraer_numero_factura(self, texto: str, patrones: List[str]) -> str:
+        candidato = self._extraer_con_patrones(texto, patrones)
+        numero_validado = self._validar_numero_factura(candidato)
+        if numero_validado:
+            return numero_validado
+
+        etiqueta_factura = re.compile(
+            r'\b(?:factura|invoice|inv|bill|receipt|nro|numero|número|num|number|no)\b'
+            r'|\bn\s*[°º#.]',
+            re.IGNORECASE,
+        )
+        numero_en_linea_siguiente = re.compile(r'^[\s#.:]*([0-9]{6})[\s#.:]*$')
+        lineas = texto.splitlines()
+        for indice, linea in enumerate(lineas):
+            if not etiqueta_factura.search(linea):
+                continue
+            for siguiente in lineas[indice + 1:indice + 3]:
+                if not siguiente.strip():
+                    continue
+                coincidencia = numero_en_linea_siguiente.fullmatch(siguiente.strip())
+                if coincidencia:
+                    return coincidencia.group(1)
+                if not etiqueta_factura.search(siguiente):
+                    break
+
+        return ""
+
     def _validar_numero_factura(self, numero: str) -> str:
-        """
-        Valida que el número de factura contenga solo dígitos.
-        Si contiene letras, intenta extraer solo la parte numérica.
-        """
-        if not numero:
+        """Acepta solo números de factura compuestos por exactamente seis dígitos ASCII."""
+        candidato = (numero or "").strip()
+        if re.fullmatch(r"[0-9]{6}", candidato):
+            return candidato
+        if candidato:
+            logger.warning("Número de factura inválido; se requiere exactamente seis dígitos.")
+        return ""
+
+    @staticmethod
+    def _normalizar_catalogo(texto: str) -> str:
+        texto_ascii = unicodedata.normalize("NFKD", str(texto or ""))
+        texto_ascii = "".join(
+            caracter for caracter in texto_ascii
+            if not unicodedata.combining(caracter)
+        )
+        return " ".join(re.findall(r"[a-z0-9]+", texto_ascii.lower()))
+
+    def _contiene_nombre_catalogo(self, texto: str, nombre: str) -> bool:
+        texto_normalizado = self._normalizar_catalogo(texto)
+        nombre_normalizado = self._normalizar_catalogo(nombre)
+        return bool(
+            nombre_normalizado
+            and f" {nombre_normalizado} " in f" {texto_normalizado} "
+        )
+
+    def _extraer_proveedor_catalogo(self, texto: str) -> str:
+        proveedores = [
+            proveedor for proveedor in getattr(self, "catalogo_proveedores", [])
+            if isinstance(proveedor, dict) and str(proveedor.get("nombre", "")).strip()
+        ]
+        if not proveedores:
             return ""
-        
-        # Extraer solo dígitos del número
-        solo_digitos = re.sub(r'[^\d]', '', numero)
-        
-        if solo_digitos and len(solo_digitos) >= 4:
-            logger.info(f"Número de factura validado: {numero} -> {solo_digitos}")
-            return solo_digitos
-        else:
-            logger.warning(f"Número de factura inválido: {numero} (no contiene suficientes dígitos)")
+
+        lineas = texto.splitlines()
+        encabezado = "\n".join(lineas[:20])
+        patrones = self.patrones.get(
+            "proveedor",
+            self.PATRONES_POR_DEFECTO["proveedor"],
+        )
+        candidatos_etiquetados = []
+        for linea in lineas[:40]:
+            candidato = self._extraer_con_patrones(linea, patrones)
+            if candidato:
+                candidatos_etiquetados.append(candidato)
+
+        coincidencias_etiquetadas = [
+            proveedor for proveedor in proveedores
+            if any(
+                self._contiene_nombre_catalogo(candidato, proveedor["nombre"])
+                for candidato in candidatos_etiquetados
+            )
+        ]
+        if len(coincidencias_etiquetadas) == 1:
+            return str(coincidencias_etiquetadas[0]["nombre"]).strip()
+        if coincidencias_etiquetadas:
             return ""
+
+        coincidencias_encabezado = [
+            proveedor for proveedor in proveedores
+            if self._contiene_nombre_catalogo(encabezado, proveedor["nombre"])
+        ]
+        if len(coincidencias_encabezado) == 1:
+            return str(coincidencias_encabezado[0]["nombre"]).strip()
+        if coincidencias_encabezado:
+            return ""
+
+        if not candidatos_etiquetados:
+            return ""
+
+        similitudes = []
+        for proveedor in proveedores:
+            nombre = self._normalizar_catalogo(proveedor["nombre"])
+            similitud = max(
+                (
+                    self._calcular_similitud(
+                        self._normalizar_catalogo(candidato),
+                        nombre,
+                    )
+                    for candidato in candidatos_etiquetados
+                ),
+                default=0.0,
+            )
+            similitudes.append((similitud, str(proveedor["nombre"]).strip()))
+        similitudes.sort(reverse=True)
+
+        if (
+            similitudes[0][0] >= 0.90
+            and (
+                len(similitudes) == 1
+                or similitudes[0][0] - similitudes[1][0] >= 0.10
+            )
+        ):
+            return similitudes[0][1]
+        return ""
 
     def _enriquecer_productos_con_catalogo(self, productos: List[ProductoExtraido]) -> List[ProductoExtraido]:
         """
-        Busca cada producto en el catálogo MySQL usando nombre+modelo+marca
-        para separar correctamente el nombre del modelo y obtener datos exactos.
+        Canonicaliza nombres solo cuando hay una coincidencia inequívoca en el catálogo.
         """
-        logger.info(f"Iniciando enriquecimiento de {len(productos)} productos con catálogo MySQL")
-        
-        if not self.adaptador_bd:
-            logger.warning("No hay adaptador BD, no se pueden enriquecer productos")
+        catalogo = getattr(self, "catalogo_productos", [])
+        if not catalogo:
+            logger.warning("No hay catálogo de productos; se conservan los datos OCR sin asignar.")
             return productos
+
+        logger.info("Iniciando cotejo de %s productos con el catálogo", len(productos))
         
         productos_enriquecidos = []
         
-        for idx, producto in enumerate(productos):
-            # Limpiar texto basura del modelo (encabezados/pies de página)
+        for producto in productos:
             producto.modelo = self._limpiar_texto_basura(producto.modelo or '')
             producto.nombre = self._limpiar_texto_basura(producto.nombre or '')
-            
-            logger.info(f"Procesando producto {idx+1}: nombre='{producto.nombre}', modelo='{producto.modelo}', marca='{producto.marca}'")
-            
-            # Intentar buscar en catálogo MySQL
-            producto_catalogo = None
-            
-            # Estrategia 1: Buscar por nombre completo
-            if producto.nombre:
-                logger.info(f"  Estrategia 1: Buscando por nombre: '{producto.nombre}'")
-                producto_catalogo = self.adaptador_bd.buscar_producto_por_nombre(producto.nombre)
-                if producto_catalogo:
-                    logger.info(f"  ✓ Encontrado en catálogo por nombre")
-            
-            # Estrategia 2: Si no encontró, intentar separar nombre de modelo y buscar solo el nombre
-            if not producto_catalogo:
-                nombre_sin_modelo, modelo_extraido = self._separar_nombre_modelo(producto.nombre, producto.modelo)
-                if nombre_sin_modelo != producto.nombre:  # Si logró separar
-                    logger.info(f"  Estrategia 2: Buscando por nombre sin modelo: '{nombre_sin_modelo}'")
-                    producto_catalogo = self.adaptador_bd.buscar_producto_por_nombre(nombre_sin_modelo)
-                    if producto_catalogo:
-                        logger.info(f"  ✓ Encontrado en catálogo por nombre sin modelo")
-            
-            # Estrategia 3: Si no encontró, buscar combinando nombre+modelo
-            if not producto_catalogo and producto.modelo:
-                nombre_completo = f"{producto.nombre} {producto.modelo}"
-                logger.info(f"  Estrategia 3: Buscando por nombre+modelo: '{nombre_completo}'")
-                producto_catalogo = self.adaptador_bd.buscar_producto_por_nombre(nombre_completo)
-                if producto_catalogo:
-                    logger.info(f"  ✓ Encontrado en catálogo por nombre+modelo")
-            
-            # Estrategia 4: Si no encontró, buscar combinando nombre+modelo+marca
-            if not producto_catalogo and producto.modelo and producto.marca:
-                nombre_completo = f"{producto.nombre} {producto.modelo} {producto.marca}"
-                logger.info(f"  Estrategia 4: Buscando por nombre+modelo+marca: '{nombre_completo}'")
-                producto_catalogo = self.adaptador_bd.buscar_producto_por_nombre(nombre_completo)
-                if producto_catalogo:
-                    logger.info(f"  ✓ Encontrado en catálogo por nombre+modelo+marca")
-            
-            # Estrategia 5: Si el modelo contiene el nombre de otro producto, intentar separar
-            if not producto_catalogo and producto.modelo:
-                # Buscar si alguna parte del modelo coincide con un producto del catálogo
-                logger.info(f"  Estrategia 5: Buscando si el modelo contiene un producto del catálogo: '{producto.modelo}'")
-                # Dividir el modelo en palabras y buscar coincidencias parciales
-                palabras_modelo = producto.modelo.split()
-                for i in range(len(palabras_modelo), 2, -1):  # Probar desde 4 palabras hasta 3
-                    parte_modelo = ' '.join(palabras_modelo[:i])
-                    logger.info(f"    Buscando por parte del modelo: '{parte_modelo}'")
-                    producto_catalogo = self.adaptador_bd.buscar_producto_por_nombre(parte_modelo)
-                    if producto_catalogo:
-                        logger.info(f"  ✓ Encontrado en catálogo por parte del modelo: '{parte_modelo}'")
-                        break
-            
+
+            producto_catalogo = self._buscar_producto_en_catalogo(producto)
             if producto_catalogo:
-                # Producto encontrado en catálogo: usar datos del catálogo
-                producto.nombre = producto_catalogo.nombre
-                producto.modelo = producto_catalogo.modelo
-                producto.marca = producto_catalogo.marca
-                producto.confianza = 0.95  # Alta confianza al usar catálogo
-                logger.info(f"  ✓ Producto enriquecido: nombre='{producto.nombre}', modelo='{producto.modelo}', marca='{producto.marca}'")
+                producto.nombre = str(producto_catalogo["nombre"]).strip()
+                producto.modelo = str(producto_catalogo.get("modelo") or producto.modelo).strip()
+                producto.marca = str(producto_catalogo.get("marca") or producto.marca).strip()
+                producto.confianza = 0.95
+                logger.info(
+                    "Producto cotejado con catálogo: nombre='%s', modelo='%s'",
+                    producto.nombre,
+                    producto.modelo,
+                )
             else:
-                # Producto no encontrado: intentar separar nombre de modelo
-                nombre_original = producto.nombre
                 producto.nombre, producto.modelo = self._separar_nombre_modelo(producto.nombre, producto.modelo)
-                logger.warning(f"  ✗ Producto no encontrado en catálogo: '{nombre_original}' -> nombre='{producto.nombre}', modelo='{producto.modelo}'")
+                logger.info(
+                    "Producto sin coincidencia segura en catálogo: '%s'",
+                    producto.nombre,
+                )
             
             productos_enriquecidos.append(producto)
         
-        logger.info(f"Enriquecimiento completado: {len(productos_enriquecidos)} productos procesados")
+        logger.info("Cotejo de catálogo completado: %s productos", len(productos_enriquecidos))
         return productos_enriquecidos
+
+    def _buscar_producto_en_catalogo(self, producto: ProductoExtraido) -> Optional[Dict]:
+        descripcion = f"{producto.nombre or ''} {producto.modelo or ''}".strip()
+        if not descripcion:
+            return None
+
+        nombre_ocr = self._normalizar_catalogo(producto.nombre)
+        palabras_descripcion = nombre_ocr.split()
+        resultados = []
+        for item in getattr(self, "catalogo_productos", []):
+            if not isinstance(item, dict):
+                continue
+            nombre = str(item.get("nombre") or "").strip()
+            nombre_normalizado = self._normalizar_catalogo(nombre)
+            palabras_nombre = nombre_normalizado.split()
+            if not nombre_normalizado:
+                continue
+
+            coincidencia_exacta = nombre_ocr == nombre_normalizado
+            nombre_en_descripcion = self._contiene_nombre_catalogo(descripcion, nombre)
+            modelo = str(item.get("modelo") or "").strip()
+            marca = str(item.get("marca") or "").strip()
+            texto_catalogo = f"{producto.nombre or ''} {producto.modelo or ''}"
+            modelo_coincide = bool(
+                modelo and self._contiene_nombre_catalogo(texto_catalogo, modelo)
+            )
+            marca_coincide = bool(
+                marca and self._contiene_nombre_catalogo(
+                    f"{texto_catalogo} {producto.marca or ''}",
+                    marca,
+                )
+            )
+
+            similitud = 1.0 if nombre_en_descripcion else 0.0
+            if (
+                not coincidencia_exacta
+                and not nombre_en_descripcion
+                and (modelo_coincide or marca_coincide)
+                and len(palabras_nombre) >= 2
+            ):
+                tamanos = {
+                    max(2, len(palabras_nombre) - 1),
+                    len(palabras_nombre),
+                    len(palabras_nombre) + 1,
+                }
+                for tamano in tamanos:
+                    for inicio in range(max(0, len(palabras_descripcion) - tamano + 1)):
+                        ventana = " ".join(palabras_descripcion[inicio:inicio + tamano])
+                        similitud = max(
+                            similitud,
+                            self._calcular_similitud(ventana, nombre_normalizado),
+                        )
+            coincidencia_con_modelo = nombre_en_descripcion and modelo_coincide
+            coincidencia_ocr = similitud >= 0.90 and (modelo_coincide or marca_coincide)
+            if not coincidencia_exacta and not coincidencia_con_modelo and not coincidencia_ocr:
+                continue
+
+            resultados.append((
+                (
+                    int(coincidencia_exacta),
+                    int(modelo_coincide),
+                    int(marca_coincide),
+                    similitud,
+                ),
+                item,
+            ))
+
+        if not resultados:
+            return None
+
+        mejor_puntaje = max(puntaje for puntaje, _ in resultados)
+        mejores = [item for puntaje, item in resultados if puntaje == mejor_puntaje]
+        if len(mejores) > 1:
+            datos = {
+                (
+                    self._normalizar_catalogo(item.get("nombre", "")),
+                    self._normalizar_catalogo(item.get("modelo", "")),
+                    self._normalizar_catalogo(item.get("marca", "")),
+                )
+                for item in mejores
+            }
+            if len(datos) > 1:
+                return None
+        return mejores[0]
 
     def _limpiar_texto_basura(self, texto: str) -> str:
         """

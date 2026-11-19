@@ -155,7 +155,7 @@ ob_start();
                             <label for="correlativo">
                                 Número de Factura*
                             </label>
-                            <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" maxlength="6">
+                            <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
                             <span class="span-value" id="scorrelativo"></span>
                         </div>
                         <div class="form-group">

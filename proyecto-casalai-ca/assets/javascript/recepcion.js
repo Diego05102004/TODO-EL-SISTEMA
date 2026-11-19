@@ -580,12 +580,7 @@ function buscarOpcionCatalogo(select, texto) {
     if (!buscado) return null;
     const opciones = Array.from(select.options).filter(opcion => opcion.value);
     const exactas = opciones.filter(opcion => normalizarTextoRecepcion(opcion.textContent) === buscado);
-    if (exactas.length === 1) return exactas[0];
-    const parciales = opciones.filter(opcion => {
-        const nombre = normalizarTextoRecepcion(opcion.textContent);
-        return nombre.includes(buscado) || buscado.includes(nombre);
-    });
-    return parciales.length === 1 ? parciales[0] : null;
+    return exactas.length === 1 ? exactas[0] : null;
 }
 
 function buscarOpcionCatalogoPorDatos(select, producto) {
@@ -645,15 +640,16 @@ function mostrarSugerenciasAutocorreccion(factura) {
             });
         } else if (sugerencia.campo === 'numero_factura') {
             const correlativo = document.getElementById('correlativo');
+            const numeroSugerido = String(sugerencia.valor_sugerido || '').trim();
             elemento.appendChild(document.createTextNode(
                 `Número de factura: "${sugerencia.valor_actual}" → ` +
                 `"${sugerencia.valor_sugerido}". ${evidencia} `
             ));
             boton.textContent = 'Aceptar número';
-            boton.disabled = !correlativo;
+            boton.disabled = !correlativo || !/^[0-9]{6}$/.test(numeroSugerido);
             boton.addEventListener('click', () => {
-                if (!correlativo) return;
-                correlativo.value = sugerencia.valor_sugerido;
+                if (!correlativo || !/^[0-9]{6}$/.test(numeroSugerido)) return;
+                correlativo.value = numeroSugerido;
                 correlativo.dispatchEvent(new Event('input', { bubbles: true }));
                 boton.disabled = true;
                 boton.textContent = 'Número actualizado';
@@ -816,11 +812,16 @@ function rellenarRecepcionDesdeFactura(factura) {
     }
     
     const correlativo = document.getElementById('correlativo');
-    if (factura.numero_factura && correlativo) correlativo.value = factura.numero_factura;
+    const numeroFactura = String(factura.numero_factura || '').trim();
+    const numeroFacturaValido = /^[0-9]{6}$/.test(numeroFactura);
+    if (correlativo && numeroFacturaValido) {
+        correlativo.value = numeroFactura;
+        correlativo.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 
     const proveedor = document.getElementById('proveedor');
     const proveedorEncontrado = buscarOpcionCatalogo(proveedor, factura.nombre_proveedor);
-    if (proveedorEncontrado && proveedor) proveedor.value = proveedorEncontrado.value;
+    if (proveedor) proveedor.value = proveedorEncontrado ? proveedorEncontrado.value : '';
 
     const productosDetectados = Array.isArray(factura.productos) ? factura.productos : [];
     if (productosDetectados.length) {
@@ -882,7 +883,8 @@ function rellenarRecepcionDesdeFactura(factura) {
     actualizarContadorProductos();
 
     const camposPendientes = [];
-    if (factura.nombre_proveedor && !proveedorEncontrado) camposPendientes.push('proveedor');
+    if (!proveedorEncontrado) camposPendientes.push('proveedor');
+    if (!numeroFacturaValido) camposPendientes.push('número de factura');
     
     // Validar si los productos están en el catálogo
     const primerSelector = document.querySelector('.producto-select');
@@ -914,7 +916,7 @@ function rellenarRecepcionDesdeFactura(factura) {
     establecerEstadoIARecepcion(`Análisis completado. Factura: ${factura.numero_factura || 'no detectada'}.${nota}`);
     if (
         camposPendientes.length ||
-        !factura.numero_factura ||
+        !numeroFacturaValido ||
         !factura.nombre_proveedor ||
         !productosDetectados.length
     ) {

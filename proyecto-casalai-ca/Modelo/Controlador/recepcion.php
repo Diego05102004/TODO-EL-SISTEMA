@@ -115,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
-            if (!isset($_POST['correlativo']) || empty(trim($_POST['correlativo']))) {
+            if (!isset($_POST['correlativo']) || !is_string($_POST['correlativo']) || empty(trim($_POST['correlativo']))) {
                 echo json_encode([
                     'status' => 'error',
                     'message' => 'Debe ingresar el número de factura',
@@ -123,6 +123,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ]);
                 exit;
             }
+
+            $correlativo = trim((string)$_POST['correlativo']);
+            if (preg_match('/\A[0-9]{6}\z/', $correlativo) !== 1) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'El número de factura debe tener exactamente 6 dígitos numéricos.',
+                    'field' => 'correlativo'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            $_POST['correlativo'] = $correlativo;
 
             if (!isset($_POST['producto']) || !is_array($_POST['producto']) || empty($_POST['producto'][0])) {
                 echo json_encode([
