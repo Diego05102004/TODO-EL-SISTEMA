@@ -185,11 +185,8 @@ ob_start();
                         <i class="fas fa-boxes"></i>
                         <h3>Productos de la Recepción</h3>
                         <span class="product-count">0 productos</span>
-
-                        <button type="button" class="btn-add-row" title="Agregar Producto" onclick="addProductoRow()">
-                        <img src="assets/img/plus.svg">
-                    </button>
                     </div>
+
                     <div id="productosList">
                         <div class="producto-row">
                             <div class="form-group">
@@ -247,6 +244,11 @@ ob_start();
                             </button>
                         </div>
                     </div>
+
+                    <button type="button" class="btn-add-row" title="Agregar Producto" onclick="addProductoRow()">
+                        <img src="assets/img/plus.svg">
+                    </button>
+
                     <div class="productos-footer">
                         <div class="total-section recepcion-resumen-factura">
                             <div class="resumen-factura-item">
@@ -255,7 +257,7 @@ ob_start();
                             </div>
                             <div class="resumen-factura-item resumen-iva-tasa">
                                 <label for="porcentajeIvaRecepcion">IVA (%)*</label>
-                                <input type="text" id="porcentajeIvaRecepcion" placeholder="16.00" name="porcentaje_iva" class="input-with-icon input-textnum costo-input" maxlength="5" oninput="limitarDosDecimales(this); calcularSubtotal(this);">
+                                <input type="text" id="porcentajeIvaRecepcion" placeholder="16.00" name="porcentaje_iva" class="costo-input" maxlength="5" oninput="limitarDosDecimales(this); calcularSubtotal(this);">
                                 <span class="span-value" id="sporcentajeIva"></span>
                             </div>
                             <div class="resumen-factura-item">

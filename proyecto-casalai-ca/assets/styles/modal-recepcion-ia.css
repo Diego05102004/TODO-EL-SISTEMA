@@ -273,6 +273,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    clear: both;
     margin-top: 20px;
     padding-top: 20px;
     border-top: 2px solid rgba(33, 150, 243, 0.1);
@@ -308,7 +309,6 @@
 .resumen-factura-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
     min-width: 0;
 }
 
@@ -319,6 +319,10 @@
     font-weight: 600;
 }
 
+.resumen-factura-item label {
+    margin: 11px 0 2px 0;
+}
+
 .resumen-factura-item .total-value {
     font-size: 1rem;
 }
@@ -326,7 +330,7 @@
 .resumen-iva-tasa input {
     width: 100%;
     min-width: 0;
-    padding: 5px 8px;
+    padding: 3px 8px;
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 5px;
 }
@@ -346,15 +350,20 @@
 }
 
 .btn-add-row {
+    float: right;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: white;
     border: none;
+    margin: 5px 0 5px 0;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
-    align-items: center;
     transition: all 0.3s ease;
 }
+
 .btn-remove-row {
     color: white;
     border: none;
@@ -368,7 +377,6 @@
 }
 
 .btn-add-row img, .btn-remove-row img {
-    margin-top: 2px;
     width:1.5em;
     height:1.5em;
     filter:brightness(0) invert(1);
