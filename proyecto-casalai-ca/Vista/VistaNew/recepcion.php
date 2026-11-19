@@ -144,8 +144,8 @@ ob_start();
                     <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
                 </div>
 
-                <!-- Información General -->
-                <div class="form-section">
+                <!-- Productos de la Recepción -->
+                <div class="form-section productos-section">
                     <div class="section-title">
                         <i class="fas fa-info-circle"></i>
                         <h3>Información Principal</h3>
@@ -159,9 +159,7 @@ ob_start();
                             <span class="span-value" id="scorrelativo"></span>
                         </div>
                         <div class="form-group">
-                            <label for="proveedor">
-                                Proveedor*
-                            </label>
+                            <label for="proveedor">Proveedor*</label>
                             <select id="proveedor" name="proveedor" class="input-select">
                                 <option value="">Seleccione un proveedor</option>
                                 <?php if (!empty($proveedores)): ?>
@@ -173,20 +171,16 @@ ob_start();
                                 <?php else: ?>
                                     <option value="">No hay proveedores disponibles</option>
                                 <?php endif; ?>
-                            </select><br>
+                            </select>
                             <span class="span-value" id="sproveedor"></span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Productos de la Recepción -->
-                <div class="form-section productos-section">
+                    <br>
                     <div class="section-title">
                         <i class="fas fa-boxes"></i>
                         <h3>Productos de la Recepción</h3>
                         <span class="product-count">0 productos</span>
                     </div>
-
                     <div id="productosList">
                         <div class="producto-row">
                             <div class="form-group">
