@@ -25,8 +25,8 @@ BASE_DIR = Path(__file__).parent.parent
 LOGS_DIR = BASE_DIR / "logs_metricas"
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Rutas de la base de conocimiento externa
-CONOCIMIENTO_DIR = BASE_DIR / "conocimiento"
+# Rutas de la base de conocimiento externo
+CONOCIMIENTO_DIR = BASE_DIR / "conocimiento_externo"
 PATRONES_FILE = CONOCIMIENTO_DIR / "patrones_factura.yaml"
 REGLAS_FILE = CONOCIMIENTO_DIR / "reglas_validacion.yaml"
 CATALOGO_FILE = CONOCIMIENTO_DIR / "catalogo_productos.csv"

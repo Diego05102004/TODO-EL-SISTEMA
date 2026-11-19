@@ -1293,7 +1293,24 @@ function evaluarDiscrepanciasInteractivas() {
     }
 
     // 4. Comparar productos - detectar todos los cambios
-    // 4a. Productos en formulario que no están en factura (agregados manualmente)
+    // 4a. Productos en factura que no están en formulario (eliminados)
+    productosFactura.forEach((prodFactura, idxFactura) => {
+        const prodForm = productosForm.find(pf => 
+            normalizarTextoRecepcion(pf.nombre) === normalizarTextoRecepcion(prodFactura.nombre)
+        );
+        
+        if (!prodForm) {
+            pendientes.push({
+                tipo: 'producto_eliminado',
+                index: idxFactura,
+                campo: `Producto ${idxFactura + 1} (Eliminado del formulario)`,
+                valor_factura: prodFactura.nombre || 'Según factura',
+                valor_formulario: 'No está en formulario'
+            });
+        }
+    });
+
+    // 4b. Productos en formulario que no están en factura (agregados manualmente)
     productosForm.forEach((prodForm, idxForm) => {
         const prodFactura = productosFactura.find(pf => 
             normalizarTextoRecepcion(pf.nombre) === normalizarTextoRecepcion(prodForm.nombre)
@@ -1335,23 +1352,6 @@ function evaluarDiscrepanciasInteractivas() {
                     valor_formulario: `$${prodForm.costo.toFixed(2)}`
                 });
             }
-        }
-    });
-
-    // 4b. Productos en factura que no están en formulario (eliminados)
-    productosFactura.forEach((prodFactura, idxFactura) => {
-        const prodForm = productosForm.find(pf => 
-            normalizarTextoRecepcion(pf.nombre) === normalizarTextoRecepcion(prodFactura.nombre)
-        );
-        
-        if (!prodForm) {
-            pendientes.push({
-                tipo: 'producto_eliminado',
-                index: idxFactura,
-                campo: `Producto ${idxFactura + 1} (Eliminado del formulario)`,
-                valor_factura: prodFactura.nombre || 'Según factura',
-                valor_formulario: 'No está en formulario'
-            });
         }
     });
 
