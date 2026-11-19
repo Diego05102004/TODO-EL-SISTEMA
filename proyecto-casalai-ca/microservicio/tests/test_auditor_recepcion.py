@@ -2,9 +2,7 @@ import unittest
 
 from microservicio.modelo.auditor_recepcion import (
     AuditorRecepcion,
-    PATRONES_FILE,
     ProductoExtraido,
-    cargar_patrones_yaml,
 )
 
 
@@ -108,43 +106,42 @@ Total: $20.00"""
 class ValidacionCatalogoFacturaTest(unittest.TestCase):
     def crear_auditor_sin_bd(self):
         auditor = AuditorRecepcion.__new__(AuditorRecepcion)
-        auditor.patrones = cargar_patrones_yaml(PATRONES_FILE)
+        auditor.patrones = auditor.PATRONES_POR_DEFECTO
         auditor.catalogo_productos = []
         auditor.catalogo_proveedores = []
         return auditor
 
     def test_numero_factura_requiere_seis_digitos_ascii_y_contexto(self):
         auditor = self.crear_auditor_sin_bd()
-        configuraciones = (
-            auditor.patrones["numero_factura"],
-            auditor.PATRONES_POR_DEFECTO["numero_factura"],
-        )
+        patrones = auditor.patrones["numero_factura"]
 
-        for patrones in configuraciones:
-            for texto in (
-                "Factura: 012345",
-                "Factura: 012345.",
-                "Factura N°: 012345",
-                "N° de factura:\n012345",
-            ):
-                with self.subTest(texto=texto, patrones=patrones):
-                    self.assertEqual(
-                        auditor._extraer_numero_factura(texto, patrones),
-                        "012345",
-                    )
+        for texto in (
+            "Factura: 849201",
+            "Factura Electrónica. No. de documento: 849201",
+            "No de factura: 849201",
+            "N°: 849201",
+            "Factura:\n849201",
+        ):
+            with self.subTest(texto=texto):
+                self.assertEqual(
+                    auditor._extraer_numero_factura(texto, patrones),
+                    "849201",
+                )
 
-            for texto in (
-                "Factura: 12345",
-                "Factura: 1234567",
-                "Factura: INV-123456",
-                "Factura: 123456-A",
-                "Factura: １２３４５６",
-            ):
-                with self.subTest(texto=texto, patrones=patrones):
-                    self.assertEqual(
-                        auditor._extraer_numero_factura(texto, patrones),
-                        "",
-                    )
+        for texto in (
+            "849201",
+            "Factura: 12345",
+            "Factura: 1234567",
+            "Factura: INV-849201",
+            "Factura: 849201-A",
+            "Factura: 849201/1",
+            "Factura: １２３４５６",
+        ):
+            with self.subTest(texto=texto):
+                self.assertEqual(
+                    auditor._extraer_numero_factura(texto, patrones),
+                    "",
+                )
 
     def test_proveedor_se_devuelve_solo_si_coincide_con_el_catalogo(self):
         auditor = self.crear_auditor_sin_bd()

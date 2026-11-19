@@ -150,8 +150,9 @@ class AuditorRecepcion:
     UMBRAL_CONFIANZA_MEDIA = 0.60
     PATRONES_POR_DEFECTO = {
         'numero_factura': [
-            r'\b(?:factura|invoice|inv|bill|receipt)\b(?:\s+(?:n(?:ro|um|o)?\s*[°º#.]?))?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)',
-            r'\b(?:nro|numero|número|num|number|no|n)\s*[°º#.]?\s*(?:de\s*)?(?:factura|invoice|bill|receipt)?\s*[:#]?\s*([0-9]{6})(?:[.,;:]?)(?=\s|$)'
+            r'\b(?:factura|invoice|inv|bill|receipt|folio|correlativo|comprobante|documento)\b[^\r\n]{0,60}?(?<![\w/-])([0-9]{6})(?![\w/-])',
+            r'\b(?:nro|numero|número|num|number|no)\b[^\r\n]{0,60}?(?<![\w/-])([0-9]{6})(?![\w/-])',
+            r'\bn\s*[°º#][^\r\n]{0,60}?(?<![\w/-])([0-9]{6})(?![\w/-])'
         ],
         'proveedor': [
             r'^\s*(?:proveedor|vendedor|supplier|vendor)\s*[:#-]\s*([^\r\n]+?)\s*$',
