@@ -1,15 +1,114 @@
 #recepcionModal .modal-content.modal-large {
     max-width: 95%;
     width: 1300px;
+    height: 82vh;
     max-height: 90vh;
     margin-top: 8vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 #recepcionModal .modal-body {
-    max-height: 70vh;
+    display: flex;
     min-height: 0;
-    overflow-y: auto;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
     overscroll-behavior: contain;
+}
+
+#recepcionModal #recepcionForm {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+#recepcionModal .form-row-content {
+    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+    overflow: hidden;
+}
+
+#recepcionModal .cai-recepcion-column {
+    display: flex;
+    min-width: 0;
+    flex: 0 0 40%;
+    flex-direction: column;
+    gap: 14px;
+    transition: flex-basis 650ms ease-in-out;
+}
+
+#recepcionModal .cai-recepcion-section {
+    min-height: 0;
+    height: auto;
+    flex: 1 1 100%;
+    transition: height 650ms ease-in-out, opacity 650ms ease-in-out;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden .cai-recepcion-column {
+    flex-basis: 100px;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden.cai-card-hover .cai-recepcion-column {
+    flex-basis: 40%;
+    max-width: 372px;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden .cai-recepcion {
+    box-sizing: border-box;
+    width: 100px;
+    height: 100px;
+    min-height: 100px;
+    flex: 0 0 100px;
+    justify-content: center;
+    gap: 0;
+    padding: 10px;
+    overflow: hidden;
+    transition:
+        width 650ms ease-in-out,
+        gap 650ms ease-in-out,
+        padding 650ms ease-in-out;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden.cai-card-hover .cai-recepcion {
+    width: 100%;
+    gap: 14px;
+    padding: 12px 16px;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden .cai-recepcion-content {
+    min-width: 0;
+    max-width: 0;
+    flex: 0 1 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 650ms ease-in-out, opacity 250ms ease-in-out;
+}
+
+#recepcionModal .form-row-content.cai-section-hidden.cai-card-hover .cai-recepcion-content {
+    max-width: 320px;
+    flex: 1 1 auto;
+    opacity: 1;
+    transition-delay: 0ms, 650ms;
+}
+
+#recepcionModal .productos-section {
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 0;
+}
+
+#recepcionModal .scrollable-section {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 #recepcionModal .recepcion-ia-preview {
@@ -53,6 +152,7 @@
 
 .cai-recepcion {
     display: flex;
+    width: 100%;
     align-items: center;
     gap: 14px;
     margin: 0 0 16px;
@@ -61,7 +161,16 @@
     border-radius: 14px;
     background: linear-gradient(120deg, #f3f8ff, #fff);
     box-shadow: 0 4px 14px rgba(45, 70, 105, 0.08);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
     animation: caiRecepcionEntrada 280ms ease-out;
+}
+
+.cai-recepcion:focus-visible {
+    outline: 3px solid #1976d2;
+    outline-offset: 3px;
 }
 
 .cai-recepcion-image {
@@ -173,6 +282,9 @@
 
 @media (prefers-reduced-motion: reduce) {
     .cai-recepcion,
+    .cai-recepcion-column,
+    .cai-recepcion-content,
+    #recepcionModal .cai-recepcion-section,
     .cai-recepcion-image,
     .cai-recepcion-image--amigable,
     .cai-recepcion-image--preocupada,
@@ -197,8 +309,8 @@
     .cai-recepcion-image {
         width: 60px;
         height: 60px;
-        flex-basis: 60px;
     }
+
 }
 
 .section-title .product-count {
@@ -456,7 +568,7 @@
     justify-content: center;
     color: white;
     border: none;
-    margin: 5px 0 5px 0;
+    margin: 5px 0 10px 0;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
@@ -500,6 +612,25 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    #recepcionModal .form-row-content {
+        flex-direction: column;
+    }
+
+    #recepcionModal .form-row-content.cai-section-hidden .cai-recepcion-column {
+        flex: 0 0 auto;
+        max-width: none;
+    }
+
+    #recepcionModal .form-row-content.cai-section-hidden.cai-card-hover .cai-recepcion-column {
+        flex-basis: 40%;
+    }
+
+    #recepcionModal .form-row-content.cai-section-visible .cai-recepcion-column,
+    #recepcionModal .productos-section {
+        min-height: 0;
+        flex: 1 1 0;
+    }
+
     .productos-footer {
         align-items: stretch;
         flex-direction: column;

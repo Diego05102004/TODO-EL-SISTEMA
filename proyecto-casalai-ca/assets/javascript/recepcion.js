@@ -90,20 +90,23 @@ function obtenerPanelCAIRecepcion() {
     if (panel) return panel;
 
     const form = modal.querySelector('#recepcionForm, #ingresarRecepcion');
-    const destino = form?.querySelector('.form-section, .modal-body');
+    const destino = form?.querySelector('.cai-recepcion-column, .form-section, .modal-body');
     if (!destino) return null;
 
-    panel = document.createElement('aside');
+    panel = document.createElement('button');
+    panel.type = 'button';
     panel.className = 'cai-recepcion';
-    panel.setAttribute('role', 'status');
-    panel.setAttribute('aria-live', 'polite');
+    panel.setAttribute('aria-controls', 'caiRecepcionSection');
+    panel.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-label', 'Mostrar análisis asistido por CAI');
 
     const imagen = document.createElement('img');
     imagen.className = 'cai-recepcion-image';
-    imagen.alt = 'CAI, asistente de recepción';
+    imagen.alt = '';
 
     const contenido = document.createElement('div');
     contenido.className = 'cai-recepcion-content';
+    contenido.setAttribute('aria-live', 'polite');
     const nombre = document.createElement('strong');
     nombre.textContent = 'CAI · Asistente de recepción';
     const dialogo = document.createElement('p');
@@ -111,7 +114,130 @@ function obtenerPanelCAIRecepcion() {
     contenido.append(nombre, dialogo);
     panel.append(imagen, contenido);
     destino.insertBefore(panel, destino.firstChild);
+
+    const distribucion = form.querySelector('.form-row-content');
+    panel.addEventListener('click', () => {
+        const seccion = modal.querySelector('#caiRecepcionSection');
+        if (!seccion) return;
+        establecerSeccionCAIRecepcionVisible(seccion.hidden);
+    });
+    panel.addEventListener('pointerenter', () => {
+        if (modal.querySelector('#caiRecepcionSection')?.hidden &&
+            window.matchMedia('(hover: hover)').matches) {
+            distribucion?.classList.add('cai-card-hover');
+        }
+    });
+    panel.addEventListener('pointerleave', () => {
+        distribucion?.classList.remove('cai-card-hover');
+    });
+    panel.addEventListener('focus', () => {
+        if (modal.querySelector('#caiRecepcionSection')?.hidden) {
+            distribucion?.classList.add('cai-card-hover');
+        }
+    });
+    panel.addEventListener('blur', () => {
+        distribucion?.classList.remove('cai-card-hover');
+    });
+
     return panel;
+}
+
+function establecerSeccionCAIRecepcionVisible(visible) {
+    const modal = document.getElementById('recepcionModal');
+    const seccion = modal?.querySelector('#caiRecepcionSection');
+    const boton = modal?.querySelector('.cai-recepcion');
+    if (!seccion) return;
+
+    const distribucion = modal.querySelector('.form-row-content');
+    if (distribucion) {
+        distribucion.classList.toggle('cai-section-visible', visible);
+        distribucion.classList.toggle('cai-section-hidden', !visible);
+        if (visible) distribucion.classList.remove('cai-card-hover');
+        else if (boton?.matches(':hover') && window.matchMedia('(hover: hover)').matches) {
+            distribucion.classList.add('cai-card-hover');
+        }
+    }
+
+    if (boton) {
+        const etiqueta = visible
+            ? 'Ocultar análisis asistido por CAI'
+            : 'Mostrar análisis asistido por CAI';
+        boton.setAttribute('aria-expanded', String(visible));
+        boton.setAttribute('aria-label', etiqueta);
+    }
+
+    const yaVisible = !seccion.hidden;
+    if (visible === yaVisible) return;
+
+    const transicion = (Number(seccion.dataset.transitionId) || 0) + 1;
+    seccion.dataset.transitionId = String(transicion);
+    const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
+    const alturaActual = seccion.getBoundingClientRect().height;
+    const limpiarEstilosAnimacion = () => {
+        seccion.style.removeProperty('height');
+        seccion.style.removeProperty('flex');
+        seccion.style.removeProperty('max-height');
+        seccion.style.removeProperty('overflow');
+        seccion.style.removeProperty('opacity');
+    };
+    const completar = () => {
+        seccion.removeEventListener('transitionend', alTerminar);
+        if (Number(seccion.dataset.transitionId) !== transicion) return;
+        if (!visible) seccion.hidden = true;
+        limpiarEstilosAnimacion();
+    };
+    const alTerminar = event => {
+        if (event.target === seccion && event.propertyName === 'height') completar();
+    };
+
+    if (visible) {
+        seccion.hidden = false;
+        seccion.inert = false;
+        seccion.setAttribute('aria-hidden', 'false');
+        if (!duracion) return;
+
+        const columna = seccion.parentElement;
+        const tarjeta = seccion.previousElementSibling;
+        const estilosColumna = columna ? window.getComputedStyle(columna) : null;
+        const estilosTarjeta = tarjeta ? window.getComputedStyle(tarjeta) : null;
+        const espacio = parseFloat(estilosColumna?.rowGap || '0') || 0;
+        const margenTarjeta = parseFloat(estilosTarjeta?.marginBottom || '0') || 0;
+        const alturaDisponible = columna && tarjeta
+            ? columna.clientHeight - tarjeta.getBoundingClientRect().height - espacio - margenTarjeta
+            : seccion.scrollHeight;
+        const alturaFinal = Math.max(0, alturaDisponible) || seccion.scrollHeight;
+
+        seccion.style.flex = '0 0 auto';
+        seccion.style.height = '0px';
+        seccion.style.maxHeight = 'none';
+        seccion.style.overflow = 'hidden';
+        seccion.style.opacity = '0';
+        void seccion.offsetHeight;
+        seccion.addEventListener('transitionend', alTerminar);
+        window.setTimeout(completar, duracion + 100);
+        seccion.style.height = `${alturaFinal}px`;
+        seccion.style.opacity = '1';
+        return;
+    }
+
+    seccion.inert = true;
+    seccion.setAttribute('aria-hidden', 'true');
+    if (!duracion) {
+        seccion.hidden = true;
+        return;
+    }
+
+    const alturaInicial = alturaActual;
+    seccion.style.flex = '0 0 auto';
+    seccion.style.height = `${alturaInicial}px`;
+    seccion.style.maxHeight = 'none';
+    seccion.style.overflow = 'hidden';
+    seccion.style.opacity = '1';
+    void seccion.offsetHeight;
+    seccion.addEventListener('transitionend', alTerminar);
+    window.setTimeout(completar, duracion + 100);
+    seccion.style.height = '0px';
+    seccion.style.opacity = '0';
 }
 
 function actualizarCAIRecepcion(estado, dialogo) {
@@ -1042,6 +1168,7 @@ function openModal(type) {
         if (form) form.reset();
         limpiarFacturaIARecepcion();
         actualizarCAIRecepcion('amigable');
+        establecerSeccionCAIRecepcionVisible(false);
         const filas = document.querySelectorAll('#productosList .producto-row');
         filas.forEach((fila, indice) => { if (indice > 0) fila.remove(); });
         actualizarContadorProductos();

@@ -125,24 +125,26 @@ ob_start();
         <div class="modal-body">
             <form id="recepcionForm" enctype="multipart/form-data">
                 <div class="form-row-content">
-                    <!-- CAI -->
-                    <div class="form-section scrollable-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="fotoFacturaRecepcion">
-                                    <i class="fas fa-robot"></i>
-                                    Factura para análisis asistido por CAI
-                                </label>
-                                <input type="file" id="fotoFacturaRecepcion" name="foto_factura" accept="image/*,.pdf">
-                                <small>Adjunte una imagen o PDF (máximo 5 MB). El análisis rellenará los datos detectados.</small>
+                    <div class="cai-recepcion-column">
+                        <!-- CAI -->
+                        <div id="caiRecepcionSection" class="form-section scrollable-section cai-recepcion-section" hidden>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fotoFacturaRecepcion">
+                                        <i class="fas fa-robot"></i>
+                                        Factura para análisis asistido por CAI
+                                    </label>
+                                    <input type="file" id="fotoFacturaRecepcion" name="foto_factura" accept="image/*,.pdf">
+                                    <small>Adjunte una imagen o PDF (máximo 5 MB). El análisis rellenará los datos detectados.</small>
+                                </div>
                             </div>
+                            <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
+                                <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
+                                <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
+                            </div>
+                            <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
+                            <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
                         </div>
-                        <div id="previewFacturaRecepcion" class="recepcion-ia-preview" hidden>
-                            <img id="previewImagenRecepcion" alt="Vista previa de la factura" hidden>
-                            <iframe id="previewPdfRecepcion" title="Vista previa de la factura PDF" hidden></iframe>
-                        </div>
-                        <div id="estadoIARecepcion" class="recepcion-ia-status" role="status" aria-live="polite" hidden></div>
-                        <div id="resultadoIARecepcion" class="recepcion-ia-result" hidden></div>
                     </div>
 
                     <!-- Productos de la Recepción -->
