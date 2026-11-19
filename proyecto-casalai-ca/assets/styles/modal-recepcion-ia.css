@@ -375,9 +375,6 @@
 }
 
 .productos-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     clear: both;
     margin-top: 20px;
     padding-top: 20px;
@@ -385,11 +382,13 @@
 }
 
 .total-section {
+    width: 100%;
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: 15px;
     background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-    padding: 12px 20px;
+    padding: 12px 30px;
     border-radius: 10px;
     color: white;
 }
@@ -404,28 +403,19 @@
     font-weight: 800;
 }
 
-.recepcion-resumen-factura {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(130px, 1fr));
-    align-items: center;
-    flex: 1;
-}
-
 .resumen-factura-item {
     display: flex;
     flex-direction: column;
-    min-width: 0;
 }
 
 .resumen-factura-item .total-label,
 .resumen-factura-item label {
     color: white;
     font-size: 0.8rem;
-    font-weight: 600;
 }
 
 .resumen-factura-item label {
-    margin: 11px 0 2px 0;
+    margin: 12px 0 2px 0;
 }
 
 .resumen-factura-item .total-value {
@@ -433,11 +423,16 @@
 }
 
 .resumen-iva-tasa input {
-    width: 100%;
-    min-width: 0;
+    width: 60px;
     padding: 3px 8px;
     border: 1px solid rgba(255, 255, 255, 0.7);
     border-radius: 5px;
+}
+
+.resumen-iva-tasa input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 .resumen-factura-total {
@@ -509,10 +504,6 @@
         align-items: stretch;
         flex-direction: column;
         gap: 12px;
-    }
-
-    .recepcion-resumen-factura {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
     }
 
     .resumen-factura-total {
