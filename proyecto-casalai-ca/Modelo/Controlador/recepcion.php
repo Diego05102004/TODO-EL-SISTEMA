@@ -115,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
-            if (!isset($_POST['correlativo']) || empty(trim($_POST['correlativo']))) {
+            if (!isset($_POST['correlativo']) || !is_string($_POST['correlativo']) || empty(trim($_POST['correlativo']))) {
                 echo json_encode([
                     'status' => 'error',
                     'message' => 'Debe ingresar el número de factura',
@@ -123,6 +123,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ]);
                 exit;
             }
+
+            $correlativo = trim((string)$_POST['correlativo']);
+            if (preg_match('/\A[0-9]{6}\z/', $correlativo) !== 1) {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'El número de factura debe tener exactamente 6 dígitos numéricos.',
+                    'field' => 'correlativo'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            $_POST['correlativo'] = $correlativo;
 
             if (!isset($_POST['producto']) || !is_array($_POST['producto']) || empty($_POST['producto'][0])) {
                 echo json_encode([
@@ -240,6 +252,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit;
             }
 
+            if ($k->existeCorrelativo(['correlativo' => $_POST['correlativo']])) {
+                http_response_code(409);
+                echo json_encode([
+                    'status' => 'error',
+                    'code' => 'DUPLICATE_INVOICE',
+                    'field' => 'correlativo',
+                    'message' => 'El número de factura ya existe'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
             $rutaFacturaResguardada = null;
             $rutaManifiestoFactura = null;
             $manifiestoFactura = null;
@@ -327,16 +350,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $k->setcorrelativo($_POST['correlativo']);
             $k->setestado('habilitado');
 
-            if ($_POST['correlativo'] != ''){
-                if ($k->existeCorrelativo(['correlativo' => $_POST['correlativo']])) {
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'El número de factura ya existe'
-                    ]);
-                    exit;
-                }
-            }
-            
             try {
                 if ($k->registrarRecepcion(
                     $_POST['producto'],
