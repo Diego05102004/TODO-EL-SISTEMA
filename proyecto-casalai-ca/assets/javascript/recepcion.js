@@ -57,6 +57,21 @@ function actualizarProteccionSelectsProductos() {
         idsProductos.push(sel.id);
     });
     protegerSelects(['proveedor', ...idsProductos], 1000);
+    actualizarDisponibilidadProductos();
+}
+
+function actualizarDisponibilidadProductos() {
+    const selects = Array.from(document.querySelectorAll('#productosList .producto-select'));
+    selects.forEach(select => {
+        Array.from(select.options).forEach(opcion => {
+            if (!opcion.value) return;
+            const seleccionadoEnOtraFila = selects.some(otroSelect =>
+                otroSelect !== select && otroSelect.value === opcion.value
+            );
+            opcion.hidden = seleccionadoEnOtraFila;
+            opcion.disabled = seleccionadoEnOtraFila;
+        });
+    });
 }
 
 // ==========================================
@@ -966,6 +981,13 @@ function rellenarRecepcionDesdeFactura(factura) {
                 if (campo.classList.contains('subtotal-display')) campo.value = '$0.00';
                 else campo.value = '';
             });
+            const selector = primeraFila.querySelector('.producto-select');
+            if (selector) {
+                selector.classList.remove('is-valid', 'is-invalid');
+                delete selector.dataset.productoDuplicado;
+            }
+            const mensajeProducto = primeraFila.querySelector('.sproducto-msg');
+            if (mensajeProducto) mensajeProducto.textContent = '';
         }
 
         if (productosDetectados.length) {
@@ -1013,6 +1035,7 @@ function rellenarRecepcionDesdeFactura(factura) {
     }
     
     actualizarContadorProductos();
+    actualizarDisponibilidadProductos();
 
     const camposPendientes = [];
     if (!proveedorEncontrado) camposPendientes.push('proveedor');
@@ -1172,6 +1195,7 @@ function openModal(type) {
         const filas = document.querySelectorAll('#productosList .producto-row');
         filas.forEach((fila, indice) => { if (indice > 0) fila.remove(); });
         actualizarContadorProductos();
+        actualizarDisponibilidadProductos();
         calcularTotal();
     }
     if (modal) {
@@ -1201,7 +1225,10 @@ function addProductoRow() {
     if (select) {
         select.value = '';
         select.removeAttribute('id');
+        delete select.dataset.productoDuplicado;
     }
+    const mensajeProducto = newRow.querySelector('.sproducto-msg');
+    if (mensajeProducto) mensajeProducto.textContent = '';
 
     const codigoInput = newRow.querySelector('.producto-codigo');
     if (codigoInput) codigoInput.value = '';
@@ -1230,6 +1257,21 @@ function addProductoRow() {
 }
 
 function seleccionarProducto(select) {
+    const valorSeleccionado = select.value;
+    const duplicado = valorSeleccionado && Array.from(
+        document.querySelectorAll('#productosList .producto-select')
+    ).some(otroSelect => otroSelect !== select && otroSelect.value === valorSeleccionado);
+    if (duplicado) {
+        select.value = '';
+        select.dataset.productoDuplicado = 'true';
+        select.classList.remove('is-valid');
+        select.classList.add('is-invalid');
+        const mensaje = select.closest('.producto-selector-group')?.querySelector('.sproducto-msg');
+        if (mensaje) mensaje.textContent = '*Este producto ya está seleccionado en otra fila*';
+    } else {
+        delete select.dataset.productoDuplicado;
+    }
+
     const opcion = select.selectedOptions[0];
     const fila = select.closest('.producto-row');
     if (!fila) return;
@@ -1242,6 +1284,7 @@ function seleccionarProducto(select) {
     const serialInput = fila.querySelector('.producto-serial');
     if (serialInput) serialInput.value = opcion?.dataset.serial || '';
     calcularSubtotal(select);
+    actualizarDisponibilidadProductos();
 }
 
 function calcularSubtotal(input) {
@@ -2038,7 +2081,11 @@ $(document).ready(function() {
             $(this).siblings('.sproducto-msg').text("");
         } else {
             $(this).removeClass("is-valid").addClass("is-invalid");
-            $(this).siblings('.sproducto-msg').text("*Debe seleccionar un producto*");
+            $(this).siblings('.sproducto-msg').text(
+                this.dataset.productoDuplicado === 'true'
+                    ? "*Este producto ya está seleccionado en otra fila*"
+                    : "*Debe seleccionar un producto*"
+            );
         }
         evaluarDiscrepanciasInteractivas();
     });
