@@ -448,28 +448,29 @@ public function decryptWithDiagnostico($encryptedData, $fieldName) {
         error_log("[ENCRYPTION-DEBUG]   IV extraído: " . bin2hex($iv));
         error_log("[ENCRYPTION-DEBUG]   Datos cifrados: " . strlen($encryptedDataPart) . " bytes");
         
-        // 6. Descifrar clave AES con RSA
-        $aesKey = '';
-        if (!openssl_private_decrypt($encryptedAesKey, $aesKey, $this->rsaPrivateKey)) {
-            $error = openssl_error_string();
-            error_log("[ENCRYPTION-DEBUG]   ❌ Error RSA: $error");
-            throw new \RuntimeException('Error al descifrar clave AES: ' . $error);
+        // 6. Intentar la clave RSA actual y las claves legacy
+        foreach (array_merge([$this->rsaPrivateKey], $this->rsaLegacyPrivateKeys) as $privateKey) {
+            $aesKey = '';
+            if (!openssl_private_decrypt($encryptedAesKey, $aesKey, $privateKey)) {
+                continue;
+            }
+
+            $decrypted = openssl_decrypt(
+                $encryptedDataPart,
+                $this->aesMethod,
+                $aesKey,
+                OPENSSL_RAW_DATA,
+                $iv
+            );
+
+            if ($decrypted !== false) {
+                error_log("[ENCRYPTION-DEBUG]   ✅ Datos descifrados: " . strlen($decrypted) . " bytes");
+                return $decrypted;
+            }
         }
-        
-        error_log("[ENCRYPTION-DEBUG]   ✅ Clave AES descifrada: " . strlen($aesKey) . " bytes");
-        
-        // 7. Descifrar datos con AES
-        $decrypted = openssl_decrypt($encryptedDataPart, $this->aesMethod, $aesKey, OPENSSL_RAW_DATA, $iv);
-        
-        if ($decrypted === false) {
-            $error = openssl_error_string();
-            error_log("[ENCRYPTION-DEBUG]   ❌ Error AES: $error");
-            throw new \RuntimeException('Error al descifrar datos: ' . $error);
-        }
-        
-        error_log("[ENCRYPTION-DEBUG]   ✅ Datos descifrados: " . strlen($decrypted) . " bytes");
-        
-        return $decrypted;
+
+        error_log("[ENCRYPTION-DEBUG]   ❌ No se pudo descifrar con las claves RSA configuradas");
+        return $encryptedData;
         
     } catch (\Exception $e) {
         error_log("[ENCRYPTION-DEBUG]   ❌ Excepción: " . $e->getMessage());

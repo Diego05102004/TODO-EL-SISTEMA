@@ -560,22 +560,22 @@ class Despacho extends BD{
         return $this->ejecutarConConexionSegura(function($pdo) use ($anio){
             $sql = "
                 SELECT 
-                    MONTH(od.fecha_despacho) AS mes_num, 
+                    MONTH(d.fecha_despacho) AS mes_num,
                     SUM(dd.cantidad) AS value
                 FROM tbl_despacho_detalle dd
-                INNER JOIN tbl_orden_despachos od ON dd.id_detalle = od.id_orden_despachos
-                WHERE 1 = 1
+                INNER JOIN tbl_despachos d ON dd.id_despacho = d.id_despachos
+                WHERE d.activo = '1'
             ";
 
             $params = [];
 
             if ($anio) {
-                $sql .= " AND YEAR(od.fecha_despacho) = :anio";
+                $sql .= " AND YEAR(d.fecha_despacho) = :anio";
                 $params[':anio'] = $anio;
             }
 
             $sql .= "
-                GROUP BY MONTH(od.fecha_despacho)
+                GROUP BY MONTH(d.fecha_despacho)
                 ORDER BY mes_num
             ";
 

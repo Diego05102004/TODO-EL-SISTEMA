@@ -31,62 +31,54 @@ $titulo_pagina = 'Reporte de Ventas';
 ob_start();
 ?>
 
-            <!-- Summary Cards para Reporte de Ventas -->
+            <?php if (!empty($errorFacturasReporte)): ?>
+                <p class="report-error" role="alert">No fue posible cargar los datos de facturación. Revisa el registro del servidor e inténtalo de nuevo.</p>
+            <?php endif; ?>
+            <?php if (!empty($errorDespachosReporte)): ?>
+                <p class="report-error" role="alert">No fue posible cargar uno o más reportes de despachos. Revisa el registro del servidor.</p>
+            <?php endif; ?>
+
             <div class="summary-cards">
                 <div class="summary-card sales">
                     <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
                     <div class="card-content">
-                        <h3>Ventas Totales</h3>
-                        <p class="card-value">$125,890</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="88, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">88%</span>
-                        </div>
+                        <h3>Ingresos de facturas pagadas</h3>
+                        <p class="card-value" id="revenueTotal">Bs. 0,00</p>
                     </div>
                 </div>
 
                 <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="card-icon"><i class="fas fa-file-invoice-dollar"></i></div>
                     <div class="card-content">
-                        <h3>Crecimiento</h3>
-                        <p class="card-value">+23.5%</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="76, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">76%</span>
-                        </div>
+                        <h3>Facturas pagadas</h3>
+                        <p class="card-value" id="paidInvoicesCount">0</p>
                     </div>
                 </div>
 
                 <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-bullseye"></i></div>
+                    <div class="card-icon"><i class="fas fa-receipt"></i></div>
                     <div class="card-content">
-                        <h3>Objetivo</h3>
-                        <p class="card-value">92%</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">92%</span>
-                        </div>
+                        <h3>Ticket promedio pagado</h3>
+                        <p class="card-value" id="averageInvoiceTotal">Bs. 0,00</p>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-icon"><i class="fas fa-truck"></i></div>
+                    <div class="card-content">
+                        <h3>Despachos activos</h3>
+                        <p class="card-value" id="activeDispatches"><?= (int)($totalDespachos ?? 0) ?></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Filtros de Reporte -->
             <div class="filters-section">
                 <div class="section-header">
-                    <h2>Filtros del Reporte</h2>
+                    <h2>Filtros de facturas</h2>
                     <div class="section-actions">
                         <button class="btn-apply-filter" onclick="applyFilters()">
                             <span class="btn-icon"><i class="fas fa-search"></i></span>
-                            Aplicar Filtros
+                            Aplicar filtros
                         </button>
                         <button class="btn-reset-filter" onclick="resetFilters()">
                             <span class="btn-icon"><i class="fas fa-sync"></i></span>
@@ -94,14 +86,14 @@ ob_start();
                         </button>
                         <button class="btn-download-report" onclick="downloadReport()">
                             <span class="btn-icon"><i class="fas fa-download"></i></span>
-                            Descargar PDF
+                            Imprimir / guardar PDF
                         </button>
                     </div>
                 </div>
 
                 <div class="filters-grid">
                     <div class="filter-group">
-                        <label for="dateRange">Rango de Fechas</label>
+                        <label for="startDate">Rango de fechas</label>
                         <div class="date-range">
                             <input type="date" id="startDate" name="startDate">
                             <span>a</span>
@@ -110,119 +102,89 @@ ob_start();
                     </div>
 
                     <div class="filter-group">
-                        <label for="categoryFilter">Categoría</label>
-                        <select id="categoryFilter" name="categoria">
-                            <option value="">Todas las categorías</option>
-                            <option value="smartphones">Smartphones</option>
-                            <option value="laptops">Laptops</option>
-                            <option value="audio">Audio</option>
-                            <option value="smartwatches">Smartwatches</option>
-                            <option value="camaras">Cámaras</option>
-                            <option value="gaming">Gaming</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
                         <label for="clientFilter">Cliente</label>
                         <select id="clientFilter" name="cliente">
                             <option value="">Todos los clientes</option>
-                            <option value="1">Juan Pérez</option>
-                            <option value="2">María González</option>
-                            <option value="3">Carlos Rodríguez</option>
-                            <option value="4">Ana Martínez</option>
-                            <option value="5">Pedro Sánchez</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label for="statusFilter">Estado del Pedido</label>
+                        <label for="statusFilter">Estado de factura</label>
                         <select id="statusFilter" name="estado">
                             <option value="">Todos los estados</option>
-                            <option value="completed">Completado</option>
-                            <option value="processing">Procesando</option>
-                            <option value="pending">Pendiente</option>
-                            <option value="shipped">Enviado</option>
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráficos de Ventas -->
             <div class="charts-section">
-                <h2>Análisis de Ventas</h2>
+                <h2>Análisis de facturación</h2>
                 <div class="charts-grid">
-                    <!-- Gráfico de Ventas Mensuales -->
                     <div class="chart-card">
                         <div class="chart-header">
-                            <h3>Ventas Mensuales</h3>
-                            <select class="chart-period" onchange="updateChart('monthly', this.value)">
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
-                            </select>
+                            <h3>Ingresos mensuales pagados</h3>
                         </div>
                         <div class="chart-container">
                             <canvas id="monthlySalesChart"></canvas>
                         </div>
                     </div>
 
-                    <!-- Gráfico de Ventas por Categoría -->
                     <div class="chart-card">
                         <div class="chart-header">
-                            <h3>Ventas por Categoría</h3>
-                            <div class="chart-legend">
-                                <span class="legend-item">
-                                    <span class="legend-color" style="background: #2196F3;"></span>
-                                    Smartphones
-                                </span>
-                                <span class="legend-item">
-                                    <span class="legend-color" style="background: #1976D2;"></span>
-                                    Laptops
-                                </span>
-                                <span class="legend-item">
-                                    <span class="legend-color" style="background: #f093fb;"></span>
-                                    Audio
-                                </span>
-                            </div>
+                            <h3>Unidades por producto facturado</h3>
                         </div>
                         <div class="chart-container">
-                            <canvas id="categorySalesChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Gráfico de Tendencia de Ventas -->
-                    <div class="chart-card full-width">
-                        <div class="chart-header">
-                            <h3>Tendencia de Ventas (Últimos 6 meses)</h3>
-                            <div class="chart-stats">
-                                <span class="stat-item">
-                                    <span class="stat-label">Promedio:</span>
-                                    <span class="stat-value">$18,234</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-label">Máximo:</span>
-                                    <span class="stat-value">$24,567</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-label">Mínimo:</span>
-                                    <span class="stat-value">$12,890</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
+                            <canvas id="productSalesChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabla de Detalles de Ventas -->
+            <div class="charts-section">
+                <h2>Reportes de despachos</h2>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Productos despachados por mes</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dispatchMonthChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Órdenes por estado</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dispatchStatusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Despachos por cliente</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dispatchClientChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Despachos por tipo de compra</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dispatchTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="sales-details-section">
                 <div class="section-header">
-                    <h2>Detalles de Ventas</h2>
+                    <h2>Facturas</h2>
                     <div class="section-actions">
                         <button class="btn-export-excel" onclick="exportToExcel()">
-                            <span class="btn-icon"><i class="fas fa-file"></i></span>
-                            Exportar Excel
+                            <span class="btn-icon"><i class="fas fa-file-csv"></i></span>
+                            Exportar CSV para Excel
                         </button>
                     </div>
                 </div>
@@ -232,101 +194,15 @@ ob_start();
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Pedido</th>
+                                <th>Factura</th>
                                 <th>Cliente</th>
                                 <th>Productos</th>
                                 <th>Total</th>
                                 <th>Estado</th>
-                                <th>Método Pago</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>2024-01-15</td>
-                                <td>#ORD-001</td>
-                                <td>Juan Pérez</td>
-                                <td>iPhone 15 Pro Max, AirPods Pro 2</td>
-                                <td>$1,448</td>
-                                <td><span class="status completed">Completado</span></td>
-                                <td>Tarjeta</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-16</td>
-                                <td>#ORD-002</td>
-                                <td>María González</td>
-                                <td>MacBook Air M3</td>
-                                <td>$1,099</td>
-                                <td><span class="status processing">Procesando</span></td>
-                                <td>Transferencia</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-17</td>
-                                <td>#ORD-003</td>
-                                <td>Carlos Rodríguez</td>
-                                <td>Apple Watch Ultra</td>
-                                <td>$799</td>
-                                <td><span class="status completed">Completado</span></td>
-                                <td>Efectivo</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-18</td>
-                                <td>#ORD-004</td>
-                                <td>Ana Martínez</td>
-                                <td>Canon EOS R5, MacBook Air M3</td>
-                                <td>$4,998</td>
-                                <td><span class="status shipped">Enviado</span></td>
-                                <td>Tarjeta</td>
-                            </tr>
-                            <tr>
-                                <td>2024-01-19</td>
-                                <td>#ORD-005</td>
-                                <td>Pedro Sánchez</td>
-                                <td>PlayStation 5, AirPods Pro 2</td>
-                                <td>$748</td>
-                                <td><span class="status completed">Completado</span></td>
-                                <td>PayPal</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="salesTableBody"></tbody>
                     </table>
-                </div>
-            </div>
-
-            <!-- Resumen Ejecutivo -->
-            <div class="executive-summary-section">
-                <h2>Resumen Ejecutivo</h2>
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-icon positive"><i class="fas fa-chart-line"></i></div>
-                        <div class="summary-content">
-                            <h4>Ventas vs Objetivo</h4>
-                            <p class="summary-value">+15.3%</p>
-                            <p class="summary-desc">Por encima del objetivo mensual</p>
-                        </div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-icon positive"><i class="fas fa-dollar-sign"></i></div>
-                        <div class="summary-content">
-                            <h4>Ticket Promedio</h4>
-                            <p class="summary-value">$892</p>
-                            <p class="summary-desc">Aumento del 8.7% vs mes anterior</p>
-                        </div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-icon neutral"><i class="fas fa-clock"></i></div>
-                        <div class="summary-content">
-                            <h4>Tiempo de Entrega</h4>
-                            <p class="summary-value">2.3 días</p>
-                            <p class="summary-desc">Mejora del 12% vs mes anterior</p>
-                        </div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-icon positive"><i class="fas fa-bullseye"></i></div>
-                        <div class="summary-content">
-                            <h4>Tasa de Conversión</h4>
-                            <p class="summary-value">94.5%</p>
-                            <p class="summary-desc">Tasa de completación de pedidos</p>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -610,6 +486,48 @@ ob_start();
                     margin: 0;
                 }
 
+                .report-error {
+                    padding: 14px 18px;
+                    margin-bottom: 20px;
+                    border-left: 4px solid #c62828;
+                    border-radius: 6px;
+                    background: #ffebee;
+                    color: #8e0000;
+                }
+
+                .sales-details-section .table-container {
+                    overflow-x: auto;
+                }
+
+                .sales-table .empty-state {
+                    padding: 24px;
+                    text-align: center;
+                    color: #666;
+                }
+
+                .status-badge {
+                    display: inline-block;
+                    padding: 5px 10px;
+                    border-radius: 999px;
+                    background: #e8f1fb;
+                    color: #174f84;
+                    white-space: nowrap;
+                }
+
+                @media print {
+                    .filters-section,
+                    .section-actions {
+                        display: none !important;
+                    }
+
+                    .charts-section,
+                    .sales-details-section,
+                    .summary-card {
+                        break-inside: avoid;
+                        box-shadow: none;
+                    }
+                }
+
                 @media (max-width: 768px) {
                     .charts-grid {
                         grid-template-columns: 1fr;
@@ -627,134 +545,346 @@ ob_start();
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
-                // Gráfico de Ventas Mensuales
-                const monthlyCtx = document.getElementById('monthlySalesChart').getContext('2d');
-                new Chart(monthlyCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                const reporteVentasData = {
+                    facturas: <?= json_encode($facturasReporte ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+                    detalles: <?= json_encode($detallesFacturasReporte ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+                    despachos: {
+                        estado: <?= json_encode($despachoEstado ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+                        mes: <?= json_encode($despachoMes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+                        cliente: <?= json_encode($despachoCliente ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>,
+                        tipoCompra: <?= json_encode($despachoTipoCompra ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>
+                    }
+                };
+
+                const estadosPagados = new Set(['pagada', 'pagada presencialmente']);
+                const formatoMoneda = new Intl.NumberFormat('es-VE', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                const graficosVentas = {};
+
+                function normalizarTexto(valor) {
+                    return String(valor || '').trim().toLocaleLowerCase();
+                }
+
+                function esFacturaPagada(factura) {
+                    return estadosPagados.has(normalizarTexto(factura.estatus));
+                }
+
+                function formatearMoneda(valor) {
+                    const monto = Number(valor);
+                    return 'Bs. ' + formatoMoneda.format(Number.isFinite(monto) ? monto : 0);
+                }
+
+                function obtenerFacturasFiltradas() {
+                    const fechaInicio = document.getElementById('startDate').value;
+                    const fechaFin = document.getElementById('endDate').value;
+                    const cliente = document.getElementById('clientFilter').value;
+                    const estado = document.getElementById('statusFilter').value;
+
+                    return reporteVentasData.facturas.filter(function(factura) {
+                        const fecha = String(factura.fecha || '').slice(0, 10);
+                        return (!fechaInicio || fecha >= fechaInicio) &&
+                            (!fechaFin || fecha <= fechaFin) &&
+                            (!cliente || String(factura.cliente || '') === cliente) &&
+                            (!estado || String(factura.estatus || '') === estado);
+                    });
+                }
+
+                function formatearFecha(fecha) {
+                    const fechaTexto = String(fecha || '').slice(0, 10);
+                    const fechaObjeto = new Date(fechaTexto + 'T12:00:00');
+                    return Number.isNaN(fechaObjeto.getTime())
+                        ? fechaTexto
+                        : new Intl.DateTimeFormat('es-VE').format(fechaObjeto);
+                }
+
+                function obtenerProductosFactura(idFactura) {
+                    const detalles = reporteVentasData.detalles[idFactura] || [];
+                    const productos = detalles.map(function(detalle) {
+                        return detalle.nombre_combo || detalle.nombre_producto || 'Producto';
+                    });
+                    return Array.from(new Set(productos)).join(', ') || 'Sin detalle';
+                }
+
+                function actualizarTabla(facturas) {
+                    const cuerpo = document.getElementById('salesTableBody');
+                    cuerpo.replaceChildren();
+
+                    if (facturas.length === 0) {
+                        const fila = document.createElement('tr');
+                        const celda = document.createElement('td');
+                        celda.colSpan = 6;
+                        celda.className = 'empty-state';
+                        celda.textContent = 'No hay facturas que coincidan con los filtros seleccionados.';
+                        fila.appendChild(celda);
+                        cuerpo.appendChild(fila);
+                        return;
+                    }
+
+                    facturas.forEach(function(factura) {
+                        const fila = document.createElement('tr');
+                        const valores = [
+                            formatearFecha(factura.fecha),
+                            '#' + String(factura.id_factura || ''),
+                            factura.cliente || 'Cliente no registrado',
+                            obtenerProductosFactura(factura.id_factura),
+                            formatearMoneda(factura.total_final),
+                            factura.estatus || 'Sin estado'
+                        ];
+
+                        valores.forEach(function(valor, indice) {
+                            const celda = document.createElement('td');
+                            if (indice === 5) {
+                                const estado = document.createElement('span');
+                                estado.className = 'status-badge';
+                                estado.textContent = valor;
+                                celda.appendChild(estado);
+                            } else {
+                                celda.textContent = valor;
+                            }
+                            fila.appendChild(celda);
+                        });
+                        cuerpo.appendChild(fila);
+                    });
+                }
+
+                function agruparVentasMensuales(facturas) {
+                    const montos = {};
+                    facturas.filter(esFacturaPagada).forEach(function(factura) {
+                        const mes = String(factura.fecha || '').slice(0, 7);
+                        if (mes) {
+                            montos[mes] = (montos[mes] || 0) + Number(factura.total_final || 0);
+                        }
+                    });
+
+                    const meses = Object.keys(montos).sort();
+                    return {
+                        labels: meses.map(function(mes) {
+                            return new Intl.DateTimeFormat('es-VE', { month: 'short', year: 'numeric' })
+                                .format(new Date(mes + '-15T12:00:00'));
+                        }),
+                        values: meses.map(function(mes) { return montos[mes]; })
+                    };
+                }
+
+                function agruparProductosFacturados(facturas) {
+                    const cantidades = {};
+                    facturas.filter(esFacturaPagada).forEach(function(factura) {
+                        const detalles = reporteVentasData.detalles[factura.id_factura] || [];
+                        detalles.forEach(function(detalle) {
+                            const nombre = detalle.nombre_combo || detalle.nombre_producto || 'Producto';
+                            cantidades[nombre] = (cantidades[nombre] || 0) + Number(detalle.cantidad || 0);
+                        });
+                    });
+
+                    return Object.entries(cantidades)
+                        .sort(function(a, b) { return b[1] - a[1]; })
+                        .slice(0, 10);
+                }
+
+                function normalizarDatosDespacho(datos, etiqueta) {
+                    return Array.isArray(datos)
+                        ? datos.filter(function(fila) { return fila && !fila.error; })
+                            .map(function(fila) {
+                                return {
+                                    label: String(fila[etiqueta] || fila.label || 'Sin dato'),
+                                    value: Number(fila.value || fila.total || 0)
+                                };
+                            })
+                        : [];
+                }
+
+                function crearGrafico(id, tipo, datos, opciones) {
+                    const elemento = document.getElementById(id);
+                    if (!elemento) {
+                        return;
+                    }
+                    if (graficosVentas[id]) {
+                        graficosVentas[id].destroy();
+                    }
+                    graficosVentas[id] = new Chart(elemento.getContext('2d'), {
+                        type: tipo,
+                        data: datos,
+                        options: Object.assign({
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: tipo === 'doughnut' } }
+                        }, opciones || {})
+                    });
+                }
+
+                function actualizarGraficosFacturas(facturas) {
+                    const mensual = agruparVentasMensuales(facturas);
+                    crearGrafico('monthlySalesChart', 'bar', {
+                        labels: mensual.labels,
                         datasets: [{
-                            label: 'Ventas 2024',
-                            data: [12000, 15000, 18000, 14000, 20000, 22000, 19000, 24000, 21000, 18000, 25000, 28000],
-                            backgroundColor: 'rgba(102, 126, 234, 0.7)',
-                            borderColor: 'rgba(102, 126, 234, 1)',
+                            label: 'Ingresos pagados',
+                            data: mensual.values,
+                            backgroundColor: 'rgba(33, 150, 243, 0.72)',
+                            borderColor: '#1976D2',
                             borderWidth: 1
                         }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
+                    }, {
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
-                                    }
-                                }
+                                ticks: { callback: function(valor) { return formatearMoneda(valor); } }
                             }
                         }
-                    }
-                });
+                    });
 
-                // Gráfico de Ventas por Categoría
-                const categoryCtx = document.getElementById('categorySalesChart').getContext('2d');
-                new Chart(categoryCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Smartphones', 'Laptops', 'Audio', 'Smartwatches', 'Cámaras', 'Gaming'],
+                    const productos = agruparProductosFacturados(facturas);
+                    crearGrafico('productSalesChart', 'bar', {
+                        labels: productos.map(function(producto) { return producto[0]; }),
                         datasets: [{
-                            data: [35, 25, 15, 10, 8, 7],
-                            backgroundColor: [
-                                'rgba(102, 126, 234, 0.8)',
-                                'rgba(118, 75, 162, 0.8)',
-                                'rgba(240, 147, 251, 0.8)',
-                                'rgba(245, 87, 108, 0.8)',
-                                'rgba(67, 233, 123, 0.8)',
-                                'rgba(56, 242, 215, 0.8)'
-                            ],
-                            borderWidth: 0
+                            label: 'Unidades facturadas',
+                            data: productos.map(function(producto) { return producto[1]; }),
+                            backgroundColor: 'rgba(118, 75, 162, 0.72)',
+                            borderColor: '#764ba2',
+                            borderWidth: 1
                         }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        }
-                    }
-                });
+                    }, {
+                        indexAxis: 'y',
+                        scales: { x: { beginAtZero: true } },
+                        plugins: { legend: { display: false } }
+                    });
+                }
 
-                // Gráfico de Tendencia
-                const trendCtx = document.getElementById('trendChart').getContext('2d');
-                new Chart(trendCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene'],
+                function actualizarGraficosDespachos() {
+                    const despachos = reporteVentasData.despachos;
+                    const mensual = normalizarDatosDespacho(despachos.mes, 'mes');
+                    const estado = normalizarDatosDespacho(despachos.estado, 'label');
+                    const cliente = normalizarDatosDespacho(despachos.cliente, 'cliente');
+                    const tipo = normalizarDatosDespacho(despachos.tipoCompra, 'tipo_compra');
+
+                    crearGrafico('dispatchMonthChart', 'bar', {
+                        labels: mensual.map(function(fila) { return fila.label; }),
                         datasets: [{
-                            label: 'Ventas',
-                            data: [15000, 18000, 16500, 22000, 21000, 24500],
-                            borderColor: 'rgba(102, 126, 234, 1)',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            fill: true,
-                            tension: 0.4
+                            label: 'Unidades despachadas',
+                            data: mensual.map(function(fila) { return fila.value; }),
+                            backgroundColor: 'rgba(17, 153, 142, 0.72)',
+                            borderColor: '#11998e',
+                            borderWidth: 1
                         }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+                    });
+                    crearGrafico('dispatchStatusChart', 'doughnut', {
+                        labels: estado.map(function(fila) { return fila.label; }),
+                        datasets: [{
+                            data: estado.map(function(fila) { return fila.value; }),
+                            backgroundColor: ['#2196F3', '#764ba2', '#43e97b', '#f093fb', '#f5576c']
+                        }]
+                    });
+                    crearGrafico('dispatchClientChart', 'bar', {
+                        labels: cliente.map(function(fila) { return fila.label; }),
+                        datasets: [{
+                            label: 'Despachos',
+                            data: cliente.map(function(fila) { return fila.value; }),
+                            backgroundColor: 'rgba(102, 126, 234, 0.72)'
+                        }]
+                    }, { indexAxis: 'y', scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } });
+                    crearGrafico('dispatchTypeChart', 'doughnut', {
+                        labels: tipo.map(function(fila) { return fila.label; }),
+                        datasets: [{
+                            data: tipo.map(function(fila) { return fila.value; }),
+                            backgroundColor: ['#43e97b', '#2196F3', '#f093fb', '#f5576c', '#764ba2']
+                        }]
+                    });
+                }
 
-                // Funciones de filtros
+                function actualizarReporte() {
+                    const facturas = obtenerFacturasFiltradas();
+                    const pagadas = facturas.filter(esFacturaPagada);
+                    const ingresos = pagadas.reduce(function(total, factura) {
+                        return total + Number(factura.total_final || 0);
+                    }, 0);
+
+                    document.getElementById('revenueTotal').textContent = formatearMoneda(ingresos);
+                    document.getElementById('paidInvoicesCount').textContent = String(pagadas.length);
+                    document.getElementById('averageInvoiceTotal').textContent = formatearMoneda(
+                        pagadas.length ? ingresos / pagadas.length : 0
+                    );
+                    actualizarTabla(facturas);
+                    actualizarGraficosFacturas(facturas);
+                }
+
                 function applyFilters() {
-                    alert('Función de aplicar filtros (conectar con backend)');
+                    const fechaInicio = document.getElementById('startDate').value;
+                    const fechaFin = document.getElementById('endDate').value;
+                    if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+                        alert('La fecha inicial no puede ser posterior a la fecha final.');
+                        return;
+                    }
+                    actualizarReporte();
                 }
 
                 function resetFilters() {
                     document.getElementById('startDate').value = '';
                     document.getElementById('endDate').value = '';
-                    document.getElementById('categoryFilter').value = '';
                     document.getElementById('clientFilter').value = '';
                     document.getElementById('statusFilter').value = '';
+                    actualizarReporte();
                 }
 
                 function downloadReport() {
-                    alert('Función de descargar PDF (conectar con backend)');
+                    window.print();
+                }
+
+                function escaparCsv(valor) {
+                    return '"' + String(valor == null ? '' : valor).replace(/"/g, '""') + '"';
                 }
 
                 function exportToExcel() {
-                    alert('Función de exportar Excel (conectar con backend)');
+                    const filas = obtenerFacturasFiltradas();
+                    const datos = [
+                        ['Fecha', 'Factura', 'Cliente', 'Productos', 'Total final', 'Estado'],
+                        ...filas.map(function(factura) {
+                            return [
+                                formatearFecha(factura.fecha),
+                                factura.id_factura,
+                                factura.cliente || 'Cliente no registrado',
+                                obtenerProductosFactura(factura.id_factura),
+                                factura.total_final,
+                                factura.estatus || 'Sin estado'
+                            ];
+                        })
+                    ];
+                    const csv = '\uFEFF' + datos.map(function(fila) {
+                        return fila.map(escaparCsv).join(',');
+                    }).join('\r\n');
+                    const enlace = document.createElement('a');
+                    enlace.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+                    enlace.download = 'reporte_ventas.csv';
+                    enlace.click();
+                    setTimeout(function() { URL.revokeObjectURL(enlace.href); }, 1000);
                 }
 
-                function updateChart(type, period) {
-                    alert('Función de actualizar gráfico ' + type + ' para período ' + period);
+                function inicializarFiltros() {
+                    const clientes = Array.from(new Set(reporteVentasData.facturas
+                        .map(function(factura) { return factura.cliente; })
+                        .filter(Boolean))).sort();
+                    const estados = Array.from(new Set(reporteVentasData.facturas
+                        .map(function(factura) { return factura.estatus; })
+                        .filter(Boolean))).sort();
+
+                    clientes.forEach(function(cliente) {
+                        const opcion = document.createElement('option');
+                        opcion.value = cliente;
+                        opcion.textContent = cliente;
+                        document.getElementById('clientFilter').appendChild(opcion);
+                    });
+                    estados.forEach(function(estado) {
+                        const opcion = document.createElement('option');
+                        opcion.value = estado;
+                        opcion.textContent = estado;
+                        document.getElementById('statusFilter').appendChild(opcion);
+                    });
                 }
 
-                // Establecer fechas por defecto (mes actual)
                 document.addEventListener('DOMContentLoaded', function() {
-                    const today = new Date();
-                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    
-                    document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
-                    document.getElementById('endDate').value = lastDay.toISOString().split('T')[0];
+                    inicializarFiltros();
+                    actualizarReporte();
+                    actualizarGraficosDespachos();
                 });
             </script>
 

@@ -752,6 +752,115 @@ class Proveedores extends BD {
         return $this->obtReporteSuministroProveedores();
     }
 
+    private function agregarFiltrosFechaReporte(&$sql, &$parametros, $fechaInicio, $fechaFin, $alias = 'r') {
+        if ($fechaInicio !== null) {
+            $sql .= " AND {$alias}.fecha >= ?";
+            $parametros[] = $fechaInicio;
+        }
+        if ($fechaFin !== null) {
+            $sql .= " AND {$alias}.fecha < DATE_ADD(?, INTERVAL 1 DAY)";
+            $parametros[] = $fechaFin;
+        }
+    }
+
+    public function getReporteSuministroProveedores($fechaInicio = null, $fechaFin = null) {
+        $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($fechaInicio, $fechaFin) {
+            $sql = "SELECT p.id_proveedor, p.nombre_proveedor, SUM(dp.cantidad) AS cantidad
+                    FROM tbl_proveedores p
+                    INNER JOIN tbl_recepcion_productos r ON p.id_proveedor = r.id_proveedor
+                    INNER JOIN tbl_detalle_recepcion_productos dp ON r.id_recepcion = dp.id_recepcion
+                    WHERE 1 = 1";
+            $parametros = [];
+            $this->agregarFiltrosFechaReporte($sql, $parametros, $fechaInicio, $fechaFin);
+            $sql .= " GROUP BY p.id_proveedor, p.nombre_proveedor
+                      ORDER BY cantidad DESC
+                      LIMIT 10";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($parametros);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        });
+
+        return $this->encryption->decryptResults($resultado, self::CAMPOS_CIFRADOS);
+    }
+
+    public function getReporteRankingProveedores($fechaInicio = null, $fechaFin = null) {
+        $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($fechaInicio, $fechaFin) {
+            $sql = "SELECT p.id_proveedor, p.nombre_proveedor, SUM(d.cantidad * d.costo) AS total
+                    FROM tbl_recepcion_productos r
+                    INNER JOIN tbl_proveedores p ON r.id_proveedor = p.id_proveedor
+                    INNER JOIN tbl_detalle_recepcion_productos d ON d.id_recepcion = r.id_recepcion
+                    WHERE 1 = 1";
+            $parametros = [];
+            $this->agregarFiltrosFechaReporte($sql, $parametros, $fechaInicio, $fechaFin);
+            $sql .= " GROUP BY p.id_proveedor, p.nombre_proveedor
+                      ORDER BY total DESC, p.nombre_proveedor ASC";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($parametros);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        });
+
+        return $this->encryption->decryptResults($resultado, self::CAMPOS_CIFRADOS);
+    }
+
+    public function getComparacionMensualSuministros($fechaInicio = null, $fechaFin = null) {
+        $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($fechaInicio, $fechaFin) {
+            $sql = "SELECT DATE_FORMAT(r.fecha, '%Y-%m') AS mes,
+                           p.id_proveedor,
+                           p.nombre_proveedor,
+                           SUM(d.cantidad) AS cantidad
+                    FROM tbl_recepcion_productos r
+                    INNER JOIN tbl_proveedores p ON r.id_proveedor = p.id_proveedor
+                    INNER JOIN tbl_detalle_recepcion_productos d ON d.id_recepcion = r.id_recepcion
+                    WHERE 1 = 1";
+            $parametros = [];
+            $this->agregarFiltrosFechaReporte($sql, $parametros, $fechaInicio, $fechaFin);
+            $sql .= " GROUP BY YEAR(r.fecha), MONTH(r.fecha), p.id_proveedor, p.nombre_proveedor
+                      ORDER BY YEAR(r.fecha), MONTH(r.fecha), p.nombre_proveedor ASC";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($parametros);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        });
+
+        return $this->encryption->decryptResults($resultado, self::CAMPOS_CIFRADOS);
+    }
+
+    public function getReporteDependenciaProveedores($fechaInicio = null, $fechaFin = null) {
+        $resultado = $this->ejecutarConConexionSegura(function($pdo) use ($fechaInicio, $fechaFin) {
+            $sqlTotal = "SELECT SUM(d2.cantidad * d2.costo) AS monto_total
+                         FROM tbl_detalle_recepcion_productos d2
+                         INNER JOIN tbl_recepcion_productos r2 ON d2.id_recepcion = r2.id_recepcion
+                         WHERE 1 = 1";
+            $parametrosTotal = [];
+            $this->agregarFiltrosFechaReporte($sqlTotal, $parametrosTotal, $fechaInicio, $fechaFin, 'r2');
+
+            $sql = "SELECT p.id_proveedor,
+                           p.nombre_proveedor,
+                           SUM(d.cantidad * d.costo) AS monto_total_pagado,
+                           ROUND(
+                               SUM(d.cantidad * d.costo) * 100.0 / NULLIF(totales.monto_total, 0),
+                               2
+                           ) AS dependencia_porcentaje
+                    FROM tbl_recepcion_productos r
+                    INNER JOIN tbl_proveedores p ON r.id_proveedor = p.id_proveedor
+                    INNER JOIN tbl_detalle_recepcion_productos d ON d.id_recepcion = r.id_recepcion
+                    CROSS JOIN ({$sqlTotal}) AS totales
+                    WHERE 1 = 1";
+            $parametros = [];
+            $this->agregarFiltrosFechaReporte($sql, $parametros, $fechaInicio, $fechaFin);
+            $sql .= " GROUP BY p.id_proveedor, p.nombre_proveedor, totales.monto_total
+                      ORDER BY dependencia_porcentaje DESC, p.nombre_proveedor ASC";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(array_merge($parametrosTotal, $parametros));
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        });
+
+        return $this->encryption->decryptResults($resultado, self::CAMPOS_CIFRADOS);
+    }
+
     private function obtReporteSuministroProveedores() {
         $resultado = $this->ejecutarConConexionSegura(function($pdo) {
             $sql = "SELECT p.nombre_proveedor, SUM(dp.cantidad) AS cantidad

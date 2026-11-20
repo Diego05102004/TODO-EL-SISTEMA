@@ -725,7 +725,18 @@ ob_start();
                         w.style.maxHeight = 'none';
                         w.style.overflowY = 'visible';
                     });
-                    html2canvas(elemento, { scale: 2, useCORS: true }).then(function (canvas) {
+                    html2canvas(elemento, {
+                        scale: 2,
+                        useCORS: true,
+                        ignoreElements: function (node) {
+                            return node.classList && (
+                                node.classList.contains('section-actions') ||
+                                node.classList.contains('filters-grid') ||
+                                node.classList.contains('btn-generate') ||
+                                node.classList.contains('btn-export')
+                            );
+                        }
+                    }).then(function (canvas) {
                         wrappers.forEach(function (w, i) {
                             w.style.maxHeight = prev[i].mh;
                             w.style.overflowY = prev[i].ov;

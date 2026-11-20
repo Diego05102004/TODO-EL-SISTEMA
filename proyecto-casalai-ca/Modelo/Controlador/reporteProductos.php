@@ -1,22 +1,54 @@
 <?php
-// Inicia el almacenamiento en búfer de salida
-ob_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Importa los modelos necesarios
 use Usuario\ProyectoCasalaiCa\Modelo\Clases\Productos;
 use Usuario\ProyectoCasalaiCa\Modelo\Clases\Permisos;
-use Usuario\ProyectoCasalaiCa\Modelo\Clases\Bitacora;
-
-define('MODULO_PRODUCTOS', 6); // Define el ID del módulo de cuentas bancarias
-
-$id_rol = $_SESSION['id_rol']; // Asegúrate de tener este dato en sesión
 
 $permisosObj = new Permisos();
-$bitacoraModel = new Bitacora();
+$id_rol = $_SESSION['id_rol'] ?? null;
 $permisosUsuario = $permisosObj->getPermisosUsuarioModulo($id_rol, strtolower('productos'));
-// Verifica si la solicitud se realizó mediante el método POST
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'reportes_productos') {
+    header('Content-Type: application/json; charset=utf-8');
 
+    if (empty($permisosUsuario['consultar'])) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'No tienes permiso para consultar este reporte.']);
+        exit;
+    }
+
+    $topNRaw = $_POST['topN'] ?? '';
+    if (!is_string($topNRaw) || !ctype_digit($topNRaw) || (int) $topNRaw < 1 || (int) $topNRaw > 50) {
+        http_response_code(422);
+        echo json_encode(['status' => 'error', 'message' => 'Top N debe ser un número entre 1 y 50.']);
+        exit;
+    }
+
+    try {
+        $productoModel = new Productos();
+        echo json_encode([
+            'status' => 'success',
+            'data' => $productoModel->getProductosMasVendidos((int) $topNRaw)
+        ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    } catch (Throwable $e) {
+        error_log('Error al generar reporte de productos más vendidos: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'No se pudo cargar el reporte de productos más vendidos.'
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    exit;
+}
+
+if (empty($permisosUsuario['consultar'])) {
+    header('Location: ?pagina=acceso-denegado');
+    exit;
+}
+
+ob_start();
 
 function obtenerModelos() {
     $ModelosModel = new Productos();
@@ -58,15 +90,13 @@ if (empty($categoriasDinamicas)) {
 }
 // Asigna el nombre de la página
 $pagina = "reporteProductos";
-// Verifica si el archivo de vista existe
-if (is_file("Vista/" . $pagina . ".php")) {
-    // Obtiene los modelos y productos
+if (is_file("Vista/VistaNew/" . $pagina . ".php")) {
+    require_once("Vista/VistaNew/" . $pagina . ".php");
+} elseif (is_file("Vista/" . $pagina . ".php")) {
     $modelos = obtenerModelos();
-        require_once("Vista/" . $pagina . ".php");
+    require_once("Vista/" . $pagina . ".php");
 } else {
-    // Muestra un mensaje si la página está en construcción
     echo "Página en construcción";
 }
 
-// Termina el almacenamiento en búfer de salida y envía la salida al navegador
 ob_end_flush();

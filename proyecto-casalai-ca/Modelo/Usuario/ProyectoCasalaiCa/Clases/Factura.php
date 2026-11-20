@@ -567,6 +567,75 @@ class Factura extends BD
         });
     }
 
+    public function obtenerMontosTotalesFacturas(array $idsFacturas): array {
+        $idsFacturas = array_values(array_unique(array_filter(
+            array_map('intval', $idsFacturas),
+            function($idFactura) {
+                return $idFactura > 0;
+            }
+        )));
+
+        if ($idsFacturas === []) {
+            return [];
+        }
+
+        return $this->ejecutarConConexionSegura(function($pdo) use ($idsFacturas) {
+            $montos = array_fill_keys($idsFacturas, 0.0);
+            $placeholders = [];
+            $parametros = [];
+
+            foreach ($idsFacturas as $indice => $idFactura) {
+                $placeholder = ':factura' . $indice;
+                $placeholders[] = $placeholder;
+                $parametros[$placeholder] = $idFactura;
+            }
+
+            $sql = "SELECT f.id_factura,
+                        ROUND(
+                            SUM(
+                                CASE
+                                    WHEN df.precio_unitario IS NULL OR (df.id_combo IS NULL AND df.precio_unitario = 0)
+                                        THEN p.precio
+                                    ELSE df.precio_unitario
+                                END * df.cantidad
+                            ) * (1 - (COALESCE(f.descuento, 0) / 100)) * 1.16,
+                            2
+                        ) AS total_con_impuesto
+                    FROM tbl_facturas f
+                    INNER JOIN tbl_factura_detalle df ON df.factura_id = f.id_factura
+                    INNER JOIN tbl_productos p ON p.id_producto = df.id_producto
+                    WHERE f.id_factura IN (" . implode(', ', $placeholders) . ")
+                    GROUP BY f.id_factura, f.descuento";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($parametros);
+
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $resultado) {
+                $montos[(int)$resultado['id_factura']] = (float)$resultado['total_con_impuesto'];
+            }
+
+            $tasa = 1;
+            try {
+                $stmtDolar = $pdo->query("SELECT precio, fecha FROM dolar_cache ORDER BY fecha DESC LIMIT 1");
+                $resultadoDolar = $stmtDolar->fetch(PDO::FETCH_ASSOC);
+                $fechaDolar = $resultadoDolar ? strtotime($resultadoDolar['fecha']) : false;
+
+                if ($resultadoDolar && $fechaDolar !== false && (time() - $fechaDolar) < 86400) {
+                    $tasa = (float)$resultadoDolar['precio'];
+                }
+            } catch (PDOException $e) {
+                error_log('Error al obtener cache del dólar para reporte de ventas: ' . $e->getMessage());
+            }
+
+            foreach ($montos as &$monto) {
+                $monto *= $tasa;
+            }
+            unset($monto);
+
+            return $montos;
+        });
+    }
+
     private function facturaConsultarTodas() {
         return $this->ejecutarConConexionSegura(function($pdo) {
             // Primero obtenemos información de pagos para validar después

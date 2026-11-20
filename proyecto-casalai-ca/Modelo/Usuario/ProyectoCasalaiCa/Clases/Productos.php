@@ -2166,11 +2166,16 @@ class Productos extends BD{
         });
     }
 
-    public function getProductosMasVendidos() {
-        return $this->g_productosMasVendidos();
+    public function getProductosMasVendidos($limite = 10) {
+        $limite = filter_var($limite, FILTER_VALIDATE_INT);
+        if ($limite === false || $limite < 1 || $limite > 50) {
+            throw new \InvalidArgumentException('El límite de productos más vendidos debe estar entre 1 y 50.');
+        }
+
+        return $this->g_productosMasVendidos($limite);
     }
-    private function g_productosMasVendidos() {
-        return $this->ejecutarConConexionSegura(function($pdo) {
+    private function g_productosMasVendidos($limite) {
+        return $this->ejecutarConConexionSegura(function($pdo) use ($limite) {
             $sql = "
                 SELECT 
                     p.id_producto,
@@ -2180,9 +2185,10 @@ class Productos extends BD{
                 INNER JOIN tbl_productos p ON fd.id_producto = p.id_producto
                 GROUP BY p.id_producto, p.nombre_producto
                 ORDER BY total_vendido DESC
-                LIMIT 10;
+                LIMIT :limite;
             ";
             $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limite', $limite, \PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         });

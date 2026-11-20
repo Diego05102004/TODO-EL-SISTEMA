@@ -156,7 +156,7 @@ function getclientes() {
 $reporteComprasClientes = $cliente->obtenerReporteComprasClientes();
 $totalComprasClientes = array_sum(array_column($reporteComprasClientes, 'cantidad'));
 $pagina = "reporteCliente";
-if (is_file("Vista/" . $pagina . ".php")) {
+if (is_file("Vista/VistaNew/" . $pagina . ".php") || is_file("Vista/" . $pagina . ".php")) {
     if (!defined('SKIP_SIDE_EFFECTS') && isset($_SESSION['id_usuario'])) {
         $bitacoraModel = new Bitacora();
         $bitacoraModel->registrarBitacora(
@@ -167,8 +167,13 @@ if (is_file("Vista/" . $pagina . ".php")) {
         'media'
     );
 }
-    $clientes = getclientes();
-    require_once("Vista/" . $pagina . ".php");
+    $vistaNueva = "Vista/VistaNew/" . $pagina . ".php";
+    if (is_file($vistaNueva)) {
+        require_once($vistaNueva);
+    } else {
+        $clientes = getclientes();
+        require_once("Vista/" . $pagina . ".php");
+    }
 } else {
     echo "Página en construcción";
 }

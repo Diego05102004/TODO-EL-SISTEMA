@@ -998,15 +998,13 @@ class Usuarios extends BD {
             $stmtusuarios->execute();
             $usuarios = $stmtusuarios->fetchAll(PDO::FETCH_ASSOC);
             $stmtusuarios->closeCursor();
-                    // Descifrar datos personales
-        $resultado = $this->encryption->decryptResults($usuarios, self::CAMPOS_CIFRADOS);
-        error_log("Usuarios obtenidos: " . print_r($resultado, true)); 
-            return $resultado;
+            return $usuarios;
         }, false);
-        
-        // Descifrar datos personales
-        $resultado = $this->encryption->decryptResults($resultado, self::CAMPOS_CIFRADOS);
-        error_log("Usuarios obtenidos: " . print_r($resultado, true)); // Log de depuración
+
+        $resultado = $this->encryption->decryptResults(
+            $resultado,
+            self::CAMPOS_CIFRADOS
+        );
         return $resultado;
     }
 }

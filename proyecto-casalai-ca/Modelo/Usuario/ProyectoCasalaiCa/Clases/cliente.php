@@ -669,6 +669,7 @@ class cliente extends BD {
             FROM tbl_clientes c
             JOIN tbl_despachos ds ON c.id_clientes = ds.id_clientes
             JOIN tbl_despacho_detalle d ON ds.id_despachos = d.id_despacho
+            WHERE c.activo = 1
             GROUP BY c.id_clientes, c.nombre
             ORDER BY cantidad DESC
             LIMIT 10;";

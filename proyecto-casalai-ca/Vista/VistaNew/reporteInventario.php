@@ -1,16 +1,13 @@
 <?php
-// Iniciar sesión si no está iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar si el usuario ha iniciado sesión (sistema tradicional)
 if (!isset($_SESSION['name'])) {
     header('Location: ../..');
     exit();
 }
 
-// Verificar y/o generar token JWT (sistema JWT)
 require_once __DIR__ . '/../../Modelo/Config/Auth.php';
 use Usuario\ProyectoCasalaiCa\Config\Auth;
 
@@ -23,639 +20,682 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
     }
 }
 
-// Variables para los componentes reutilizables
 $pagina_actual = 'reporteInventario';
 $titulo_pagina = 'Reporte de Inventario';
 
-// Iniciar el buffer de contenido
+$jsonOptions = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE;
+$proveedoresJson = json_encode($RecepcionesProveedor ?? [], $jsonOptions) ?: '[]';
+$productosJson = json_encode($ProductosRecibidos ?? [], $jsonOptions) ?: '[]';
+$mensualJson = json_encode($RecepcionMensual ?? [], $jsonOptions) ?: '[]';
+
+$totalRecepciones = array_sum(array_map(
+    static function ($fila) { return (float) ($fila['value'] ?? 0); },
+    $RecepcionesProveedor ?? []
+));
+$totalProductos = array_sum(array_map(
+    static function ($fila) { return (float) ($fila['value'] ?? 0); },
+    $ProductosRecibidos ?? []
+));
+$totalMeses = array_sum(array_map(
+    static function ($fila) { return (float) ($fila['value'] ?? 0); },
+    $RecepcionMensual ?? []
+));
+$cantidadProveedores = count($RecepcionesProveedor ?? []);
+
 ob_start();
 ?>
 
-            <!-- Summary Cards para Inventario -->
-            <div class="summary-cards">
-                <div class="summary-card sales">
-                    <div class="card-icon"><i class="fas fa-box"></i></div>
-                    <div class="card-content">
-                        <h3>Total Productos</h3>
-                        <p class="card-value">1,234</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="85, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">85%</span>
-                        </div>
-                    </div>
-                </div>
+<div class="summary-cards">
+    <div class="summary-card sales">
+        <div class="card-icon"><i class="fas fa-inbox"></i></div>
+        <div class="card-content">
+            <h3>Recepciones</h3>
+            <p class="card-value"><?php echo number_format($totalRecepciones); ?></p>
+        </div>
+    </div>
+    <div class="summary-card income">
+        <div class="card-icon"><i class="fas fa-boxes"></i></div>
+        <div class="card-content">
+            <h3>Productos Recibidos</h3>
+            <p class="card-value"><?php echo number_format($totalProductos); ?></p>
+        </div>
+    </div>
+    <div class="summary-card balance">
+        <div class="card-icon"><i class="fas fa-building"></i></div>
+        <div class="card-content">
+            <h3>Proveedores</h3>
+            <p class="card-value"><?php echo number_format($cantidadProveedores); ?></p>
+        </div>
+    </div>
+    <div class="summary-card expenses">
+        <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="card-content">
+            <h3>Recepciones del Año</h3>
+            <p class="card-value"><?php echo number_format($totalMeses); ?></p>
+        </div>
+    </div>
+</div>
 
-                <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div class="card-content">
-                        <h3>Stock Bajo</h3>
-                        <p class="card-value">23</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="12, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">12%</span>
-                        </div>
-                    </div>
-                </div>
+<section class="report-card" id="resultadoInventario">
+    <div class="section-header">
+        <h2><i class="fas fa-chart-pie"></i> Reportes de Recepción</h2>
+        <div class="section-actions">
+            <button type="button" class="btn-primary-action" id="generarReporteRecepcion">
+                <i class="fas fa-chart-bar"></i> Generar Reporte
+            </button>
+            <button type="button" class="btn-export" id="descargarTodosReportes">
+                <i class="fas fa-file-pdf"></i> Descargar Todos los Reportes
+            </button>
+        </div>
+    </div>
 
-                <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-sync"></i></div>
-                    <div class="card-content">
-                        <h3>Movimientos</h3>
-                        <p class="card-value">456</p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="37, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">37%</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="filters-grid">
+        <div class="filter-group">
+            <label for="tipoReporteRecepcion">Tipo de reporte</label>
+            <select id="tipoReporteRecepcion">
+                <option value="todos">Todos los Reportes</option>
+                <option value="proveedores">Recepciones por Proveedor</option>
+                <option value="productos">Productos más Recibidos</option>
+                <option value="mensual">Recepciones Mensuales</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="fechaInicioRecepcion">Fecha inicio</label>
+            <input type="date" id="fechaInicioRecepcion">
+        </div>
+        <div class="filter-group">
+            <label for="fechaFinRecepcion">Fecha fin</label>
+            <input type="date" id="fechaFinRecepcion">
+        </div>
+        <div class="filter-group">
+            <label for="tipoGraficaRecepcion">Tipo de gráfica</label>
+            <select id="tipoGraficaRecepcion">
+                <option value="bar">Barras</option>
+                <option value="pie">Pastel</option>
+                <option value="line">Líneas</option>
+                <option value="doughnut">Donas</option>
+                <option value="polarArea">Área Polar</option>
+            </select>
+        </div>
+    </div>
+    <div id="parametrosRecepcion" class="filters-grid dynamic-filter"></div>
+
+    <div id="mensajeErrorRecepcion" class="no-data" style="display:none;">
+        No se pudieron cargar los datos. Verifique la conexión con el servidor.
+    </div>
+
+    <section class="report-subcard reporte-seccion" id="reporteProveedores">
+        <div class="report-subcard-header">
+            <h3><i class="fas fa-building"></i> Recepciones por Proveedor</h3>
+        </div>
+        <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header"><h3>Recepciones por Proveedor</h3></div>
+            <div class="chart-container"><canvas id="graficoProveedores"></canvas></div>
+        </div>
+        <div class="chart-card table-chart-card">
+            <div class="chart-header"><h3>Datos del reporte</h3></div>
+            <div id="tablaProveedores" class="table-wrapper"></div>
+            <div class="section-actions">
+                <button type="button" class="btn-export" onclick="descargarPDFRecepcion('reporteProveedores','Reporte_Recepciones_Proveedores.pdf')">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button type="button" class="btn-primary-action" onclick="descargarImagenRecepcion('graficoProveedores','Grafico_Recepciones_Proveedores.png')">
+                    <i class="fas fa-image"></i> Descargar Gráfico
+                </button>
             </div>
+        </div>
+        </div>
+    </section>
 
-            <!-- Filtros de Inventario -->
-            <div class="inventory-filters">
-                <div class="section-header">
-                    <h2>Filtros del Reporte</h2>
-                    <div class="section-actions">
-                        <button class="btn-apply-filter" onclick="applyFilters()">
-                            <span class="btn-icon"><i class="fas fa-search"></i></span>
-                            Aplicar Filtros
-                        </button>
-                        <button class="btn-reset-filter" onclick="resetFilters()">
-                            <span class="btn-icon"><i class="fas fa-sync"></i></span>
-                            Restablecer
-                        </button>
-                        <button class="btn-download-report" onclick="downloadReport()">
-                            <span class="btn-icon"><i class="fas fa-download"></i></span>
-                            Descargar PDF
-                        </button>
-                    </div>
-                </div>
-
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label for="dateRange">Rango de Fechas</label>
-                        <div class="date-range">
-                            <input type="date" id="startDate" name="startDate">
-                            <span>a</span>
-                            <input type="date" id="endDate" name="endDate">
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="categoryFilter">Categoría</label>
-                        <select id="categoryFilter" name="categoria">
-                            <option value="">Todas las categorías</option>
-                            <option value="smartphones">Smartphones</option>
-                            <option value="laptops">Laptops</option>
-                            <option value="audio">Audio</option>
-                            <option value="smartwatches">Smartwatches</option>
-                            <option value="camaras">Cámaras</option>
-                            <option value="gaming">Gaming</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="statusFilter">Estado del Stock</label>
-                        <select id="statusFilter" name="estado">
-                            <option value="">Todos los estados</option>
-                            <option value="normal">Normal</option>
-                            <option value="low">Stock Bajo</option>
-                            <option value="critical">Crítico</option>
-                            <option value="overstock">Sobre-stock</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="locationFilter">Ubicación</label>
-                        <select id="locationFilter" name="ubicacion">
-                            <option value="">Todas las ubicaciones</option>
-                            <option value="almacen">Almacén Principal</option>
-                            <option value="tienda">Tienda</option>
-                            <option value="sucursal">Sucursal</option>
-                        </select>
-                    </div>
-                </div>
+    <section class="report-subcard reporte-seccion" id="reporteProductos">
+        <div class="report-subcard-header">
+            <h3><i class="fas fa-boxes"></i> Productos más Recibidos</h3>
+        </div>
+        <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header"><h3>Productos más Recibidos</h3></div>
+            <div class="chart-container"><canvas id="graficoProductos"></canvas></div>
+        </div>
+        <div class="chart-card table-chart-card">
+            <div class="chart-header"><h3>Datos del reporte</h3></div>
+            <div id="tablaProductos" class="table-wrapper"></div>
+            <div class="section-actions">
+                <button type="button" class="btn-export" onclick="descargarPDFRecepcion('reporteProductos','Reporte_Recepciones_Productos.pdf')">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button type="button" class="btn-primary-action" onclick="descargarImagenRecepcion('graficoProductos','Grafico_Recepciones_Productos.png')">
+                    <i class="fas fa-image"></i> Descargar Gráfico
+                </button>
             </div>
+        </div>
+        </div>
+    </section>
 
-            <!-- Gráficos de Inventario -->
-            <div class="charts-section">
-                <h2>Análisis de Inventario</h2>
-                <div class="charts-grid">
-                    <!-- Gráfico de Stock por Categoría -->
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Stock por Categoría</h3>
-                            <div class="chart-legend">
-                                <span class="legend-item">
-                                    <span class="legend-color" style="background: #2196F3;"></span>
-                                    Smartphones
-                                </span>
-                                <span class="legend-item">
-                                    <span class="legend-color" style="background: #1976D2;"></span>
-                                    Laptops
-                                </span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="categoryStockChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Gráfico de Movimientos -->
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Movimientos de Inventario</h3>
-                            <div class="chart-stats">
-                                <span class="stat-item">
-                                    <span class="stat-label">Entradas:</span>
-                                    <span class="stat-value">234</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-label">Salidas:</span>
-                                    <span class="stat-value">189</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="movementsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Gráfico de Tendencia -->
-                    <div class="chart-card full-width">
-                        <div class="chart-header">
-                            <h3>Tendencia de Stock (Últimos 6 meses)</h3>
-                            <div class="chart-stats">
-                                <span class="stat-item">
-                                    <span class="stat-label">Promedio:</span>
-                                    <span class="stat-value">1,234</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-label">Máximo:</span>
-                                    <span class="stat-value">1,456</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-label">Mínimo:</span>
-                                    <span class="stat-value">987</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+    <section class="report-subcard reporte-seccion" id="reporteMensual">
+        <div class="report-subcard-header">
+            <h3><i class="fas fa-calendar-alt"></i> Recepciones Mensuales</h3>
+        </div>
+        <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header"><h3>Recepciones Mensuales</h3></div>
+            <div class="chart-container"><canvas id="graficoMensual"></canvas></div>
+        </div>
+        <div class="chart-card table-chart-card">
+            <div class="chart-header"><h3>Datos del reporte</h3></div>
+            <div id="tablaMensual" class="table-wrapper"></div>
+            <div class="section-actions">
+                <button type="button" class="btn-export" onclick="descargarPDFRecepcion('reporteMensual','Reporte_Recepciones_Mensual.pdf')">
+                    <i class="fas fa-file-pdf"></i> Descargar PDF
+                </button>
+                <button type="button" class="btn-primary-action" onclick="descargarImagenRecepcion('graficoMensual','Grafico_Recepciones_Mensual.png')">
+                    <i class="fas fa-image"></i> Descargar Gráfico
+                </button>
             </div>
+        </div>
+        </div>
+    </section>
+</section>
 
-            <!-- Alertas de Stock -->
-            <div class="stock-alerts-section">
-                <div class="section-header">
-                    <h2>Alertas de Stock</h2>
-                    <div class="section-actions">
-                        <button class="btn-view-all" onclick="viewAllAlerts()">Ver todas</button>
-                    </div>
-                </div>
+<style>
+.report-card { background:white; border-radius:16px; padding:25px; box-shadow:0 4px 15px rgba(0,0,0,.08); }
+.filters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin:20px 0; }
+.dynamic-filter { margin:0; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+.filter-group { display:flex; flex-direction:column; gap:8px; }
+.filter-group label { font-weight:600; color:#4a5568; }
+.filter-group select,.filter-group input { padding:11px 12px; border:1px solid #dfe6ed; border-radius:8px; background:white; }
+.reporte-seccion { margin-top:28px; }
+.report-subcard { background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+.report-subcard-header { display:flex; align-items:center; margin-bottom:14px; padding:12px 16px; background:linear-gradient(135deg,#2196F3,#1976D2); border-radius:10px; }
+.report-subcard-header h3 { margin:0; color:white; font-size:1.05rem; display:flex; align-items:center; gap:9px; }
+.table-chart-card { min-width:0; }
+.table-wrapper { max-height:430px; overflow-y:auto; margin-bottom:15px; }
+.table-wrapper table { width:100%; border-collapse:collapse; }
+.table-wrapper th { background:#2196F3; color:white; padding:12px; text-align:left; }
+.table-wrapper td,.table-wrapper tfoot th { padding:10px 12px; border-bottom:1px solid #edf2f7; }
+.table-wrapper tr:hover td { background:#f8fafc; }
+.no-data { text-align:center; color:#718096; padding:30px; }
+.btn-primary-action,.btn-export { border:none; padding:10px 16px; border-radius:8px; cursor:pointer; color:white; display:flex; align-items:center; gap:8px; }
+.btn-primary-action { background:linear-gradient(135deg,#2196F3,#1976D2); }
+.btn-export { background:linear-gradient(135deg,#f56565,#e53e3e); }
+.section-actions { display:flex; flex-wrap:wrap; gap:10px; }
+@media(max-width:768px){ .filters-grid{grid-template-columns:1fr}.section-actions{width:100%}.section-actions button{width:100%;justify-content:center} }
+</style>
 
-                <div class="alerts-grid">
-                    <div class="alert-card critical">
-                        <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div class="alert-content">
-                            <h4>Stock Crítico</h4>
-                            <p>5 productos necesitan atención inmediata</p>
-                        </div>
-                        <button class="btn-alert-action" onclick="handleAlert('critical')">Ver</button>
-                    </div>
-                    <div class="alert-card low">
-                        <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div class="alert-content">
-                            <h4>Stock Bajo</h4>
-                            <p>18 productos están por debajo del mínimo</p>
-                        </div>
-                        <button class="btn-alert-action" onclick="handleAlert('low')">Ver</button>
-                    </div>
-                    <div class="alert-card overstock">
-                        <div class="alert-icon"><i class="fas fa-box"></i></div>
-                        <div class="alert-content">
-                            <h4>Sobre-stock</h4>
-                            <p>7 productos tienen exceso de inventario</p>
-                        </div>
-                        <button class="btn-alert-action" onclick="handleAlert('overstock')">Ver</button>
-                    </div>
-                </div>
-            </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+    'use strict';
 
-            <!-- Tabla de Detalles de Inventario -->
-            <div class="inventory-details-section">
-                <div class="section-header">
-                    <h2>Detalles de Inventario</h2>
-                    <div class="section-actions">
-                        <button class="btn-export-excel" onclick="exportToExcel()">
-                            <span class="btn-icon"><i class="fas fa-file"></i></span>
-                            Exportar Excel
-                        </button>
-                    </div>
-                </div>
+    let recepcionProveedores = <?php echo $proveedoresJson; ?>;
+    let recepcionProductos = <?php echo $productosJson; ?>;
+    let recepcionMensual = <?php echo $mensualJson; ?>;
+    const graficos = {};
 
-                <div class="table-container">
-                    <table class="inventory-table">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Categoría</th>
-                                <th>Stock Actual</th>
-                                <th>Stock Mínimo</th>
-                                <th>Ubicación</th>
-                                <th>Estado</th>
-                                <th>Último Movimiento</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>iPhone 15 Pro Max</td>
-                                <td>Smartphones</td>
-                                <td>5</td>
-                                <td>10</td>
-                                <td>Almacén Principal</td>
-                                <td><span class="status critical">Crítico</span></td>
-                                <td>2024-01-19</td>
-                            </tr>
-                            <tr>
-                                <td>MacBook Air M3</td>
-                                <td>Laptops</td>
-                                <td>8</td>
-                                <td>5</td>
-                                <td>Tienda</td>
-                                <td><span class="status low">Bajo</span></td>
-                                <td>2024-01-18</td>
-                            </tr>
-                            <tr>
-                                <td>Apple Watch Ultra</td>
-                                <td>Smartwatches</td>
-                                <td>25</td>
-                                <td>10</td>
-                                <td>Almacén Principal</td>
-                                <td><span class="status normal">Normal</span></td>
-                                <td>2024-01-17</td>
-                            </tr>
-                            <tr>
-                                <td>Canon EOS R5</td>
-                                <td>Cámaras</td>
-                                <td>3</td>
-                                <td>5</td>
-                                <td>Sucursal</td>
-                                <td><span class="status critical">Crítico</span></td>
-                                <td>2024-01-16</td>
-                            </tr>
-                            <tr>
-                                <td>PlayStation 5</td>
-                                <td>Gaming</td>
-                                <td>15</td>
-                                <td>10</td>
-                                <td>Almacén Principal</td>
-                                <td><span class="status normal">Normal</span></td>
-                                <td>2024-01-15</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    function esc(value) {
+        const div = document.createElement('div');
+        div.textContent = value == null ? '' : String(value);
+        return div.innerHTML;
+    }
 
-            <style>
-                /* Estilos específicos de Inventario */
-                .inventory-filters {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 25px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                    margin-bottom: 30px;
-                }
+    function colores(cantidad) {
+        return Array.from({length: Math.max(cantidad, 1)}, function (_, i) {
+            return 'hsl(' + Math.round((360 / Math.max(cantidad, 1)) * i) + ',70%,60%)';
+        });
+    }
 
-                .filters-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 20px;
-                }
+    function normalizar(datos, etiqueta) {
+        const mapa = new Map();
+        (datos || []).forEach(function (fila) {
+            const key = String(fila.label ?? fila[etiqueta] ?? '').trim() || 'Sin dato';
+            const value = Number(fila.value ?? fila.cantidad ?? 0) || 0;
+            mapa.set(key, (mapa.get(key) || 0) + value);
+        });
+        return Array.from(mapa.entries())
+            .map(function (entry) { return {label: entry[0], value: entry[1]}; })
+            .sort(function (a, b) { return b.value - a.value; });
+    }
 
-                .filter-group {
-                    display: flex;
-                    flex-direction: column;
-                }
+    function renderReporte(datos, canvasId, tablaId, titulo, tipoGrafica) {
+        if (graficos[canvasId]) {
+            graficos[canvasId].destroy();
+        }
 
-                .filter-group label {
-                    font-weight: 600;
-                    color: #333;
-                    margin-bottom: 8px;
-                }
+        const tabla = document.getElementById(tablaId);
+        const canvas = document.getElementById(canvasId);
+        const chartContainer = canvas.closest('.chart-container');
+        if (chartContainer) {
+            chartContainer.style.height = canvasId === 'graficoProductos' && datos && datos.length
+                ? Math.max(280, Math.min(560, datos.length * 28)) + 'px'
+                : '';
+        }
 
-                .filter-group select, .filter-group input {
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                }
+        if (!datos || !datos.length) {
+            tabla.innerHTML = '<div class="no-data">No hay datos disponibles para el período seleccionado</div>';
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
 
-                .date-range {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
+        const total = datos.reduce(function (sum, fila) { return sum + fila.value; }, 0);
+        let html = '<table><thead><tr><th>Descripción</th><th>Cantidad</th><th>Porcentaje</th></tr></thead><tbody>';
+        datos.forEach(function (fila) {
+            const porcentaje = total ? (fila.value / total * 100).toFixed(2) : '0.00';
+            html += '<tr><td>' + esc(fila.label) + '</td><td>' + fila.value.toLocaleString() +
+                '</td><td>' + porcentaje + '%</td></tr>';
+        });
+        html += '</tbody><tfoot><tr><th>Total</th><th>' + total.toLocaleString() +
+            '</th><th>100%</th></tr></tfoot></table>';
+        tabla.innerHTML = html;
 
-                .date-range span {
-                    color: #666;
-                    font-weight: 500;
-                }
+        graficos[canvasId] = new Chart(canvas.getContext('2d'), {
+            type: tipoGrafica,
+            data: {
+                labels: datos.map(function (fila) { return fila.label; }),
+                datasets: [{
+                    label: titulo,
+                    data: datos.map(function (fila) { return fila.value; }),
+                    backgroundColor: colores(datos.length),
+                    borderWidth: tipoGrafica === 'line' ? 3 : 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: tipoGrafica !== 'line', position: 'bottom' },
+                    title: { display: false }
+                },
+                scales: tipoGrafica === 'line' || tipoGrafica === 'bar'
+                    ? { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    : {}
+            }
+        });
+    }
 
-                .stock-alerts-section {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 25px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                    margin-bottom: 30px;
-                }
+    function distinct(datos, campo) {
+        const mapa = new Map();
+        (datos || []).forEach(function (fila) {
+            const valor = String(fila[campo] ?? '').trim();
+            if (valor) mapa.set(valor.toLowerCase(), valor);
+        });
+        return Array.from(mapa.values()).sort();
+    }
 
-                .alerts-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 20px;
-                }
+    function buildFiltros() {
+        const tipo = document.getElementById('tipoReporteRecepcion').value;
+        const contenedor = document.getElementById('parametrosRecepcion');
+        let html = '';
 
-                .alert-card {
-                    padding: 20px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
+        if (tipo === 'proveedores') {
+            html += '<div class="filter-group"><label for="paramProveedor">Proveedor</label><select id="paramProveedor"><option value="">Todos</option>' +
+                distinct(recepcionProveedores, 'label').map(function (valor) {
+                    return '<option value="' + esc(valor) + '">' + esc(valor) + '</option>';
+                }).join('') + '</select></div>';
+        } else if (tipo === 'productos') {
+            html += '<div class="filter-group"><label for="paramProducto">Producto</label><select id="paramProducto"><option value="">Todos</option>' +
+                distinct(recepcionProductos, 'label').map(function (valor) {
+                    return '<option value="' + esc(valor) + '">' + esc(valor) + '</option>';
+                }).join('') + '</select></div>' +
+                '<div class="filter-group"><label for="paramProveedorProducto">Proveedor</label><select id="paramProveedorProducto"><option value="">Todos</option>' +
+                distinct(recepcionProductos, 'proveedor').map(function (valor) {
+                    return '<option value="' + esc(valor) + '">' + esc(valor) + '</option>';
+                }).join('') + '</select></div>' +
+                '<div class="filter-group"><label for="paramTopN">Top</label><select id="paramTopN"><option value="0">Todos</option><option value="10">Top 10</option><option value="20">Top 20</option><option value="50">Top 50</option></select></div>';
+        } else if (tipo === 'mensual') {
+            html += '<div class="filter-group"><label for="paramMes">Mes</label><select id="paramMes"><option value="">Todos</option>';
+            ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].forEach(function (mes, indice) {
+                html += '<option value="' + (indice + 1) + '">' + mes + '</option>';
+            });
+            html += '</select></div><div class="filter-group"><label for="paramAnio">Año</label><input type="number" id="paramAnio" placeholder="Ej: 2026"></div>';
+        }
+        contenedor.innerHTML = html;
+    }
 
-                .alert-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-                }
+    function toggleSecciones() {
+        const tipo = document.getElementById('tipoReporteRecepcion').value;
+        document.getElementById('reporteProveedores').style.display =
+            tipo === 'todos' || tipo === 'proveedores' ? 'block' : 'none';
+        document.getElementById('reporteProductos').style.display =
+            tipo === 'todos' || tipo === 'productos' ? 'block' : 'none';
+        document.getElementById('reporteMensual').style.display =
+            tipo === 'todos' || tipo === 'mensual' ? 'block' : 'none';
+        buildFiltros();
+    }
 
-                .alert-card.critical {
-                    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-                    border-left: 4px solid #dc3545;
-                }
+    function generarLocales(datos) {
+        const tipo = document.getElementById('tipoReporteRecepcion').value;
+        const tipoGrafica = document.getElementById('tipoGraficaRecepcion').value;
 
-                .alert-card.low {
-                    background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-                    border-left: 4px solid #ffc107;
-                }
+        let proveedores = normalizar(recepcionProveedores, 'label');
+        let productos = normalizar(recepcionProductos, 'label');
+        let mensual = normalizar(recepcionMensual, 'label');
 
-                .alert-card.overstock {
-                    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-                    border-left: 4px solid #17a2b8;
-                }
-
-                .alert-icon {
-                    font-size: 2rem;
-                }
-
-                .alert-icon i {
-                    color: #2196F3;
-                }
-
-                .alert-content {
-                    flex: 1;
-                }
-
-                .alert-content h4 {
-                    margin: 0 0 5px 0;
-                    color: #333;
-                    font-size: 1rem;
-                }
-
-                .alert-content p {
-                    margin: 0;
-                    color: #666;
-                    font-size: 0.85rem;
-                }
-
-                .btn-alert-action {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 0.85rem;
-                    transition: transform 0.2s;
-                }
-
-                .btn-alert-action:hover {
-                    transform: scale(1.05);
-                }
-
-                .inventory-details-section {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 25px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                }
-
-                .inventory-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-
-                .inventory-table th {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                    padding: 15px;
-                    text-align: left;
-                    font-weight: 600;
-                }
-
-                .inventory-table th:first-child {
-                    border-radius: 8px 0 0 0;
-                }
-
-                .inventory-table th:last-child {
-                    border-radius: 0 8px 0 0;
-                }
-
-                .inventory-table td {
-                    padding: 15px;
-                    border-bottom: 1px solid #eee;
-                }
-
-                .inventory-table tr:hover {
-                    background-color: #f8f9fa;
-                }
-
-                .status {
-                    padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                }
-
-                .status.critical {
-                    background-color: #f8d7da;
-                    color: #721c24;
-                }
-
-                .status.low {
-                    background-color: #fff3cd;
-                    color: #856404;
-                }
-
-                .status.normal {
-                    background-color: #d4edda;
-                    color: #155724;
-                }
-
-                @media (max-width: 768px) {
-                    .alerts-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .filters-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
-            </style>
-
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                // Gráfico de Stock por Categoría
-                const categoryCtx = document.getElementById('categoryStockChart').getContext('2d');
-                new Chart(categoryCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Smartphones', 'Laptops', 'Audio', 'Smartwatches', 'Cámaras', 'Gaming'],
-                        datasets: [{
-                            data: [25, 20, 15, 18, 12, 10],
-                            backgroundColor: [
-                                'rgba(102, 126, 234, 0.8)',
-                                'rgba(118, 75, 162, 0.8)',
-                                'rgba(240, 147, 251, 0.8)',
-                                'rgba(245, 87, 108, 0.8)',
-                                'rgba(67, 233, 123, 0.8)',
-                                'rgba(56, 242, 215, 0.8)'
-                            ],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        }
-                    }
+        if (tipo === 'proveedores') {
+            const proveedor = document.getElementById('paramProveedor')?.value || '';
+            if (proveedor) proveedores = proveedores.filter(function (fila) {
+                return fila.label.toLowerCase() === proveedor.toLowerCase();
+            });
+        }
+        if (tipo === 'productos') {
+            const producto = document.getElementById('paramProducto')?.value || '';
+            const proveedor = document.getElementById('paramProveedorProducto')?.value || '';
+            const topN = parseInt(document.getElementById('paramTopN')?.value || '0', 10) || 0;
+            if (producto) productos = normalizar(recepcionProductos.filter(function (fila) {
+                return String(fila.label || '').toLowerCase() === producto.toLowerCase();
+            }), 'label');
+            if (proveedor) productos = normalizar(recepcionProductos.filter(function (fila) {
+                return String(fila.proveedor || '').toLowerCase() === proveedor.toLowerCase();
+            }), 'label');
+            if (topN) productos = productos.slice(0, topN);
+        }
+        if (tipo === 'mensual') {
+            const mes = parseInt(document.getElementById('paramMes')?.value || '0', 10);
+            const anio = document.getElementById('paramAnio')?.value || '';
+            if (mes) mensual = mensual.filter(function (fila) {
+                const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+                return fila.label === meses[mes - 1];
+            });
+            if (anio) {
+                mensual = mensual.filter(function (fila) {
+                    return !fila.anio || String(fila.anio) === String(anio);
                 });
+            }
+        }
 
-                // Gráfico de Movimientos
-                const movementsCtx = document.getElementById('movementsChart').getContext('2d');
-                new Chart(movementsCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Entradas', 'Salidas'],
-                        datasets: [{
-                            label: 'Movimientos',
-                            data: [234, 189],
-                            backgroundColor: [
-                                'rgba(67, 233, 123, 0.8)',
-                                'rgba(245, 87, 108, 0.8)'
-                            ],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
+        renderReporte(proveedores, 'graficoProveedores', 'tablaProveedores', 'Recepciones por Proveedor', tipoGrafica);
+        renderReporte(productos, 'graficoProductos', 'tablaProductos', 'Productos más Recibidos', tipoGrafica);
+        renderReporte(mensual, 'graficoMensual', 'tablaMensual', 'Recepciones Mensuales', tipoGrafica);
+    }
+
+    async function generarDesdeBackend() {
+        const params = new URLSearchParams();
+        params.append('accion', 'reportes_inventario');
+        params.append('tipoReporte', document.getElementById('tipoReporteRecepcion').value);
+        params.append('fechaInicio', document.getElementById('fechaInicioRecepcion').value);
+        params.append('fechaFin', document.getElementById('fechaFinRecepcion').value);
+        params.append('proveedor', document.getElementById('paramProveedor')?.value || '');
+        params.append('producto', document.getElementById('paramProducto')?.value || '');
+        params.append('anio', document.getElementById('paramAnio')?.value || '');
+
+        document.getElementById('mensajeErrorRecepcion').style.display = 'none';
+
+        try {
+            const respuesta = await fetch('?pagina=reporteInventario', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: params.toString()
+            });
+            const contenido = await respuesta.json();
+            if (!respuesta.ok || contenido.status !== 'success') throw new Error(contenido.message || 'Error');
+
+            recepcionProveedores = contenido.data.proveedores || [];
+            recepcionProductos = contenido.data.productos || [];
+            recepcionMensual = contenido.data.mensual || [];
+            generarLocales();
+        } catch (error) {
+            document.getElementById('mensajeErrorRecepcion').style.display = 'block';
+            generarLocales();
+        }
+    }
+
+    function descargarImagenRecepcion(canvasId, nombreArchivo) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = nombreArchivo;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }
+
+    async function capturarGrafico(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const seccion = canvas.closest('.reporte-seccion');
+        const displayAnterior = seccion.style.display;
+
+        if (getComputedStyle(seccion).display === 'none') {
+            seccion.style.display = 'block';
+        }
+
+        try {
+            const grafico = graficos[canvasId];
+            if (!grafico) throw new Error('El gráfico aún no se ha generado');
+
+            grafico.resize();
+            grafico.update('none');
+            await new Promise(function (resolve) {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(resolve);
                 });
+            });
 
-                // Gráfico de Tendencia
-                const trendCtx = document.getElementById('trendChart').getContext('2d');
-                new Chart(trendCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene'],
-                        datasets: [{
-                            label: 'Stock',
-                            data: [1100, 1250, 1180, 1320, 1400, 1234],
-                            borderColor: 'rgba(102, 126, 234, 1)',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
+            return {
+                data: grafico.toBase64Image('image/png'),
+                width: canvas.width,
+                height: canvas.height
+            };
+        } finally {
+            seccion.style.display = displayAnterior;
+        }
+    }
 
-                function applyFilters() {
-                    alert('Función de aplicar filtros (conectar con backend)');
+    async function descargarTodosLosReportes() {
+        if (typeof window.jspdf === 'undefined') {
+            Swal.fire({icon:'error', title:'Error', text:'La librería PDF no está cargada'});
+            return;
+        }
+
+        const secciones = ['reporteProveedores', 'reporteProductos', 'reporteMensual'];
+        const disponibles = secciones.filter(function (id) {
+            const contenedor = document.getElementById(id);
+            return contenedor && contenedor.querySelector('canvas') &&
+                contenedor.querySelector('table');
+        });
+
+        if (!disponibles.length) {
+            Swal.fire({icon:'warning', title:'Sin datos', text:'Genere los reportes antes de descargarlos'});
+            return;
+        }
+
+        Swal.fire({title:'Generando reportes...', allowOutsideClick:false, didOpen:function () { Swal.showLoading(); }});
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+        const margenX = 12;
+        const margenSuperior = 12;
+        const margenInferior = 12;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imageWidth = pageWidth - margenX * 2;
+        const rowHeight = 8;
+        const widths = [imageWidth * 0.52, imageWidth * 0.23, imageWidth * 0.25];
+
+        for (let seccionIndex = 0; seccionIndex < disponibles.length; seccionIndex++) {
+            const id = disponibles[seccionIndex];
+            if (seccionIndex > 0) pdf.addPage();
+
+            const contenedor = document.getElementById(id);
+            const canvas = contenedor.querySelector('canvas');
+            const tabla = contenedor.querySelector('table');
+            let y = margenSuperior;
+
+            pdf.setFontSize(16);
+            pdf.setTextColor(45,55,72);
+            pdf.text(contenedor.querySelector('.report-subcard-header h3').textContent.trim(), margenX, y);
+            y += 8;
+
+            const graficoImagen = await capturarGrafico(canvas.id);
+            const chartHeight = Math.min(graficoImagen.height * imageWidth / graficoImagen.width, 95);
+            pdf.addImage(graficoImagen.data, 'PNG', margenX, y, imageWidth, chartHeight);
+            y += chartHeight + 8;
+
+            const wrapper = tabla.closest('.table-wrapper');
+            const maxHeightAnterior = wrapper ? wrapper.style.maxHeight : '';
+            const overflowAnterior = wrapper ? wrapper.style.overflowY : '';
+            if (wrapper) {
+                wrapper.style.maxHeight = 'none';
+                wrapper.style.overflowY = 'visible';
+            }
+
+            const tablaCanvas = await html2canvas(tabla, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+            if (wrapper) {
+                wrapper.style.maxHeight = maxHeightAnterior;
+                wrapper.style.overflowY = overflowAnterior;
+            }
+
+            const tablaWidth = pageWidth - margenX * 2;
+            const tablaHeight = tablaCanvas.height * tablaWidth / tablaCanvas.width;
+            if (y + tablaHeight <= pageHeight - margenInferior) {
+                pdf.addImage(tablaCanvas.toDataURL('image/png'), 'PNG', margenX, y, tablaWidth, tablaHeight);
+            } else {
+                const ratio = tablaCanvas.width / tablaWidth;
+                const pageContentHeight = (pageHeight - margenSuperior - margenInferior) * ratio;
+                let sourceY = 0;
+                let firstTableSlice = true;
+                while (sourceY < tablaCanvas.height) {
+                    if (!firstTableSlice) pdf.addPage();
+                    const remaining = tablaCanvas.height - sourceY;
+                    const sliceHeight = Math.min(pageContentHeight, remaining);
+                    const slice = document.createElement('canvas');
+                    slice.width = tablaCanvas.width;
+                    slice.height = Math.ceil(sliceHeight);
+                    slice.getContext('2d').drawImage(
+                        tablaCanvas,
+                        0, sourceY, tablaCanvas.width, slice.height,
+                        0, 0, tablaCanvas.width, slice.height
+                    );
+                    pdf.addImage(
+                        slice.toDataURL('image/png'),
+                        'PNG',
+                        margenX,
+                        margenSuperior,
+                        tablaWidth,
+                        slice.height / ratio
+                    );
+                    sourceY += sliceHeight;
+                    firstTableSlice = false;
                 }
+            }
+        }
 
-                function resetFilters() {
-                    document.getElementById('startDate').value = '';
-                    document.getElementById('endDate').value = '';
-                    document.getElementById('categoryFilter').value = '';
-                    document.getElementById('statusFilter').value = '';
-                    document.getElementById('locationFilter').value = '';
+        pdf.save('Reporte_Recepciones_Completo.pdf');
+        Swal.close();
+    }
+
+    async function descargarPDFRecepcion(contenedorId, nombreArchivo) {
+        if (typeof window.jspdf === 'undefined') {
+            Swal.fire({icon:'error', title:'Error', text:'La librería PDF no está cargada'});
+            return;
+        }
+
+        const contenedor = document.getElementById(contenedorId);
+        const canvas = contenedor.querySelector('canvas');
+        const tabla = contenedor.querySelector('table');
+        if (!canvas || !tabla) {
+            Swal.fire({icon:'warning', title:'Sin datos', text:'Genere el reporte antes de descargar'});
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+        const margenX = 12;
+        const margenSuperior = 12;
+        const margenInferior = 12;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        let y = margenSuperior;
+
+        pdf.setFontSize(16);
+        pdf.setTextColor(45,55,72);
+        pdf.text(contenedor.querySelector('.chart-header h3').textContent, margenX, y);
+        y += 8;
+
+        const imageWidth = pageWidth - margenX * 2;
+        const graficoImagen = await capturarGrafico(canvas.id);
+        const imageHeight = graficoImagen.height * imageWidth / graficoImagen.width;
+        if (y + imageHeight > pageHeight - margenInferior) {
+            pdf.addPage();
+            y = margenSuperior;
+        }
+        pdf.addImage(graficoImagen.data, 'PNG', margenX, y, imageWidth, Math.min(imageHeight, 95));
+        y += Math.min(imageHeight, 95) + 8;
+
+        if (typeof html2canvas === 'undefined') {
+            Swal.fire({icon:'error', title:'Error', text:'La librería de tabla no está cargada'});
+            return;
+        }
+
+        const wrapper = tabla.closest('.table-wrapper');
+        const maxHeightAnterior = wrapper ? wrapper.style.maxHeight : '';
+        const overflowAnterior = wrapper ? wrapper.style.overflowY : '';
+        if (wrapper) {
+            wrapper.style.maxHeight = 'none';
+            wrapper.style.overflowY = 'visible';
+        }
+
+        Swal.fire({title:'Generando tabla...', allowOutsideClick:false, didOpen:function () { Swal.showLoading(); }});
+        html2canvas(tabla, {scale:2, useCORS:true, backgroundColor:'#ffffff'}).then(function (tablaCanvas) {
+            if (wrapper) {
+                wrapper.style.maxHeight = maxHeightAnterior;
+                wrapper.style.overflowY = overflowAnterior;
+            }
+
+            const tablaWidth = pageWidth - margenX * 2;
+            const tablaHeight = tablaCanvas.height * tablaWidth / tablaCanvas.width;
+            if (y + tablaHeight <= pageHeight - margenInferior) {
+                pdf.addImage(tablaCanvas.toDataURL('image/png'), 'PNG', margenX, y, tablaWidth, tablaHeight);
+            } else {
+                const ratio = tablaCanvas.width / tablaWidth;
+                const pageContentHeight = (pageHeight - margenSuperior - margenInferior) * ratio;
+                let sourceY = 0;
+                let first = true;
+                while (sourceY < tablaCanvas.height) {
+                    if (!first) pdf.addPage();
+                    const remaining = tablaCanvas.height - sourceY;
+                    const sliceHeight = Math.min(pageContentHeight, remaining);
+                    const slice = document.createElement('canvas');
+                    slice.width = tablaCanvas.width;
+                    slice.height = Math.ceil(sliceHeight);
+                    slice.getContext('2d').drawImage(
+                        tablaCanvas,
+                        0, sourceY, tablaCanvas.width, slice.height,
+                        0, 0, tablaCanvas.width, slice.height
+                    );
+                    const sliceImg = slice.toDataURL('image/png');
+                    const slicePdfHeight = slice.height / ratio;
+                    pdf.addImage(sliceImg, 'PNG', margenX, margenSuperior, tablaWidth, slicePdfHeight);
+                    sourceY += sliceHeight;
+                    first = false;
                 }
+            }
 
-                function downloadReport() {
-                    alert('Función de descargar PDF (conectar con backend)');
-                }
+            pdf.save(nombreArchivo);
+            Swal.close();
+        }).catch(function (error) {
+            if (wrapper) {
+                wrapper.style.maxHeight = maxHeightAnterior;
+                wrapper.style.overflowY = overflowAnterior;
+            }
+            Swal.close();
+            Swal.fire({icon:'error', title:'Error', text:'No se pudo generar la tabla del PDF'});
+            console.error(error);
+        });
+    }
 
-                function exportToExcel() {
-                    alert('Función de exportar Excel (conectar con backend)');
-                }
+    window.descargarImagenRecepcion = descargarImagenRecepcion;
+    window.descargarPDFRecepcion = descargarPDFRecepcion;
+    window.descargarTodosLosReportes = descargarTodosLosReportes;
 
-                function viewAllAlerts() {
-                    alert('Función de ver todas las alertas (conectar con backend)');
-                }
-
-                function handleAlert(type) {
-                    alert('Función para manejar alertas: ' + type + ' (conectar con backend)');
-                }
-
-                // Establecer fechas por defecto (mes actual)
-                document.addEventListener('DOMContentLoaded', function() {
-                    const today = new Date();
-                    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    
-                    document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
-                    document.getElementById('endDate').value = lastDay.toISOString().split('T')[0];
-                });
-            </script>
+    document.getElementById('tipoReporteRecepcion').addEventListener('change', toggleSecciones);
+    document.getElementById('generarReporteRecepcion').addEventListener('click', generarDesdeBackend);
+    document.getElementById('descargarTodosReportes').addEventListener('click', descargarTodosLosReportes);
+    toggleSecciones();
+    generarLocales();
+})();
+</script>
 
 <?php
 $contenido_pagina = ob_get_clean();
-
-// Incluir la estructura base del dashboard
 require_once __DIR__ . '/dashboard_base.php';
 ?>
