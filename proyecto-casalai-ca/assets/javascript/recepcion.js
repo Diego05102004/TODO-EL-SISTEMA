@@ -725,6 +725,64 @@ function buscarOpcionCatalogo(select, texto) {
     return exactas.length === 1 ? exactas[0] : null;
 }
 
+function buscarProductoFacturaEnCatalogo(select, producto) {
+    if (!select || !producto) return null;
+
+    const nombreFactura = normalizarTextoRecepcion(producto.nombre);
+    if (!nombreFactura) return null;
+
+    const opciones = Array.from(select.options).filter(opcion => opcion.value);
+    const exactas = opciones.filter(opcion =>
+        normalizarTextoRecepcion(opcion.textContent) === nombreFactura
+    );
+    if (exactas.length === 1) return exactas[0];
+
+    const marcaFactura = normalizarTextoRecepcion(producto.marca);
+    const modeloFactura = normalizarTextoRecepcion(producto.modelo);
+    const candidatas = [];
+
+    opciones.forEach(opcion => {
+        const nombreCatalogo = normalizarTextoRecepcion(opcion.textContent);
+        if (!nombreCatalogo || !nombreFactura.startsWith(nombreCatalogo)) return;
+
+        const marcaCatalogo = normalizarTextoRecepcion(opcion.dataset.marca);
+        const modeloCatalogo = normalizarTextoRecepcion(opcion.dataset.modelo);
+        const marcaCoincide = Boolean(marcaFactura && marcaCatalogo && marcaFactura === marcaCatalogo);
+        const modeloCoincide = Boolean(
+            modeloCatalogo &&
+            (
+                (modeloCatalogo.length >= 3 && nombreFactura.includes(modeloCatalogo)) ||
+                (modeloFactura && modeloFactura === modeloCatalogo)
+            )
+        );
+        const nombreExacto = nombreCatalogo === nombreFactura;
+
+        if (!nombreExacto && !marcaCoincide && !modeloCoincide) return;
+
+        candidatas.push({
+            opcion,
+            puntuacion: (nombreExacto ? 10 : 0) +
+                (modeloCoincide ? 3 : 0) +
+                (marcaCoincide ? 2 : 0),
+            longitudNombre: nombreCatalogo.length
+        });
+    });
+
+    if (!candidatas.length) return null;
+
+    candidatas.sort((a, b) =>
+        b.puntuacion - a.puntuacion || b.longitudNombre - a.longitudNombre
+    );
+    const mejor = candidatas[0];
+    const hayEmpate = candidatas.some((candidata, indice) =>
+        indice > 0 &&
+        candidata.puntuacion === mejor.puntuacion &&
+        candidata.longitudNombre === mejor.longitudNombre
+    );
+
+    return hayEmpate ? null : mejor.opcion;
+}
+
 function buscarOpcionCatalogoPorDatos(select, producto) {
     if (!select) return null;
     const campos = [
@@ -998,7 +1056,7 @@ function rellenarRecepcionDesdeFactura(factura) {
                 if (!fila) return;
                 fila.dataset.indiceFactura = String(indice);
                 const selector = fila.querySelector('.producto-select');
-                const opcion = buscarOpcionCatalogo(selector, producto.nombre);
+                const opcion = buscarProductoFacturaEnCatalogo(selector, producto);
                 if (opcion && selector) {
                     selector.value = opcion.value;
                     seleccionarProducto(selector);
@@ -1045,7 +1103,9 @@ function rellenarRecepcionDesdeFactura(factura) {
     const primerSelector = document.querySelector('.producto-select');
     let productos_no_en_catalogo = 0;
     if (productosDetectados.length > 0 && primerSelector) {
-        productos_no_en_catalogo = productosDetectados.filter(producto => !buscarOpcionCatalogo(primerSelector, producto.nombre)).length;
+        productos_no_en_catalogo = productosDetectados.filter(producto =>
+            !buscarProductoFacturaEnCatalogo(primerSelector, producto)
+        ).length;
     }
     
     if (productos_no_en_catalogo > 0) {
@@ -1462,6 +1522,7 @@ function obtenerDiscrepanciasRecepcionActuales() {
 
     const productosForm = Array.from(document.querySelectorAll('#productosList .producto-row')).map(fila => ({
         nombre: fila.querySelector('.producto-select option:checked')?.textContent?.trim() || '',
+        productoId: fila.querySelector('.producto-select')?.value || '',
         cantidad: Number(fila.querySelector('input[name="cantidad[]"]')?.value || 0),
         costo: Number(fila.querySelector('input[name="costo[]"]')?.value || 0),
         indiceFactura: /^\d+$/.test(fila.dataset.indiceFactura || '')
@@ -1522,8 +1583,16 @@ function obtenerDiscrepanciasRecepcionActuales() {
         }
 
         const nombreFactura = String(prodFactura.nombre || '').trim();
+        const opcionFactura = buscarProductoFacturaEnCatalogo(
+            document.querySelector('.producto-select'),
+            prodFactura
+        );
+        const mismoProductoCatalogado = Boolean(
+            opcionFactura && String(prodForm.productoId) === String(opcionFactura.value)
+        );
         if (
             nombreFactura &&
+            !mismoProductoCatalogado &&
             normalizarTextoRecepcion(nombreFactura) !== normalizarTextoRecepcion(prodForm.nombre)
         ) {
             pendientes.push({
