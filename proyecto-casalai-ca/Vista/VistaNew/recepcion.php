@@ -113,8 +113,8 @@ ob_start();
                     <i class="fas fa-inbox"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2 id="modalTitle">Nueva Recepción</h2>
-                    <p>Complete los datos para registrar una nueva recepción de productos</p>
+                    <h2 id="modalTitle">Incluir Recepción</h2>
+                    <p>Complete los datos para incluir una nueva recepción de productos</p>
                 </div>
                 <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para Incluir Recepción" data-contexto="registrar">
                     <img src="assets/img/info-ayuda.svg">
@@ -122,6 +122,7 @@ ob_start();
             </div>
             <span class="close-modal" onclick="closeRecepcionModal()">&times;</span>
         </div>
+        
         <div class="modal-body">
             <form id="recepcionForm" enctype="multipart/form-data">
                 <div class="form-row-content">
@@ -155,9 +156,7 @@ ob_start();
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="correlativo">
-                                    Número de Factura*
-                                </label>
+                                <label for="correlativo">Número de Factura*</label>
                                 <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
                                 <span class="span-value" id="scorrelativo"></span>
                             </div>
@@ -291,7 +290,6 @@ ob_start();
                             </button>
                         </div>
                     </div>
-
                 </div>
             </form>
         </div>

@@ -217,97 +217,124 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
     </table>
 </div>
 
-            <!-- Modal para Agregar/Editar Usuario -->
-            <div id="userModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2 id="modalTitle">Agregar Usuario</h2>
-                        <span class="close-modal">&times;</span>
+<!-- Modal para Agregar/Editar Usuario -->
+<div id="userModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="modal-title-content">
+                    <h2 id="modalTitle">Incluir Usuarios</h2>
+                    <p>Complete los datos para incluir un nuevo usuario</p>
+                </div>
+                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para Incluir Usuarios" data-contexto="registrar">
+                    <img src="assets/img/info-ayuda.svg">
+                </button>
+            </div>
+            <span class="close-modal" onclick="closeRecepcionModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <form id="userForm" enctype="multipart/form-data">
+                <div class="form-section">
+                    <input type="hidden" id="userId" name="id_usuario">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nombre_usuario">Nombre de Usuario*</label>
+                            <input type="text" class="input-textnum" id="nombre_usuario" name="nombre_usuario" placeholder="Ingrese un nombre de usuario" maxlength="20">
+                            <span class="span-value" id="snombre_usuario"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nombre">Nombre(s)*</label>
+                            <input type="text" class="input-textnum" id="nombre" name="nombre" placeholder="Ingrese su nombre" maxlength="50">
+                            <span class="span-value" id="snombre"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apellido_usuario">Apellido(s)*</label>
+                            <input type="text" class="input-textnum" id="apellido_usuario" name="apellido_usuario" placeholder="Ingrese su apellido" maxlength="50">
+                            <span class="span-value" id="sapellido"></span>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <form id="userForm">
-                            <input type="hidden" id="userId" name="id_usuario">
 
-                            <div class="form-group">
-                                <label for="nombre_usuario">Nombre de Usuario*</label>
-                                <input type="text" id="nombre_usuario" name="nombre_usuario" required
-                                       placeholder="Ej: jperrez" maxlength="20">
-                                <small class="field-error" data-error-for="nombre_usuario"></small>
-                            </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cedula">Cédula*</label>
+                            <input type="text" class="input-textnum" id="cedula" name="cedula" placeholder="12.345.678" maxlength="10">
+                            <span class="span-value" id="scedula"></span>
+                        </div>
 
-                            <div class="form-group">
-                                <label for="nombre">Nombre*</label>
-                                <input type="text" id="nombre" name="nombre" required
-                                       placeholder="Ej: Juan" maxlength="50">
-                                <small class="field-error" data-error-for="nombre"></small>
-                            </div>
+                        <div class="form-group">
+                            <label for="telefono_usuario">Teléfono*</label>
+                            <input type="text" class="input-textnum" id="telefono_usuario" name="telefono_usuario" placeholder="0414-123-4567" maxlength="13">
+                            <span class="span-value" id="stelefono_usuario"></span>
+                        </div>
 
-                            <div class="form-group">
-                                <label for="apellido_usuario">Apellido*</label>
-                                <input type="text" id="apellido_usuario" name="apellido_usuario" required
-                                       placeholder="Ej: Pérez" maxlength="50">
-                                <small class="field-error" data-error-for="apellido_usuario"></small>
-                            </div>
+                        <div class="form-group">
+                            <label for="correo_usuario">Correo Electrónico*</label>
+                            <input type="email" class="input-textnum" id="correo_usuario" name="correo_usuario" placeholder="persona@gmail.com" maxlength="50">
+                            <span class="span-value" id="scorreo_usuario"></span>
+                        </div>
+                    </div>
 
-                            <div class="form-group">
-                                <label for="correo_usuario">Email*</label>
-                                <input type="email" id="correo_usuario" name="correo_usuario" required
-                                       placeholder="juan.perez@casalai.com" maxlength="50">
-                                <small class="field-error" data-error-for="correo_usuario"></small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="cedula">Cédula*</label>
-                                <input type="text" id="cedula" name="cedula" required
-                                       placeholder="12.345.678" maxlength="10">
-                                <small class="field-error" data-error-for="cedula"></small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="telefono_usuario">Teléfono*</label>
-                                <input type="text" id="telefono_usuario" name="telefono_usuario" required
-                                       placeholder="0414-123-4567" maxlength="13">
-                                <small class="field-error" data-error-for="telefono_usuario"></small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="rango">Rol*</label>
-                                <select id="rango" name="rango" required>
-                                    <option value="">Seleccione rol</option>
-                                    <?php
-                                    if (!empty($selecionarRol)) {
-                                        foreach ($selecionarRol as $rol) {
-                                            if($rol['nombre_rol'] != 'SuperUsuario' && $rol['nombre_rol'] != 'Cliente') {
-                                                echo '<option value="' . $rol['id_rol'] . '">' . htmlspecialchars($rol['nombre_rol']) . '</option>';
-                                            }
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rango">Rol del Usuario*</label>
+                            <select id="rango" name="rango" class="input-select">
+                                <option value="">Seleccione el rol</option>
+                                <?php
+                                if (!empty($selecionarRol)) {
+                                    foreach ($selecionarRol as $rol) {
+                                        if($rol['nombre_rol'] != 'SuperUsuario' && $rol['nombre_rol'] != 'Cliente') {
+                                            echo '<option value="' . $rol['id_rol'] . '">' . htmlspecialchars($rol['nombre_rol']) . '</option>';
                                         }
                                     }
-                                    ?>
-                                </select>
-                                <small class="field-error" data-error-for="rango"></small>
-                            </div>
+                                }
+                                ?>
+                            </select>
+                            <span class="span-value" id="srango"></span>
+                        </div>
 
-                            <div class="form-group" id="passwordGroup">
-                                <label for="clave_usuario">Contraseña*</label>
-                                <input type="password" id="clave_usuario" name="clave_usuario" required
-                                       placeholder="Mínimo 6 caracteres" maxlength="15">
-                                <small class="field-error" data-error-for="clave_usuario"></small>
+                        <div class="form-group" id="passwordGroup">
+                            <label for="clave_usuario">Contraseña*</label>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="password" class="input-textnum" id="clave_usuario" name="clave_usuario" placeholder="Crea una contraseña" maxlength="15">
+                                <button type="button" class="toggle-password" data-target="#clave_usuario" title="Mostrar/Ocultar" style="background:transparent;border:none;cursor:pointer;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                                </button>
                             </div>
+                            <span class="span-value" id="sclave_usuario"></span>
+                        </div>
 
-                            <div class="form-group" id="confirmPasswordGroup">
-                                <label for="clave_confirmar">Confirmar Contraseña*</label>
-                                <input type="password" id="clave_confirmar" name="clave_confirmar" required
-                                       placeholder="Repetir contraseña" maxlength="15">
-                                <small class="field-error" data-error-for="clave_confirmar"></small>
+                        <div class="form-group" id="confirmPasswordGroup">
+                            <label for="clave_confirmar">Confirmar Contraseña*</label>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="password" class="input-textnum" id="clave_confirmar" name="clave_confirmar" placeholder="Ingrese nuevamente la contraseña" maxlength="15">
+                                <button type="button" class="toggle-password" data-target="#clave_confirmar" title="Mostrar/Ocultar" style="background:transparent;border:none;cursor:pointer;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                                </button>
                             </div>
-                        </form>
+                            <span class="span-value" id="sclave_confirmar"></span>
+                        </div>
                     </div>
+
                     <div class="modal-footer">
-                        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-                        <button class="btn-save" onclick="saveUser()">Guardar</button>
+                        <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="button" class="btm-confirmar btn-save" onclick="saveUser()">
+                            <i class="fas fa-check"></i> Registrar
+                        </button>
                     </div>
                 </div>
-            </div>
+            </form>
+        </div>
+    </div>
+</div>
 
             <div id="userDetailsModal" class="modal">
                 <div class="modal-content">
@@ -357,45 +384,6 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     margin: 0;
                     color: #222;
                     overflow-wrap: anywhere;
-                }
-
-                .btn-view {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                }
-
-                .btn-edit {
-                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                }
-
-                .btn-delete {
-                    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-                }
-
-                @media (max-width: 768px) {
-                    .filters-section {
-                        flex-direction: column;
-                    }
-                    
-                    .filter-options {
-                        flex-direction: column;
-                        width: 100%;
-                    }
-                    
-                    .filter-options select {
-                        width: 100%;
-                    }
-                    
-                    .users-table {
-                        font-size: 0.85rem;
-                    }
-
-                    .user-details-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .users-table th, .users-table td {
-                        padding: 10px;
-                    }
                 }
             </style>
 
