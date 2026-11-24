@@ -20,9 +20,93 @@
     font-size: 1.5rem;
 }
 
+/*Filtrado*/
+.filters-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.search-bar {
+    flex: 1;
+    position: relative;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.filter-options {
+    display: flex;
+    gap: 10px;
+}
+
+.select-filter{
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    padding: 0.375rem 2rem 0.375rem 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #333;
+    appearance: none;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    border-color: #d7e4f2;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.select-filter:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
 .section-actions{
     display: flex;
     gap: 10px;
+}
+
+.campo-texto{
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.role-badge {
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #887dff 0%, #1303ee 100%);
+    color: white;
+}
+
+.status {
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+}
+
+.status.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 /*Botones Superiores*/
@@ -121,6 +205,20 @@
 }
 .btn-detallar:hover {
     box-shadow: 0 4px 12px rgba(44, 75, 250, 0.479);
+}
+
+.btn-modificar {
+    background: linear-gradient(135deg, #a8e7f7 0%, #059cf3 100%);
+}
+.btn-modificar:hover {
+    box-shadow: 0 4px 12px rgba(44, 75, 250, 0.479);
+}
+
+.btn-eliminar{
+    background: linear-gradient(135deg, #fd8c8c 0%, #f10404 100%);
+}
+.btn-eliminar:hover {
+    box-shadow: 0 4px 12px rgba(236, 78, 78, 0.479);
 }
 
 .btn-anular {

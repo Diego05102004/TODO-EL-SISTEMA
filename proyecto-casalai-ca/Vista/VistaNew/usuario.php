@@ -51,6 +51,8 @@ $porcentaje_inactivos = $total_usuarios > 0 ? round(($usuarios_inactivos / $tota
 $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuarios) * 100) : 0;
 ?>
 
+<script src="assets/public/js/jquery-3.7.1.min.js"></script>
+<script src="assets/javascript/datatable.js"></script>
 <link rel="stylesheet" href="assets/styles/cards.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/cards.css'); ?>">
 
 <!-- Summary Cards para Usuarios -->
@@ -107,123 +109,112 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
     </div>
 </div>
 
-            <!-- Botones de Acción -->
-            <div class="action-buttons">
-                <button class="btn-add-user" onclick="openModal('agregar')">
-                    <span class="btn-icon"><i class="fas fa-plus"></i></span>
-                    Agregar Usuario
-                </button>
-                <button class="btn-import" onclick="importUsers()">
-                    <span class="btn-icon"><i class="fas fa-download"></i></span>
-                    Importar
-                </button>
-                <button class="btn-export" onclick="exportUsers()">
-                    <span class="btn-icon"><i class="fas fa-upload"></i></span>
-                    Exportar
-                </button>
+<!-- Usuarios Section -->
+<div class="table-section">
+    <div class="section-header">
+        <h2>Lista de Usuarios</h2>
+        <div class="filters-section">
+            <div class="filter-options">
+                <select id="roleFilter" class="select-filter" onchange="filterByRole()">
+                    <option value="">Todos los roles</option>
+                    <option value="admin">Administrador</option>
+                    <option value="gerente">Gerente</option>
+                    <option value="vendedor">Vendedor</option>
+                    <option value="almacen">Almacenista</option>
+                </select>
             </div>
-
-            <!-- Filtros y Búsqueda -->
-            <div class="filters-section">
-                <div class="search-bar">
-                    <input type="text" id="searchUser" placeholder="Buscar usuario..." onkeyup="searchUsers()">
-                    <span class="search-icon"><i class="fas fa-search"></i></span>
-                </div>
-                <div class="filter-options">
-                    <select id="roleFilter" onchange="filterByRole()">
-                        <option value="">Todos los roles</option>
-                        <option value="admin">Administrador</option>
-                        <option value="gerente">Gerente</option>
-                        <option value="vendedor">Vendedor</option>
-                        <option value="almacen">Almacén</option>
-                    </select>
-                    <select id="statusFilter" onchange="filterByStatus()">
-                        <option value="">Todos los estados</option>
-                        <option value="active">Activos</option>
-                        <option value="inactive">Inactivos</option>
-                        <option value="pending">Pendientes</option>
-                    </select>
-                </div>
+            <div class="filter-options">
+                <select id="statusFilter" class="select-filter" onchange="filterByStatus()">
+                    <option value="">Todos los estados</option>
+                    <option value="active">Habilitados</option>
+                    <option value="inactive">Inhabilitados</option>
+                </select>
             </div>
-
-<!-- Tabla de Usuarios -->
-<div class="users-table-section">
-    <div class="table-container">
-        <table class="users-table">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Nombre Completo</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($usuarios)): ?>
-                    <?php foreach ($usuarios as $usuario): ?>
-                    <tr data-id="<?php echo (int)($usuario['id_usuario'] ?? 0); ?>">
-                        <td>
-                            <div class="user-cell">
-                                <div class="user-avatar-small">
-                                    <span class="avatar-initial">
-                                        <?php echo htmlspecialchars(mb_substr($usuario['username'] ?? '', 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>
-                                    </span>
-                                </div>
-                                <span class="username">
-                                    <?php echo htmlspecialchars($usuario['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <?php echo htmlspecialchars(($usuario['nombres'] ?? '') . ' ' . ($usuario['apellidos'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
-                        </td>
-                        <td>
-                            <?php echo htmlspecialchars($usuario['correo'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                        </td>
-                        <td>
-                            <span class="role-badge <?php echo strtolower(str_replace(' ', '', $usuario['nombre_rol'] ?? '')); ?>">
-                                <?php echo htmlspecialchars($usuario['nombre_rol'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
-                                    <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
-                                    onclick="toggleUserStatus(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>, '<?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
-                                    title="Click para cambiar estado"
-                                    <?php endif; ?>
-                                    <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
-                                    style="cursor: not-allowed; opacity: 0.6;"
-                                    <?php endif; ?>>
-                                <?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                            </span>
-                        </td>
-                        <td>
-                            <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
-                                <button class="btn-action btn-edit" onclick="openModal('editar', <?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-action btn-view" onclick="viewUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)"><i class="fas fa-eye"></i></button>
-                                <button class="btn-action btn-delete" onclick="deleteUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            <?php else: ?>
-                                <span style="color: #999; font-size: 0.8rem;">No editable</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px;">
-                            No hay usuarios registrados
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+        </div>
+        <div class="section-actions">
+            <button class="btn-table-superior btn-ayuda" title="Visualizar Ayuda">
+                <img src="assets/img/info-ayuda.svg">
+            </button>
+            <button class="btn-table-superior btn-incluir" title="Incluir Usuarios" onclick="openModal('agregar')">
+                <img src="assets/img/plus.svg">
+            </button>
+        </div>
     </div>
+
+    <!-- Tabla de Usuarios -->
+    <table class="table-info" data-datatable data-page-length="10" data-datatable-order='[[0, "desc"]]' data-datatable-no-order="4" data-datatable-no-search="4">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre Completo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($usuarios)): ?>
+                <?php foreach ($usuarios as $usuario): ?>
+                <tr data-id="<?php echo (int)($usuario['id_usuario'] ?? 0); ?>">
+                    <td>
+                        <span class="campo-texto">
+                            <?php echo htmlspecialchars($usuario['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="campo-texto">
+                            <?php echo htmlspecialchars(($usuario['nombres'] ?? '') . ' ' . ($usuario['apellidos'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="role-badge <?php echo strtolower(str_replace(' ', '', $usuario['nombre_rol'] ?? '')); ?>">
+                            <?php echo htmlspecialchars($usuario['nombre_rol'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
+                                <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
+                                onclick="toggleUserStatus(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>, '<?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                title="Click para cambiar estado"
+                                <?php endif; ?>
+                                <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
+                                style="cursor: not-allowed; opacity: 0.6;"
+                                <?php endif; ?>>
+                            <?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                        </span>
+                    </td>
+                    <td class="action-buttons">
+                        <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
+                            <button class="btn-action btn-detallar" 
+                                title="Detallar Usuario"
+                                onclick="viewUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                <img src="assets/img/eye.svg">
+                            </button>
+                            <button class="btn-action btn-modificar"
+                                title="Modificar Usuario"
+                                onclick="openModal('editar', <?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                <img src="assets/img/pencil.svg">
+                            </button>
+                            <button class="btn-action btn-eliminar" 
+                                title="Eliminar Usuario"
+                                onclick="deleteUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                <img src="assets/img/circle-x.svg">
+                            </button>
+                        <?php else: ?>
+                            <span style="color: #999; font-size: 0.9rem;">NO DISPONIBLE</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px;">
+                        No hay usuarios registrados
+                    </td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
 
             <!-- Modal para Agregar/Editar Usuario -->
@@ -343,128 +334,6 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
             </div>
 
             <style>
-                /* Estilos específicos de Usuarios */
-                .action-buttons {
-                    display: flex;
-                    gap: 15px;
-                    margin-bottom: 30px;
-                }
-
-                .btn-add-user, .btn-import, .btn-export {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-
-                .btn-add-user:hover, .btn-import:hover, .btn-export:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-                }
-
-                .btn-import {
-                    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-                }
-
-                .btn-export {
-                    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                }
-
-                .filters-section {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 20px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                    margin-bottom: 30px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 20px;
-                }
-
-                .search-bar {
-                    flex: 1;
-                    position: relative;
-                }
-
-                .search-bar input {
-                    width: 100%;
-                    padding: 12px 40px 12px 15px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                }
-
-                .search-icon {
-                    position: absolute;
-                    right: 15px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    font-size: 1.2rem;
-                }
-
-                .filter-options {
-                    display: flex;
-                    gap: 10px;
-                }
-
-                .filter-options select {
-                    padding: 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                    font-size: 1rem;
-                }
-
-                .users-table-section {
-                    background: white;
-                    border-radius: 12px;
-                    padding: 25px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                }
-
-                .users-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-
-                .users-table th {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                    padding: 15px;
-                    text-align: left;
-                    font-weight: 600;
-                }
-
-                .users-table th:first-child {
-                    border-radius: 8px 0 0 0;
-                }
-
-                .users-table th:last-child {
-                    border-radius: 0 8px 0 0;
-                }
-
-                .users-table td {
-                    padding: 15px;
-                    border-bottom: 1px solid #eee;
-                }
-
-                .users-table tr:hover {
-                    background-color: #f8f9fa;
-                }
-
-                .user-cell {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
                 .user-details-grid {
                     display: grid;
                     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -488,88 +357,6 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     margin: 0;
                     color: #222;
                     overflow-wrap: anywhere;
-                }
-
-                .user-avatar-small {
-                    width: 35px;
-                    height: 35px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: 700;
-                    font-size: 0.9rem;
-                }
-
-                .username {
-                    font-weight: 500;
-                    color: #333;
-                }
-
-                .role-badge {
-                    padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                }
-
-                .role-badge.admin {
-                    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-                    color: white;
-                }
-
-                .role-badge.gerente {
-                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-                    color: white;
-                }
-
-                .role-badge.vendedor {
-                    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-                    color: white;
-                }
-
-                .role-badge.almacen {
-                    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                    color: white;
-                }
-
-                .status {
-                    padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                }
-
-                .status.active {
-                    background-color: #d4edda;
-                    color: #155724;
-                }
-
-                .status.inactive {
-                    background-color: #f8d7da;
-                    color: #721c24;
-                }
-
-                .status.pending {
-                    background-color: #fff3cd;
-                    color: #856404;
-                }
-
-                .btn-action {
-                    width: 35px;
-                    height: 35px;
-                    border-radius: 50%;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 1rem;
-                    transition: transform 0.2s;
-                    margin-right: 5px;
-                }
-
-                .btn-action:hover {
-                    transform: scale(1.1);
                 }
 
                 .btn-view {
