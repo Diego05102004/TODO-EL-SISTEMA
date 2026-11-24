@@ -29,9 +29,7 @@ $titulo_pagina = 'Gestión de Usuarios';
 
 // Iniciar el buffer de contenido
 ob_start();
-?>
 
-<?php
 // Cálculos previos para summary cards
 $total_usuarios = count($usuarios ?? []);
 $usuarios_activos = count($usuariosHabilitados ?? []);
@@ -43,59 +41,71 @@ $administradores = count(array_filter($usuarios ?? [], function($u) {
            (isset($u['id_rol']) && (int)$u['id_rol'] === 1);
 }));
 
+$totalHabilitados = is_array($usuariosHabilitados ?? null) ? count($usuariosHabilitados) : 0;
+$totalInhabilitados = is_array($usuariosDeshabilitados ?? null) ? count($usuariosDeshabilitados) : 0;
+
 // Calcular porcentajes
 $porcentaje_total = 100;
 $porcentaje_activos = $total_usuarios > 0 ? round(($usuarios_activos / $total_usuarios) * 100) : 0;
+$porcentaje_inactivos = $total_usuarios > 0 ? round(($usuarios_inactivos / $total_usuarios) * 100) : 0;
 $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuarios) * 100) : 0;
 ?>
 
-            <!-- Summary Cards para Usuarios -->
-            <div class="summary-cards">
-                <div class="summary-card sales">
-                    <div class="card-icon"><i class="fas fa-users"></i></div>
-                    <div class="card-content">
-                        <h3>Total Usuarios</h3>
-                        <p class="card-value"><?php echo $total_usuarios; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_total; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $porcentaje_total; ?>%</span>
-                        </div>
-                    </div>
-                </div>
+<link rel="stylesheet" href="assets/styles/cards.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/cards.css'); ?>">
 
-                <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="card-content">
-                        <h3>Activos</h3>
-                        <p class="card-value"><?php echo $usuarios_activos; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_activos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $porcentaje_activos; ?>%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-crown"></i></div>
-                    <div class="card-content">
-                        <h3>Administradores</h3>
-                        <p class="card-value"><?php echo $administradores; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $porcentaje_admin; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $porcentaje_admin; ?>%</span>
-                        </div>
-                    </div>
+<!-- Summary Cards para Usuarios -->
+<div class="summary-cards">
+    <div class="summary-card sales">
+        <div class="card-icon"><i class="fas fa-users"></i></div>
+        <div class="card-content">
+            <h3>Total Usuarios</h3>
+            <div class="card-data">
+                <p class="card-value"><?php echo $total_usuarios; ?></p>
+                <div class="progress-circle">
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_total; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <span class="percentage"><?php echo $porcentaje_total; ?>%</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="summary-card income">
+        <div class="card-icon"><i class="fas fa-user-check"></i></div>
+        <div class="card-content">
+            <h3>Usuarios Habilitados</h3>
+            <div class="card-data">
+                <p class="card-value"><?php echo number_format($totalHabilitados); ?></p>
+                <div class="progress-circle">
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_activos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <span class="percentage"><?php echo $porcentaje_activos; ?>%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="summary-card expenses">
+        <div class="card-icon"><i class="fas fa-user-slash"></i></div>
+        <div class="card-content">
+            <h3>Usuarios Inhabilitados</h3>
+            <div class="card-data">
+                <p class="card-value"><?php echo number_format($totalInhabilitados); ?></p>
+                <div class="progress-circle">
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_inactivos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <span class="percentage"><?php echo $porcentaje_inactivos; ?>%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- Botones de Acción -->
             <div class="action-buttons">
@@ -136,85 +146,85 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                 </div>
             </div>
 
-            <!-- Tabla de Usuarios -->
-            <div class="users-table-section">
-                <div class="table-container">
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>Usuario</th>
-                                <th>Nombre Completo</th>
-                                <th>Email</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($usuarios)): ?>
-                                <?php foreach ($usuarios as $usuario): ?>
-                                <tr data-id="<?php echo (int)($usuario['id_usuario'] ?? 0); ?>">
-                                    <td>
-                                        <div class="user-cell">
-                                            <div class="user-avatar-small">
-                                                <span class="avatar-initial">
-                                                    <?php echo htmlspecialchars(mb_substr($usuario['username'] ?? '', 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>
-                                                </span>
-                                            </div>
-                                            <span class="username">
-                                                <?php echo htmlspecialchars($usuario['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <?php echo htmlspecialchars(($usuario['nombres'] ?? '') . ' ' . ($usuario['apellidos'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <?php echo htmlspecialchars($usuario['correo'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    </td>
-                                    <td>
-                                        <span class="role-badge <?php echo strtolower(str_replace(' ', '', $usuario['nombre_rol'] ?? '')); ?>">
-                                            <?php echo htmlspecialchars($usuario['nombre_rol'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
-                                              <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
-                                              onclick="toggleUserStatus(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>, '<?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
-                                              title="Click para cambiar estado"
-                                              <?php endif; ?>
-                                              <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
-                                              style="cursor: not-allowed; opacity: 0.6;"
-                                              <?php endif; ?>>
-                                            <?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
-                                            <button class="btn-action btn-edit" onclick="openModal('editar', <?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-action btn-view" onclick="viewUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)"><i class="fas fa-eye"></i></button>
-                                            <button class="btn-action btn-delete" onclick="deleteUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        <?php else: ?>
-                                            <span style="color: #999; font-size: 0.8rem;">No editable</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
+<!-- Tabla de Usuarios -->
+<div class="users-table-section">
+    <div class="table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre Completo</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($usuarios)): ?>
+                    <?php foreach ($usuarios as $usuario): ?>
+                    <tr data-id="<?php echo (int)($usuario['id_usuario'] ?? 0); ?>">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar-small">
+                                    <span class="avatar-initial">
+                                        <?php echo htmlspecialchars(mb_substr($usuario['username'] ?? '', 0, 1, 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
+                                </div>
+                                <span class="username">
+                                    <?php echo htmlspecialchars($usuario['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <?php echo htmlspecialchars(($usuario['nombres'] ?? '') . ' ' . ($usuario['apellidos'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                        </td>
+                        <td>
+                            <?php echo htmlspecialchars($usuario['correo'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                        </td>
+                        <td>
+                            <span class="role-badge <?php echo strtolower(str_replace(' ', '', $usuario['nombre_rol'] ?? '')); ?>">
+                                <?php echo htmlspecialchars($usuario['nombre_rol'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
+                                    <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
+                                    onclick="toggleUserStatus(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>, '<?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                    title="Click para cambiar estado"
+                                    <?php endif; ?>
+                                    <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
+                                    style="cursor: not-allowed; opacity: 0.6;"
+                                    <?php endif; ?>>
+                                <?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
+                                <button class="btn-action btn-edit" onclick="openModal('editar', <?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-action btn-view" onclick="viewUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)"><i class="fas fa-eye"></i></button>
+                                <button class="btn-action btn-delete" onclick="deleteUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             <?php else: ?>
-                                <tr>
-                                    <td colspan="6" style="text-align: center; padding: 20px;">
-                                        No hay usuarios registrados
-                                    </td>
-                                </tr>
+                                <span style="color: #999; font-size: 0.8rem;">No editable</span>
                             <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">
+                            No hay usuarios registrados
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 
             <!-- Modal para Agregar/Editar Usuario -->
             <div id="userModal" class="modal">

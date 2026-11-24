@@ -74,13 +74,13 @@ if ($nombre_rol === 'SuperUsuario') {
                 <?php if ($permisosConsulta['Usuario'] ?? false): ?>
                 <a href="?pagina=usuario" class="nav-link <?php echo ($pagina_actual ?? '') === 'usuario' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
-                    <span class="nav-text">Gestionar Usuario</span>
+                    <span class="nav-text">Gestionar Usuarios</span>
                 </a>
                 <?php endif; ?>
                 <?php if ($permisosConsulta['Permisos'] ?? false): ?>
                 <a href="?pagina=reporteUsuario" class="nav-link <?php echo ($pagina_actual ?? '') === 'reporteUsuario' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
-                    <span class="nav-text">Reporte de Perfiles</span>
+                    <span class="nav-text">Generar Reporte de Usuarios</span>
                 </a>
                 <?php endif; ?>
             </div>

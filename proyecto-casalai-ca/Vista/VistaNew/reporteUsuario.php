@@ -31,48 +31,12 @@ if (!isset($permisosUsuarioEntrar[$idRol][$idModulo]['consultar']) ||
 $pagina_actual = 'reporteUsuario';
 $titulo_pagina = 'Reporte de Usuarios';
 
-$totalUsuarios = is_array($usuariosTodos ?? null) ? count($usuariosTodos) : 0;
-$totalHabilitados = is_array($usuariosHabilitados ?? null) ? count($usuariosHabilitados) : 0;
-$totalInhabilitados = is_array($usuariosDeshabilitados ?? null) ? count($usuariosDeshabilitados) : 0;
-$totalRoles = is_array($reporteRoles ?? null) ? count($reporteRoles) : 0;
-
 $jsonOptions = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE;
 $reporteRolesJson = json_encode($reporteRoles ?? [], $jsonOptions) ?: '[]';
 $usuariosTodosJson = json_encode($usuariosTodos ?? [], $jsonOptions) ?: '[]';
 
 ob_start();
 ?>
-
-<div class="summary-cards">
-    <div class="summary-card sales">
-        <div class="card-icon"><i class="fas fa-users"></i></div>
-        <div class="card-content">
-            <h3>Total de Usuarios</h3>
-            <p class="card-value"><?php echo number_format($totalUsuarios); ?></p>
-        </div>
-    </div>
-    <div class="summary-card income">
-        <div class="card-icon"><i class="fas fa-user-check"></i></div>
-        <div class="card-content">
-            <h3>Usuarios Habilitados</h3>
-            <p class="card-value"><?php echo number_format($totalHabilitados); ?></p>
-        </div>
-    </div>
-    <div class="summary-card expenses">
-        <div class="card-icon"><i class="fas fa-user-slash"></i></div>
-        <div class="card-content">
-            <h3>Usuarios Inhabilitados</h3>
-            <p class="card-value"><?php echo number_format($totalInhabilitados); ?></p>
-        </div>
-    </div>
-    <div class="summary-card">
-        <div class="card-icon"><i class="fas fa-user-shield"></i></div>
-        <div class="card-content">
-            <h3>Roles Registrados</h3>
-            <p class="card-value"><?php echo number_format($totalRoles); ?></p>
-        </div>
-    </div>
-</div>
 
 <section class="report-card" id="resultadoReporteUsuarios">
     <div class="section-header">
