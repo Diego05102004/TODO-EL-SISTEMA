@@ -3,6 +3,7 @@ namespace Usuario\ProyectoCasalaiCa;
 use Usuario\ProyectoCasalaiCa\Factura;
 use Usuario\ProyectoCasalaiCa\OrdenDespacho;
 use Usuario\ProyectoCasalaiCa\Config\BD;
+use Usuario\ProyectoCasalaiCa\Config\Encryption;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -39,7 +40,44 @@ class PasareladePago extends Factura {
     const ESTADOS_VALIDOS_CAMBIO = ['Pendiente', 'En Proceso', 'Pago Procesado', 'Anulado'];
     const EXTENSIONES_COMPROBANTE = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
 
-    
+    private $encryption;
+
+    private function getEncryption() {
+        if ($this->encryption === null) {
+            $this->encryption = new Encryption();
+        }
+        return $this->encryption;
+    }
+
+    private function cifrarReferencia($referencia) {
+        if ($referencia === null || trim((string) $referencia) === '') {
+            return '';
+        }
+        return $this->getEncryption()->encrypt($referencia);
+    }
+
+    private function descifrarReferencia($valor) {
+        if (!is_string($valor) || $valor === '') {
+            return $valor;
+        }
+        try {
+            return $this->getEncryption()->decrypt($valor);
+        } catch (\Throwable $e) {
+            error_log('[PAGOS] No se pudo descifrar una referencia: ' . $e->getMessage());
+            return $valor;
+        }
+    }
+
+    private function descifrarReferenciasEnFilas(array $filas) {
+        foreach ($filas as &$fila) {
+            if (array_key_exists('referencia', $fila)) {
+                $fila['referencia'] = $this->descifrarReferencia($fila['referencia']);
+            }
+        }
+        unset($fila);
+        return $filas;
+    }
+
     public function getIdDetalles() {
         return $this->id_detalles;
     }
@@ -437,17 +475,18 @@ class PasareladePago extends Factura {
     private function pagoIngresar() {
         return $this->ejecutarConConexionSegura(function($pdo) {
             try {
+                $referenciaCifrada = $this->cifrarReferencia($this->referencia);
                 error_log("Intentando insertar pago con datos: " . json_encode([
                     'factura' => $this->factura,
                     'cuenta' => $this->cuenta,
                     'observaciones' => $this->observaciones,
                     'tipo' => $this->tipo,
-                    'referencia' => $this->referencia,
+                    'referencia' => '[cifrada]',
                     'fecha' => $this->fecha,
                     'comprobante' => $this->comprobante,
                     'monto' => $this->monto
                 ]));
-                
+
                 $stmt = $pdo->prepare("
                     INSERT INTO `tbl_detalles_pago`
                     (`id_factura`, `id_cuenta`, `observaciones`, `tipo`, `referencia`, `fecha`, `comprobante`, `monto`)
@@ -458,7 +497,7 @@ class PasareladePago extends Factura {
                     $this->cuenta,
                     $this->observaciones,
                     $this->tipo,
-                    $this->referencia,
+                    $referenciaCifrada,
                     $this->fecha,
                     $this->comprobante,
                     $this->monto
@@ -548,6 +587,8 @@ class PasareladePago extends Factura {
                 throw new PDOException("El tipo de pago es requerido.");
             }
 
+            $referenciaCifrada = $this->cifrarReferencia($referencia);
+
             // Verificar que la factura existe
             $this->assertInvoiceAccess($pdo, $factura);
             $stmtFactura = $pdo->prepare("SELECT id_factura FROM tbl_facturas WHERE id_factura = ?");
@@ -575,7 +616,7 @@ class PasareladePago extends Factura {
                     $cuenta,
                     $observaciones,
                     $tipo,
-                    $referencia,
+                    $referenciaCifrada,
                     $fecha,
                     $nombreArchivo,
                     $monto
@@ -802,7 +843,7 @@ class PasareladePago extends Factura {
                 $stmt->bindValue(':id_cliente', (int) $this->authenticatedClientId, PDO::PARAM_INT);
             }
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->descifrarReferenciasEnFilas($stmt->fetchAll(PDO::FETCH_ASSOC));
         });
     }
 
@@ -820,17 +861,32 @@ class PasareladePago extends Factura {
                 $stmt->bindValue(':id_cliente', (int) $this->authenticatedClientId, PDO::PARAM_INT);
             }
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->descifrarReferenciasEnFilas($stmt->fetchAll(PDO::FETCH_ASSOC));
         });
     }
 
     public function validarCodigoReferencia(){
         return $this->ejecutarConConexionSegura(function($pdo) {
-            $sql = "SELECT COUNT(*) FROM tbl_detalles_pago WHERE referencia = :referencia";
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':referencia', $this->referencia);
+            $referenciaBusqueda = trim((string) $this->referencia);
+
+            // Coincidencia directa: cubre registros legados guardados en texto plano
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM tbl_detalles_pago WHERE referencia = :referencia");
+            $stmt->execute([':referencia' => $referenciaBusqueda]);
+            if ($stmt->fetchColumn() > 0) {
+                return true;
+            }
+
+            // Los valores cifrados son aleatorios (IV/clav única por registro):
+            // es necesario descifrar para comparar contra la referencia en claro.
+            $stmt = $pdo->prepare("SELECT id_detalles, referencia FROM tbl_detalles_pago WHERE referencia <> ''");
             $stmt->execute();
-            return $stmt->fetchColumn() > 0;
+            while ($fila = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $referenciaPlano = $this->descifrarReferencia($fila['referencia']);
+                if (hash_equals($referenciaBusqueda, trim((string) $referenciaPlano))) {
+                    return true;
+                }
+            }
+            return false;
         });
     }
 
@@ -910,7 +966,8 @@ class PasareladePago extends Factura {
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $pago = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $pago === false ? $pago : $this->descifrarReferenciasEnFilas([$pago])[0];
         });
     }
 }

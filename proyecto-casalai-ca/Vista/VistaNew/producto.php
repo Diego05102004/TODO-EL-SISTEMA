@@ -71,45 +71,45 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
 
 <!-- Summary Cards para Productos -->
 <div class="summary-cards">
-    <div class="summary-card expenses">
-        <div class="card-icon"><i class="fas fa-chart-down"></i></div>
+    <div class="summary-card stock-low">
+        <div class="card-icon"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></div>
         <div class="card-content">
             <h3>Stock Bajo</h3>
             <p class="card-value"><?php echo $stock_bajo; ?></p>
             <div class="progress-circle">
                 <svg viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_bajo; ?>, 100" stroke="#ff6b6b" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_bajo; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
                 <span class="percentage"><?php echo $porcentaje_stock_bajo; ?>%</span>
             </div>
         </div>
     </div>
 
-    <div class="summary-card expenses">
-        <div class="card-icon"><i class="fas fa-chart-down"></i></div>
+    <div class="summary-card stock-stable">
+        <div class="card-icon"><i class="fas fa-box" aria-hidden="true"></i></div>
         <div class="card-content">
             <h3>Stock Estable</h3>
             <p class="card-value"><?php echo $stock_estable; ?></p>
             <div class="progress-circle">
                 <svg viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_estable; ?>, 100" stroke="#ff6b6b" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_estable; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
                 <span class="percentage"><?php echo $porcentaje_stock_estable; ?>%</span>
             </div>
         </div>
     </div>
 
-    <div class="summary-card expenses">
-        <div class="card-icon"><i class="fas fa-chart-down"></i></div>
+    <div class="summary-card stock-exceeded">
+        <div class="card-icon"><i class="fas fa-boxes" aria-hidden="true"></i></div>
         <div class="card-content">
             <h3>Stock Excedido</h3>
             <p class="card-value"><?php echo $stock_excedido; ?></p>
             <div class="progress-circle">
                 <svg viewBox="0 0 36 36" class="circular-chart">
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_excedido; ?>, 100" stroke="#ff6b6b" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" stroke-dasharray="<?php echo $porcentaje_stock_excedido; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
                 <span class="percentage"><?php echo $porcentaje_stock_excedido; ?>%</span>
             </div>
@@ -200,7 +200,7 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                         </select>
                     </div>
                     <button type="button" class="analytics-button" id="runAnalytics">
-                        <i class="fas fa-chart-line" aria-hidden="true"></i> Analizar
+                        <i class="fas fa-chart-line" aria-hidden="true"></i> Analizar inventario
                     </button>
                     <?php if ($puedeModificarProductos): ?>
                         <button type="button" class="analytics-button analytics-train" id="trainAnalytics">
@@ -210,50 +210,50 @@ $porcentaje_stock_excedido = $total_productos > 0 ? round(($stock_excedido / $to
                 </div>
 
                 <p class="analytics-status" id="analyticsStatus" role="status" aria-live="polite">
-                    El análisis general del inventario se ejecuta automáticamente al entrar. Puedes filtrar por producto o categoría y pulsar «Analizar».
+                    CAIN está listo. Pulsa «Analizar inventario» para consultar el microservicio; no se ejecutará hasta que lo solicites.
                 </p>
 
-                <div class="analytics-kpis" id="analyticsKpis" hidden>
-                    <article class="analytics-kpi"><span>Venta proyectada</span><strong data-metric="venta_proyectada">—</strong><small>unidades en el horizonte</small></article>
-                    <article class="analytics-kpi"><span>Días hasta agotamiento</span><strong data-metric="dias_estimados_agotamiento">—</strong><small>estimación con stock actual</small></article>
-                    <article class="analytics-kpi"><span>Punto de reorden</span><strong data-metric="punto_reorden">—</strong><small>stock mínimo configurado</small></article>
-                    <article class="analytics-kpi"><span>Compra sugerida</span><strong data-metric="cantidad_sugerida_compra">—</strong><small>no descuenta órdenes abiertas</small></article>
-                    <article class="analytics-kpi"><span>Rotación proyectada</span><strong data-metric="rotacion_proyectada">—</strong><small>veces en el horizonte</small></article>
-                    <!-- <article class="analytics-kpi"><span>Explicaciones</span><strong data-metric="explicaciones">—</strong><small>del modelo</small></article> -->
-                </div>
+                <div id="analyticsResults" hidden>
+                    <div class="analytics-kpis" id="analyticsKpis" hidden>
+                        <article class="analytics-kpi"><span>Venta proyectada</span><strong data-metric="venta_proyectada">—</strong><small>unidades en el horizonte</small></article>
+                        <article class="analytics-kpi"><span>Días hasta agotamiento</span><strong data-metric="dias_estimados_agotamiento">—</strong><small>estimación con stock actual</small></article>
+                        <article class="analytics-kpi"><span>Punto de reorden</span><strong data-metric="punto_reorden">—</strong><small>stock mínimo configurado</small></article>
+                        <article class="analytics-kpi"><span>Compra sugerida</span><strong data-metric="cantidad_sugerida_compra">—</strong><small>no descuenta órdenes abiertas</small></article>
+                        <article class="analytics-kpi"><span>Rotación proyectada</span><strong data-metric="rotacion_proyectada">—</strong><small>veces en el horizonte</small></article>
+                    </div>
 
-                <div class="analytics-chart-card">
-                    <div class="analytics-chart-heading">
-                        <h3>Ventas históricas y demanda estimada</h3>
-                        <span>La banda representa el intervalo estimado del modelo.</span>
+                    <div class="analytics-chart-card">
+                        <div class="analytics-chart-heading">
+                            <h3>Ventas históricas y demanda estimada</h3>
+                            <span>La banda representa el intervalo estimado del modelo.</span>
+                        </div>
+                        <div class="analytics-chart-frame">
+                            <canvas id="analyticsChart" aria-label="Gráfico de ventas y demanda estimada" role="img"></canvas>
+                        </div>
                     </div>
-                    <div class="analytics-chart-frame">
-                        <canvas id="analyticsChart" aria-label="Gráfico de ventas y demanda estimada" role="img"></canvas>
-                    </div>
-                
-                </div>
 
-                <div class="analytics-actions" id="analyticsActions" data-can-create-combo="<?php echo $puedeModificarProductos ? '1' : '0'; ?>">
-                    <div class="analytics-chart-heading">
-                        <h3>Acciones recomendadas</h3>
-                        <span>Sus decisiones ajustan la prioridad y el descuento de futuras sugerencias.</span>
-                    </div>
-                    <div class="analytics-table-wrap">
-                        <table class="analytics-table">
-                            <thead>
-                                <tr>
-                                    <th>Producto / acción</th>
-                                    <th>Señal</th>
-                                    <th>Cantidad sugerida</th>
-                                    <th>Confianza</th>
-                                    <th>Calculado</th>
-                                    <th>Valoración</th>
-                                </tr>
-                            </thead>
-                            <tbody id="analyticsRecommendations">
-                                <tr><td colspan="6">Aún no hay recomendaciones cargadas.</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="analytics-actions" id="analyticsActions" data-can-create-combo="<?php echo $puedeModificarProductos ? '1' : '0'; ?>">
+                        <div class="analytics-chart-heading">
+                            <h3>Acciones recomendadas</h3>
+                            <span>Sus decisiones ajustan la prioridad y el descuento de futuras sugerencias.</span>
+                        </div>
+                        <div class="analytics-table-wrap">
+                            <table class="analytics-table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto / acción</th>
+                                        <th>Señal</th>
+                                        <th>Cantidad sugerida</th>
+                                        <th>Confianza</th>
+                                        <th>Calculado</th>
+                                        <th>Valoración</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analyticsRecommendations">
+                                    <tr><td colspan="6">Aún no hay recomendaciones cargadas.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>

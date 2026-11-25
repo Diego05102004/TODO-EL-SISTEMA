@@ -18,13 +18,23 @@ $pagina_actual = 'comprafisica';
 $titulo_pagina = 'Ventas Presenciales';
 ob_start();
 ?>
-<link rel="stylesheet" href="assets/public/bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" href="assets/styles/formulario.css">
 <link rel="stylesheet" href="assets/styles/tabla_consulta.css">
-<link rel="stylesheet" href="assets/styles/modalmodificar.css">
 <link rel="stylesheet" href="assets/styles/modaldetalles.css">
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/public/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+if (window.jQuery && window.bootstrap && !jQuery.fn.modal) {
+    jQuery.fn.modal = function (command) {
+        return this.each(function () {
+            var modal = bootstrap.Modal.getOrCreateInstance(this);
+            if (command === 'show') modal.show();
+            else if (command === 'hide') modal.hide();
+            else if (command === 'toggle') modal.toggle();
+        });
+    };
+}
+</script>
 <script src="assets/public/js/jquery.dataTables.min.js"></script>
 <script src="assets/public/js/dataTables.bootstrap5.min.js"></script>
     <style>
@@ -47,6 +57,7 @@ ob_start();
             background: #f8fafc;
         }
         #modalp .modal-header {
+            position: relative;
             background: #e0e4eaff;
             color: #fff;
             border-top-left-radius: 12px;
@@ -98,11 +109,84 @@ ob_start();
             color: #fff;
             cursor: not-allowed;
         }
+        #registrarCompraFisicaModal .close,
+        #modalp .close-2 {
+            position: absolute;
+            top: 18px;
+            right: 24px;
+            z-index: 3;
+            border: 0;
+            background: transparent;
+            color: #1976d2;
+            font-size: 1.7rem;
+            opacity: 1;
+            cursor: pointer;
+        }
     </style>
 
     <style>
         body { font-size: 1rem; }
         .main-content { min-width: 0; }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1050;
+            background: #000;
+            opacity: 0;
+            transition: opacity .15s linear;
+        }
+        .modal-backdrop.show { opacity: .5; }
+        #registrarCompraFisicaModal,
+        #modalp {
+            z-index: 1055 !important;
+            overflow-x: hidden;
+            overflow-y: auto;
+            outline: 0;
+            background: transparent;
+        }
+        #registrarCompraFisicaModal .modal-dialog,
+        #modalp .modal-dialog {
+            position: relative;
+            width: auto;
+            margin: 1.75rem auto;
+            pointer-events: none;
+        }
+        #registrarCompraFisicaModal .modal-dialog-centered,
+        #modalp .modal-dialog-centered {
+            display: flex;
+            align-items: center;
+            min-height: calc(100% - 3.5rem);
+        }
+        #registrarCompraFisicaModal .modal-content,
+        #modalp .modal-content {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            pointer-events: auto;
+            background: #fff;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, .2);
+            border-radius: .3rem;
+            outline: 0;
+        }
+        #registrarCompraFisicaModal .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        #registrarCompraFisicaModal .form-control {
+            display: block;
+            width: 100%;
+            padding: .375rem .75rem;
+            border: 1px solid #ced4da;
+            border-radius: .375rem;
+            font-size: 1rem;
+        }
+        .modal-detalles .table-responsive { overflow-x: auto; }
         .comprafisica-section { margin-top: 0; }
         .comprafisica-section .section-header {
             display: flex;
@@ -188,7 +272,7 @@ ob_start();
         }
     </style>
 
-<input type="number" id="tasa" value="<?php echo $data['monitors']['bcv']['price'];?>
+<input type="hidden" id="tasa" value="<?= htmlspecialchars((string)($data['monitors']['bcv']['price'] ?? 0), ENT_QUOTES, 'UTF-8') ?>">
 
 
 <!-- ...código anterior... -->
@@ -343,7 +427,7 @@ aria-labelledby="registrarCompraFisicaModalLabel" aria-hidden="true">
     <div class="section-header">
         <div>
             <h2>Ventas presenciales</h2>
-            <p>Registra ventas en el local y consulta sus detalles.</p>
+            <p>Registra ventas en el local y consulta sus detalles. El equivalente en bolívares usa la tasa actual; la tasa histórica no se almacena en la factura.</p>
         </div>
     </div>
     <div class="contenedor-tabla">
@@ -360,54 +444,28 @@ aria-labelledby="registrarCompraFisicaModalLabel" aria-hidden="true">
             <tr>
                 <th>FECHA</th>
                 <th>CLIENTE / CÉDULA</th>
-                <th>MONTO TOTAL</th>
+                <th>TOTAL (USD / EQUIVALENTE BS. A TASA ACTUAL)</th>
                 <th>ACCIÓN</th>
             </tr>
         </thead>
-<?php 
+<?php
 foreach ($compras as &$compra) {
-    // Convertir productos y pagos a arrays
     $compra['productos'] = !empty($compra['productos'])
         ? json_decode('[' . $compra['productos'] . ']', true)
         : [];
-
     $compra['pagos'] = !empty($compra['pagos'])
         ? json_decode('[' . $compra['pagos'] . ']', true)
         : [];
-
-    // 🔹 AGRUPAR PRODUCTOS REPETIDOS
-    $agrupadosProductos = [];
-    foreach ($compra['productos'] as $producto) {
-        $key = $producto['id_producto'] . '-' . $producto['precio'];
-        if (!isset($agrupadosProductos[$key])) {
-            $agrupadosProductos[$key] = $producto;
-        } 
-    }
-    $compra['productos'] = array_values($agrupadosProductos);
-
-    // 🔹 AGRUPAR PAGOS REPETIDOS
-    $agrupadosPagos = [];
-    foreach ($compra['pagos'] as $pago) {
-        // Usamos referencia + cuenta + monto como clave única
-        $keyPago = $pago['referencia'] . '-' . $pago['cuenta'] . '-' . $pago['monto'];
-        if (!isset($agrupadosPagos[$keyPago])) {
-            $agrupadosPagos[$keyPago] = $pago;
-        } 
-    }
-    $compra['pagos'] = array_values($agrupadosPagos);
 }
 unset($compra);
-
 ?>
 
 <tbody>
 <?php if (!empty($compras)): ?>
     <?php foreach ($compras as $compra): ?>
         <?php
-            $montoTotal = 0;
-            foreach ($compra['productos'] as $prod) {
-                $montoTotal += $prod['precio'] * $prod['cantidad'];
-            }
+            $montoTotalUsd = (float)($compra['total_usd'] ?? 0);
+            $montoTotalBsActual = $montoTotalUsd * (float)($data['monitors']['bcv']['price'] ?? 0);
         ?>
         <tr>
             <td>
@@ -425,7 +483,8 @@ unset($compra);
             </td>
             <td>
                 <span class="campo-numeros">
-                    <?= number_format($montoTotal, 2) ?>
+                    <strong>$ <?= number_format($montoTotalUsd, 2, '.', ',') ?></strong>
+                    <br><small>Bs. <?= number_format($montoTotalBsActual, 2, '.', ',') ?></small>
                 </span>
             </td>
             <td>
@@ -489,8 +548,8 @@ unset($compra);
                                 <th>Marca</th>
                                 <th>Serial</th>
                                 <th>Cantidad</th>
-                                <th>Precio</th>
-                                <th>Total</th>
+                                <th>Precio (USD)</th>
+                                <th>Subtotal (USD)</th>
                             </tr>
                         </thead>
                         <tbody id="detalleProductos"></tbody>
@@ -504,7 +563,7 @@ unset($compra);
                                 <th>Comprobante</th>
                                 <th>Tipo de Compra</th>
                                 <th>Referencia</th>
-                                <th>Monto</th>
+                                <th>Monto (Bs.)</th>
                                 <th>Estatus</th>
                             </tr>
                         </thead>

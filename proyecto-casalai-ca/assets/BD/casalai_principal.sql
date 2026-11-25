@@ -502,7 +502,7 @@ CREATE TABLE `tbl_detalles_pago` (
   `id_factura` int(11) NOT NULL,
   `id_cuenta` int(11) NOT NULL,
   `observaciones` varchar(200) NOT NULL,
-  `referencia` varchar(30) NOT NULL,
+  `referencia` varchar(2048) NOT NULL,
   `fecha` date NOT NULL,
   `tipo` varchar(20) NOT NULL,
   `monto` float(8,2) NOT NULL,
@@ -568,36 +568,66 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_descontar_stock_detalle_insert` AFTER INSERT ON `tbl_factura_detalle` FOR EACH ROW BEGIN
-    DECLARE v_estatus VARCHAR(50);
-    DECLARE v_stock_actual INT;
-    DECLARE v_mensaje_error VARCHAR(255);
-
-    -- 1. Obtener el estatus de la factura a la que pertenece este detalle
-    SELECT estatus INTO v_estatus 
-    FROM tbl_facturas 
-    WHERE id_factura = NEW.factura_id;
-
-    -- 2. Si la factura está "Pagada en Oficina", procesamos el inventario
-    IF v_estatus = 'Pagada en Oficina' THEN
-        
-        -- Obtener el stock actual del producto que se está intentando insertar
-        SELECT stock INTO v_stock_actual 
-        FROM tbl_productos 
-        WHERE id_producto = NEW.id_producto;
-
-        -- 3. Validar si hay suficiente stock para la cantidad solicitada
-        IF v_stock_actual < NEW.cantidad THEN
-            SET v_mensaje_error = CONCAT('Error: Stock insuficiente para el producto ID ', NEW.id_producto, '. Disponible: ', v_stock_actual, ', Solicitado: ', NEW.cantidad);
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensaje_error;
-        ELSE
-            -- 4. Si hay stock, se descuenta de inmediato
-            UPDATE tbl_productos 
-            SET stock = stock - NEW.cantidad
-            WHERE id_producto = NEW.id_producto;
-        END IF;
-
-    END IF;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_descontar_stock_detalle_insert` AFTER INSERT ON `tbl_factura_detalle` FOR EACH ROW BEGIN
+
+    DECLARE v_estatus VARCHAR(50);
+
+    DECLARE v_stock_actual INT;
+
+    DECLARE v_mensaje_error VARCHAR(255);
+
+
+
+    -- 1. Obtener el estatus de la factura a la que pertenece este detalle
+
+    SELECT estatus INTO v_estatus 
+
+    FROM tbl_facturas 
+
+    WHERE id_factura = NEW.factura_id;
+
+
+
+    -- 2. Si la factura está "Pagada en Oficina", procesamos el inventario
+
+    IF v_estatus = 'Pagada en Oficina' THEN
+
+        
+
+        -- Obtener el stock actual del producto que se está intentando insertar
+
+        SELECT stock INTO v_stock_actual 
+
+        FROM tbl_productos 
+
+        WHERE id_producto = NEW.id_producto;
+
+
+
+        -- 3. Validar si hay suficiente stock para la cantidad solicitada
+
+        IF v_stock_actual < NEW.cantidad THEN
+
+            SET v_mensaje_error = CONCAT('Error: Stock insuficiente para el producto ID ', NEW.id_producto, '. Disponible: ', v_stock_actual, ', Solicitado: ', NEW.cantidad);
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensaje_error;
+
+        ELSE
+
+            -- 4. Si hay stock, se descuenta de inmediato
+
+            UPDATE tbl_productos 
+
+            SET stock = stock - NEW.cantidad
+
+            WHERE id_producto = NEW.id_producto;
+
+        END IF;
+
+
+
+    END IF;
+
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -613,36 +643,66 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_descontar_stock_online` AFTER INSERT ON `tbl_factura_detalle` FOR EACH ROW BEGIN
-    DECLARE v_estatus VARCHAR(50);
-    DECLARE v_stock_actual INT;
-    DECLARE v_mensaje_error VARCHAR(255);
-
-    -- 1. Obtener el estatus de la factura a la que pertenece este detalle
-    SELECT estatus INTO v_estatus 
-    FROM tbl_facturas 
-    WHERE id_factura = NEW.factura_id;
-
-    -- 2. Si la factura está en "Borrador", procesamos el inventario
-    IF v_estatus = 'Borrador' THEN
-        
-        -- Obtener el stock actual del producto que se está intentando insertar
-        SELECT stock INTO v_stock_actual 
-        FROM tbl_productos 
-        WHERE id_producto = NEW.id_producto;
-
-        -- 3. Validar si hay suficiente stock para la cantidad solicitada
-        IF v_stock_actual < NEW.cantidad THEN
-            SET v_mensaje_error = CONCAT('Error: Stock insuficiente para el producto ID ', NEW.id_producto, '. Disponible: ', v_stock_actual, ', Solicitado: ', NEW.cantidad);
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensaje_error;
-        ELSE
-            -- 4. Si hay stock, se descuenta de inmediato
-            UPDATE tbl_productos 
-            SET stock = stock - NEW.cantidad
-            WHERE id_producto = NEW.id_producto;
-        END IF;
-
-    END IF;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_descontar_stock_online` AFTER INSERT ON `tbl_factura_detalle` FOR EACH ROW BEGIN
+
+    DECLARE v_estatus VARCHAR(50);
+
+    DECLARE v_stock_actual INT;
+
+    DECLARE v_mensaje_error VARCHAR(255);
+
+
+
+    -- 1. Obtener el estatus de la factura a la que pertenece este detalle
+
+    SELECT estatus INTO v_estatus 
+
+    FROM tbl_facturas 
+
+    WHERE id_factura = NEW.factura_id;
+
+
+
+    -- 2. Si la factura está en "Borrador", procesamos el inventario
+
+    IF v_estatus = 'Borrador' THEN
+
+        
+
+        -- Obtener el stock actual del producto que se está intentando insertar
+
+        SELECT stock INTO v_stock_actual 
+
+        FROM tbl_productos 
+
+        WHERE id_producto = NEW.id_producto;
+
+
+
+        -- 3. Validar si hay suficiente stock para la cantidad solicitada
+
+        IF v_stock_actual < NEW.cantidad THEN
+
+            SET v_mensaje_error = CONCAT('Error: Stock insuficiente para el producto ID ', NEW.id_producto, '. Disponible: ', v_stock_actual, ', Solicitado: ', NEW.cantidad);
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_mensaje_error;
+
+        ELSE
+
+            -- 4. Si hay stock, se descuenta de inmediato
+
+            UPDATE tbl_productos 
+
+            SET stock = stock - NEW.cantidad
+
+            WHERE id_producto = NEW.id_producto;
+
+        END IF;
+
+
+
+    END IF;
+
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -970,21 +1030,36 @@ DELIMITER ;;
 /*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;;
 /*!50003 SET @saved_time_zone      = @@time_zone */ ;;
 /*!50003 SET time_zone             = '+00:00' */ ;;
-/*!50106 CREATE*/ /*!50117 DEFINER=`root`@`localhost`*/ /*!50106 EVENT `evt_liberar_stock_borradores` ON SCHEDULE EVERY 5 MINUTE STARTS '2026-06-16 21:20:47' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
-    -- 1. Devolver los productos al stock de las facturas en 'Borrador' vencidas (más de 2 horas)
-    UPDATE tbl_productos p
-    JOIN tbl_factura_detalle df ON p.id_producto = df.id_producto
-    JOIN tbl_facturas f ON df.factura_id = f.id_factura
-    SET p.stock = p.stock + df.cantidad
-    WHERE f.estatus = 'Borrador'
-      AND f.fecha < NOW() - INTERVAL 1 HOUR;
-
-    -- 2. Cambiar el estatus de esas facturas para que no se procesen de nuevo
-    UPDATE tbl_facturas
-    SET estatus = 'Anulada por Tiempo'
-    WHERE estatus = 'Borrador'
-      AND fecha < NOW() - INTERVAL 1 HOUR;
-
+/*!50106 CREATE*/ /*!50117 DEFINER=`root`@`localhost`*/ /*!50106 EVENT `evt_liberar_stock_borradores` ON SCHEDULE EVERY 5 MINUTE STARTS '2026-06-16 21:20:47' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
+
+    -- 1. Devolver los productos al stock de las facturas en 'Borrador' vencidas (más de 2 horas)
+
+    UPDATE tbl_productos p
+
+    JOIN tbl_factura_detalle df ON p.id_producto = df.id_producto
+
+    JOIN tbl_facturas f ON df.factura_id = f.id_factura
+
+    SET p.stock = p.stock + df.cantidad
+
+    WHERE f.estatus = 'Borrador'
+
+      AND f.fecha < NOW() - INTERVAL 1 HOUR;
+
+
+
+    -- 2. Cambiar el estatus de esas facturas para que no se procesen de nuevo
+
+    UPDATE tbl_facturas
+
+    SET estatus = 'Anulada por Tiempo'
+
+    WHERE estatus = 'Borrador'
+
+      AND fecha < NOW() - INTERVAL 1 HOUR;
+
+
+
 END */ ;;
 /*!50003 SET time_zone             = @saved_time_zone */ ;;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;;
@@ -1007,62 +1082,117 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_despacho`(
-    IN p_id_despacho INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_despacho`(
+
+    IN p_id_despacho INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_estado_anterior VARCHAR(20);
-    DECLARE v_activo_anterior TINYINT;
-
-    -- Concurrencia Avanzada: Bloqueamos la fila en la tabla de despachos
-    SELECT estado, activo INTO v_estado_anterior, v_activo_anterior
-    FROM tbl_despachos
-    WHERE id_despachos = p_id_despacho
-    FOR UPDATE;
-
-    -- Verificación de Existencia
-    IF v_estado_anterior IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El despacho especificado no existe en el sistema.';
-    END IF;
-
-    -- Verificación de doble anulación
-    IF v_activo_anterior = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: El despacho ya se encuentra anulado.';
-    END IF;
-
-    -- Regla de Negocio Crítica: Si ya fue despachado, no debería poder anularse sin un proceso de devolución
-    IF v_estado_anterior = 'Despachado' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede anular un despacho que ya figura como "Despachado".';
-    END IF;
-
-    -- Actualización Atómica (Eliminación Lógica)
-    UPDATE tbl_despachos
-    SET activo = 0
-    WHERE id_despachos = p_id_despacho;
-
-    -- Auditoría Síncrona Estructurada en JSON (Prioridad ALTA por alteración de integridad)
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, 
-        `nombre_modulo`, 
-        `accion`, 
-        `datos_nuevos`, 
-        `datos_viejos`, 
-        `id_usuario`, 
-        `prioridad`, 
-        `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Despachos',
-        'ANULAR',
-        JSON_OBJECT('id_despachos', p_id_despacho, 'activo', 0),
-        JSON_OBJECT('id_despachos', p_id_despacho, 'activo', v_activo_anterior, 'estado', v_estado_anterior),
-        p_id_usuario_auditor,
-        'alta',
-        CONCAT('Se realizó la anulación lógica del despacho con ID: ', p_id_despacho, '.')
-    );
-
+BEGIN
+
+    DECLARE v_estado_anterior VARCHAR(20);
+
+    DECLARE v_activo_anterior TINYINT;
+
+
+
+    -- Concurrencia Avanzada: Bloqueamos la fila en la tabla de despachos
+
+    SELECT estado, activo INTO v_estado_anterior, v_activo_anterior
+
+    FROM tbl_despachos
+
+    WHERE id_despachos = p_id_despacho
+
+    FOR UPDATE;
+
+
+
+    -- Verificación de Existencia
+
+    IF v_estado_anterior IS NULL THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El despacho especificado no existe en el sistema.';
+
+    END IF;
+
+
+
+    -- Verificación de doble anulación
+
+    IF v_activo_anterior = 0 THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: El despacho ya se encuentra anulado.';
+
+    END IF;
+
+
+
+    -- Regla de Negocio Crítica: Si ya fue despachado, no debería poder anularse sin un proceso de devolución
+
+    IF v_estado_anterior = 'Despachado' THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede anular un despacho que ya figura como "Despachado".';
+
+    END IF;
+
+
+
+    -- Actualización Atómica (Eliminación Lógica)
+
+    UPDATE tbl_despachos
+
+    SET activo = 0
+
+    WHERE id_despachos = p_id_despacho;
+
+
+
+    -- Auditoría Síncrona Estructurada en JSON (Prioridad ALTA por alteración de integridad)
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, 
+
+        `nombre_modulo`, 
+
+        `accion`, 
+
+        `datos_nuevos`, 
+
+        `datos_viejos`, 
+
+        `id_usuario`, 
+
+        `prioridad`, 
+
+        `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Despachos',
+
+        'ANULAR',
+
+        JSON_OBJECT('id_despachos', p_id_despacho, 'activo', 0),
+
+        JSON_OBJECT('id_despachos', p_id_despacho, 'activo', v_activo_anterior, 'estado', v_estado_anterior),
+
+        p_id_usuario_auditor,
+
+        'alta',
+
+        CONCAT('Se realizó la anulación lógica del despacho con ID: ', p_id_despacho, '.')
+
+    );
+
+
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1079,67 +1209,127 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_orden_despacho`(
-    IN p_id_orden INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_orden_despacho`(
+
+    IN p_id_orden INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- 1. Declaración de variables locales para auditoría e integridad
-    DECLARE v_activo_anterior INT DEFAULT NULL;
-    DECLARE v_estado_anterior VARCHAR(50);
-
-    -- 2. Manejador de excepciones transaccionales
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        -- Si ocurre un fallo, se deshacen todos los cambios concurrentes
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error transaccional: No se pudo anular la orden de despacho.'; 
-    END;
-
-    -- Configuración estricta de aislamiento
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- CONTROL DE CONCURRENCIA: Bloqueamos la fila y extraemos el estado actual
-    SELECT activo, estado INTO v_activo_anterior, v_estado_anterior
-    FROM tbl_orden_despachos 
-    WHERE id_orden_despachos = p_id_orden 
-    FOR UPDATE;
-
-    -- CONTROL DE INTEGRIDAD 1: Verificar si la orden realmente existe
-    IF v_activo_anterior IS NULL THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho solicitada no existe o ya fue eliminada.';
-    END IF;
-
-    -- CONTROL DE INTEGRIDAD 2: Verificar si ya se encuentra anulada para evitar redundancia
-    IF v_activo_anterior = 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho ya se encuentra anulada en el sistema.';
-    END IF;
-
-    -- 3. Ejecución de la eliminación lógica
-    UPDATE tbl_orden_despachos 
-    SET activo = 0 
-    WHERE id_orden_despachos = p_id_orden;
-
-    -- 4. Registro síncrono de auditoría en la base de datos de seguridad
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(), 
-        'Ordenes de despacho', 
-        'ANULAR', 
-        JSON_OBJECT('id_orden_despachos', p_id_orden, 'activo', 0), 
-        JSON_OBJECT('id_orden_despachos', p_id_orden, 'activo', v_activo_anterior, 'estado', v_estado_anterior), 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se anuló lógicamente la orden de despacho ID: ', p_id_orden, '.')
-    );
-
-    COMMIT;
-
+BEGIN
+
+    -- 1. Declaración de variables locales para auditoría e integridad
+
+    DECLARE v_activo_anterior INT DEFAULT NULL;
+
+    DECLARE v_estado_anterior VARCHAR(50);
+
+
+
+    -- 2. Manejador de excepciones transaccionales
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        -- Si ocurre un fallo, se deshacen todos los cambios concurrentes
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error transaccional: No se pudo anular la orden de despacho.'; 
+
+    END;
+
+
+
+    -- Configuración estricta de aislamiento
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- CONTROL DE CONCURRENCIA: Bloqueamos la fila y extraemos el estado actual
+
+    SELECT activo, estado INTO v_activo_anterior, v_estado_anterior
+
+    FROM tbl_orden_despachos 
+
+    WHERE id_orden_despachos = p_id_orden 
+
+    FOR UPDATE;
+
+
+
+    -- CONTROL DE INTEGRIDAD 1: Verificar si la orden realmente existe
+
+    IF v_activo_anterior IS NULL THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho solicitada no existe o ya fue eliminada.';
+
+    END IF;
+
+
+
+    -- CONTROL DE INTEGRIDAD 2: Verificar si ya se encuentra anulada para evitar redundancia
+
+    IF v_activo_anterior = 0 THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho ya se encuentra anulada en el sistema.';
+
+    END IF;
+
+
+
+    -- 3. Ejecución de la eliminación lógica
+
+    UPDATE tbl_orden_despachos 
+
+    SET activo = 0 
+
+    WHERE id_orden_despachos = p_id_orden;
+
+
+
+    -- 4. Registro síncrono de auditoría en la base de datos de seguridad
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(), 
+
+        'Ordenes de despacho', 
+
+        'ANULAR', 
+
+        JSON_OBJECT('id_orden_despachos', p_id_orden, 'activo', 0), 
+
+        JSON_OBJECT('id_orden_despachos', p_id_orden, 'activo', v_activo_anterior, 'estado', v_estado_anterior), 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se anuló lógicamente la orden de despacho ID: ', p_id_orden, '.')
+
+    );
+
+
+
+    COMMIT;
+
+
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1156,47 +1346,83 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_recepcion`(
-    IN p_correlativo VARCHAR(255),
-    IN p_id_usuario_auditor INT,
-    OUT p_resultado INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_anular_recepcion`(
+
+    IN p_correlativo VARCHAR(255),
+
+    IN p_id_usuario_auditor INT,
+
+    OUT p_resultado INT
+
 )
-BEGIN
-    DECLARE v_id_recepcion INT DEFAULT NULL;
-    DECLARE v_estado VARCHAR(20) DEFAULT NULL;
+BEGIN
+
+    DECLARE v_id_recepcion INT DEFAULT NULL;
+
+    DECLARE v_estado VARCHAR(20) DEFAULT NULL;
+
     DECLARE v_stock_aplicado TINYINT DEFAULT 0;
     DECLARE v_productos_reversion INT DEFAULT 0;
-    DECLARE v_existe INT DEFAULT 0;
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SET p_resultado = 0;
-        RESIGNAL;
-    END;
-
-    SET p_resultado = 0;
-    START TRANSACTION;
-
-    SELECT COUNT(*) INTO v_existe
-    FROM tbl_recepcion_productos
-    WHERE correlativo = p_correlativo;
-    IF v_existe = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción no existe.';
-    END IF;
-
+    DECLARE v_existe INT DEFAULT 0;
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SET p_resultado = 0;
+
+        RESIGNAL;
+
+    END;
+
+
+
+    SET p_resultado = 0;
+
+    START TRANSACTION;
+
+
+
+    SELECT COUNT(*) INTO v_existe
+
+    FROM tbl_recepcion_productos
+
+    WHERE correlativo = p_correlativo;
+
+    IF v_existe = 0 THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción no existe.';
+
+    END IF;
+
+
+
     SELECT id_recepcion, estado, stock_aplicado
     INTO v_id_recepcion, v_estado, v_stock_aplicado
-    FROM tbl_recepcion_productos
-    WHERE correlativo = p_correlativo
-    ORDER BY id_recepcion DESC
-    LIMIT 1
-    FOR UPDATE;
-
-    IF v_estado = 'anulado' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción ya está anulada.';
-    END IF;
-
+    FROM tbl_recepcion_productos
+
+    WHERE correlativo = p_correlativo
+
+    ORDER BY id_recepcion DESC
+
+    LIMIT 1
+
+    FOR UPDATE;
+
+
+
+    IF v_estado = 'anulado' THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción ya está anulada.';
+
+    END IF;
+
+
+
     IF v_stock_aplicado = 1 THEN
         SELECT COUNT(DISTINCT id_producto)
         INTO v_productos_reversion
@@ -1218,20 +1444,34 @@ BEGIN
         END IF;
     END IF;
 
-    UPDATE tbl_recepcion_productos
-    SET estado = 'anulado'
-    WHERE id_recepcion = v_id_recepcion;
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora`
-        (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
-    VALUES
-        (NOW(), 'Recepcion', 'ANULAR',
-         JSON_OBJECT('id_recepcion', v_id_recepcion, 'correlativo', p_correlativo, 'estado', 'anulado'),
-         JSON_OBJECT('id_recepcion', v_id_recepcion, 'correlativo', p_correlativo, 'estado', v_estado),
-         p_id_usuario_auditor, 'media', CONCAT('Se anuló la recepción ', p_correlativo, '.'));
-
-    SET p_resultado = 1;
-    COMMIT;
+    UPDATE tbl_recepcion_productos
+
+    SET estado = 'anulado'
+
+    WHERE id_recepcion = v_id_recepcion;
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora`
+
+        (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
+
+    VALUES
+
+        (NOW(), 'Recepcion', 'ANULAR',
+
+         JSON_OBJECT('id_recepcion', v_id_recepcion, 'correlativo', p_correlativo, 'estado', 'anulado'),
+
+         JSON_OBJECT('id_recepcion', v_id_recepcion, 'correlativo', p_correlativo, 'estado', v_estado),
+
+         p_id_usuario_auditor, 'media', CONCAT('Se anuló la recepción ', p_correlativo, '.'));
+
+
+
+    SET p_resultado = 1;
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1248,51 +1488,95 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_cuenta`(
-    IN p_id_cuenta INT,
-    IN p_nuevo_estado ENUM('habilitado','inhabilitado'),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_cuenta`(
+
+    IN p_id_cuenta INT,
+
+    IN p_nuevo_estado ENUM('habilitado','inhabilitado'),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_banco VARCHAR(255);
-    DECLARE v_estado_previo ENUM('habilitado','inhabilitado');
-
-    -- Manejador general de excepciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo alterar el estado de la cuenta.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo y extracción del estado previo
-    SELECT `nombre_banco`, `estado` INTO v_nombre_banco, v_estado_previo
-    FROM `tbl_cuentas`
-    WHERE `id_cuenta` = p_id_cuenta
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Modificación física del campo ENUM
-    UPDATE `tbl_cuentas`
-    SET `estado` = p_nuevo_estado
-    WHERE `id_cuenta` = p_id_cuenta;
-
-    -- Registro conciso en bitácora
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Cuentas bancarias', 
-        'MODIFICAR', 
-        JSON_OBJECT('id_cuenta', p_id_cuenta, 'estado', p_nuevo_estado), 
-        JSON_OBJECT('id_cuenta', p_id_cuenta, 'estado', v_estado_previo), 
-        p_id_usuario_auditor, 
-        'media',
-        CONCAT('Se cambió el estado de la cuenta bancaria "', IFNULL(v_nombre_banco, 'Desconocido'), '" a: ', p_nuevo_estado, '.')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_banco VARCHAR(255);
+
+    DECLARE v_estado_previo ENUM('habilitado','inhabilitado');
+
+
+
+    -- Manejador general de excepciones
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo alterar el estado de la cuenta.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo y extracción del estado previo
+
+    SELECT `nombre_banco`, `estado` INTO v_nombre_banco, v_estado_previo
+
+    FROM `tbl_cuentas`
+
+    WHERE `id_cuenta` = p_id_cuenta
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Modificación física del campo ENUM
+
+    UPDATE `tbl_cuentas`
+
+    SET `estado` = p_nuevo_estado
+
+    WHERE `id_cuenta` = p_id_cuenta;
+
+
+
+    -- Registro conciso en bitácora
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Cuentas bancarias', 
+
+        'MODIFICAR', 
+
+        JSON_OBJECT('id_cuenta', p_id_cuenta, 'estado', p_nuevo_estado), 
+
+        JSON_OBJECT('id_cuenta', p_id_cuenta, 'estado', v_estado_previo), 
+
+        p_id_usuario_auditor, 
+
+        'media',
+
+        CONCAT('Se cambió el estado de la cuenta bancaria "', IFNULL(v_nombre_banco, 'Desconocido'), '" a: ', p_nuevo_estado, '.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1309,70 +1593,133 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_despacho`(
-    IN p_id_despacho INT,
-    IN p_nuevo_estado VARCHAR(20),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_despacho`(
+
+    IN p_id_despacho INT,
+
+    IN p_nuevo_estado VARCHAR(20),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_estado_anterior VARCHAR(20);
-    DECLARE v_activo_anterior TINYINT;
-
-    -- Manejador de excepciones para garantizar el ROLLBACK ante errores imprevistos
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo modificar el estado del despacho.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Concurrencia Avanzada: Bloqueo de fila exclusivo para evitar actualizaciones fantasmas
-    SELECT estado, activo INTO v_estado_anterior, v_activo_anterior
-    FROM tbl_despachos
-    WHERE id_despachos = p_id_despacho
-    FOR UPDATE;
-
-    -- Control de flujo de datos (Verificación de existencia y consistencia)
-    IF v_estado_anterior IS NULL THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El despacho especificado no existe en el sistema.';
-    END IF;
-
-    IF v_activo_anterior = 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación inválida: El despacho se encuentra anulado.';
-    END IF;
-
-    -- Actualización de estado atómica
-    UPDATE tbl_despachos
-    SET estado = p_nuevo_estado
-    WHERE id_despachos = p_id_despacho;
-
-    -- Auditoría Síncrona: Inserción directa en la base de datos de seguridad
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, 
-        `nombre_modulo`, 
-        `accion`, 
-        `datos_nuevos`, 
-        `datos_viejos`, 
-        `id_usuario`, 
-        `prioridad`, 
-        `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Despacho',
-        'CAMBIAR ESTADO',
-        JSON_OBJECT('id_despachos', p_id_despacho, 'estado', p_nuevo_estado),
-        JSON_OBJECT('id_despachos', p_id_despacho, 'estado', v_estado_anterior),
-        p_id_usuario_auditor,
-        'media',
-        CONCAT('Se cambió el estado del despacho con ID: ', p_id_despacho, ' a ', p_nuevo_estado, '.')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_estado_anterior VARCHAR(20);
+
+    DECLARE v_activo_anterior TINYINT;
+
+
+
+    -- Manejador de excepciones para garantizar el ROLLBACK ante errores imprevistos
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo modificar el estado del despacho.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Concurrencia Avanzada: Bloqueo de fila exclusivo para evitar actualizaciones fantasmas
+
+    SELECT estado, activo INTO v_estado_anterior, v_activo_anterior
+
+    FROM tbl_despachos
+
+    WHERE id_despachos = p_id_despacho
+
+    FOR UPDATE;
+
+
+
+    -- Control de flujo de datos (Verificación de existencia y consistencia)
+
+    IF v_estado_anterior IS NULL THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El despacho especificado no existe en el sistema.';
+
+    END IF;
+
+
+
+    IF v_activo_anterior = 0 THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación inválida: El despacho se encuentra anulado.';
+
+    END IF;
+
+
+
+    -- Actualización de estado atómica
+
+    UPDATE tbl_despachos
+
+    SET estado = p_nuevo_estado
+
+    WHERE id_despachos = p_id_despacho;
+
+
+
+    -- Auditoría Síncrona: Inserción directa en la base de datos de seguridad
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, 
+
+        `nombre_modulo`, 
+
+        `accion`, 
+
+        `datos_nuevos`, 
+
+        `datos_viejos`, 
+
+        `id_usuario`, 
+
+        `prioridad`, 
+
+        `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Despacho',
+
+        'CAMBIAR ESTADO',
+
+        JSON_OBJECT('id_despachos', p_id_despacho, 'estado', p_nuevo_estado),
+
+        JSON_OBJECT('id_despachos', p_id_despacho, 'estado', v_estado_anterior),
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT('Se cambió el estado del despacho con ID: ', p_id_despacho, ' a ', p_nuevo_estado, '.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1389,113 +1736,219 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_orden_despacho`(
-    IN p_id_orden INT,
-    IN p_nuevo_estado ENUM('Por Entregar','Entregada'),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_orden_despacho`(
+
+    IN p_id_orden INT,
+
+    IN p_nuevo_estado ENUM('Por Entregar','Entregada'),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- 1. Declaración de variables locales
-    DECLARE v_id_factura INT DEFAULT NULL;
-    DECLARE v_fecha_despacho DATE;
-    DECLARE v_id_cliente INT;
-    DECLARE v_id_despacho INT;
-    DECLARE v_id_producto INT;
-    DECLARE v_cantidad INT;
-    DECLARE v_estado_anterior VARCHAR(50);
-    DECLARE v_fin INT DEFAULT 0;
-
-    -- 2. Declaración del Cursor para procesar los detalles de la factura en lote
-    DECLARE cur_detalles CURSOR FOR 
-        SELECT id_producto, cantidad 
-        FROM tbl_factura_detalle 
-        WHERE factura_id = v_id_factura;
-
-    -- 3. Manejadores de condiciones y errores (Mantiene la integridad ante fallos)
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_fin = 1;
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        -- Si algo falla, deshace absolutamente todos los cambios concurrentes
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error transaccional: No se pudo actualizar el estado ni procesar el despacho.'; 
-    END;
-
-    -- Configuración estricta de aislamiento de transacciones concurrentes
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- CONTROL DE CONCURRENCIA: Bloqueamos la fila de la orden con FOR UPDATE
-    SELECT id_factura, fecha_despacho, estado 
-    INTO v_id_factura, v_fecha_despacho, v_estado_anterior
-    FROM tbl_orden_despachos 
-    WHERE id_orden_despachos = p_id_orden 
-    FOR UPDATE;
-
-    -- CONTROL DE INTEGRIDAD: Verificar si la orden realmente existe
-    IF v_id_factura IS NULL THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho solicitada no existe o fue eliminada.';
-    END IF;
-
-    -- Reiniciamos la bandera de control por si el SELECT anterior levantó un flag NOT FOUND
-    SET v_fin = 0;
-
-    -- Actualización directa del estado
-    UPDATE tbl_orden_despachos 
-    SET estado = p_nuevo_estado 
-    WHERE id_orden_despachos = p_id_orden;
-
-    -- Lógica interna optimizada si pasa a "Entregada"
-    IF p_nuevo_estado = 'Entregada' THEN
-        
-        -- Obtener el cliente de la factura asociada
-        SELECT cliente INTO v_id_cliente 
-        FROM tbl_facturas 
-        WHERE id_factura = v_id_factura;
-        
-        -- Insertar cabecera en la tabla de despachos finales
-        INSERT INTO tbl_despachos (id_clientes, fecha_despacho, tipocompra, estado, activo) 
-        VALUES (v_id_cliente, v_fecha_despacho, 'Online', 'Por Despachar', 1);
-        
-        -- Capturamos el ID generado de forma aislada
-        SET v_id_despacho = LAST_INSERT_ID();
-        
-        -- Reiniciamos la bandera de control antes de abrir el cursor de detalles
-        SET v_fin = 0;
-        
-        -- Procesamiento del bucle directamente en la Base de Datos mediante el Cursor
-        OPEN cur_detalles;
-        read_loop: LOOP
-            FETCH cur_detalles INTO v_id_producto, v_cantidad;
-            IF v_fin = 1 THEN 
-                LEAVE read_loop; 
-            END IF;
-            
-            -- Inserción del detalle del despacho
-            INSERT INTO tbl_despacho_detalle (id_despacho, id_producto, cantidad) 
-            VALUES (v_id_despacho, v_id_producto, v_cantidad);
-        END LOOP;
-        CLOSE cur_detalles;
-        
-    END IF;
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(), 
-        'Ordenes de despacho', 
-        'CAMBIAR ESTADO', 
-        JSON_OBJECT('id_orden_despachos', p_id_orden, 'estado', p_nuevo_estado), 
-        JSON_OBJECT('id_orden_despachos', p_id_orden, 'estado', v_estado_anterior), 
-        p_id_usuario_auditor, 
-        'media', 
-        CONCAT('Se cambió el estado de la orden de despacho ID: ', p_id_orden, ' a ', p_nuevo_estado, '.')
-    );
-
-    COMMIT;
-
+BEGIN
+
+    -- 1. Declaración de variables locales
+
+    DECLARE v_id_factura INT DEFAULT NULL;
+
+    DECLARE v_fecha_despacho DATE;
+
+    DECLARE v_id_cliente INT;
+
+    DECLARE v_id_despacho INT;
+
+    DECLARE v_id_producto INT;
+
+    DECLARE v_cantidad INT;
+
+    DECLARE v_estado_anterior VARCHAR(50);
+
+    DECLARE v_fin INT DEFAULT 0;
+
+
+
+    -- 2. Declaración del Cursor para procesar los detalles de la factura en lote
+
+    DECLARE cur_detalles CURSOR FOR 
+
+        SELECT id_producto, cantidad 
+
+        FROM tbl_factura_detalle 
+
+        WHERE factura_id = v_id_factura;
+
+
+
+    -- 3. Manejadores de condiciones y errores (Mantiene la integridad ante fallos)
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_fin = 1;
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        -- Si algo falla, deshace absolutamente todos los cambios concurrentes
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error transaccional: No se pudo actualizar el estado ni procesar el despacho.'; 
+
+    END;
+
+
+
+    -- Configuración estricta de aislamiento de transacciones concurrentes
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- CONTROL DE CONCURRENCIA: Bloqueamos la fila de la orden con FOR UPDATE
+
+    SELECT id_factura, fecha_despacho, estado 
+
+    INTO v_id_factura, v_fecha_despacho, v_estado_anterior
+
+    FROM tbl_orden_despachos 
+
+    WHERE id_orden_despachos = p_id_orden 
+
+    FOR UPDATE;
+
+
+
+    -- CONTROL DE INTEGRIDAD: Verificar si la orden realmente existe
+
+    IF v_id_factura IS NULL THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: La orden de despacho solicitada no existe o fue eliminada.';
+
+    END IF;
+
+
+
+    -- Reiniciamos la bandera de control por si el SELECT anterior levantó un flag NOT FOUND
+
+    SET v_fin = 0;
+
+
+
+    -- Actualización directa del estado
+
+    UPDATE tbl_orden_despachos 
+
+    SET estado = p_nuevo_estado 
+
+    WHERE id_orden_despachos = p_id_orden;
+
+
+
+    -- Lógica interna optimizada si pasa a "Entregada"
+
+    IF p_nuevo_estado = 'Entregada' THEN
+
+        
+
+        -- Obtener el cliente de la factura asociada
+
+        SELECT cliente INTO v_id_cliente 
+
+        FROM tbl_facturas 
+
+        WHERE id_factura = v_id_factura;
+
+        
+
+        -- Insertar cabecera en la tabla de despachos finales
+
+        INSERT INTO tbl_despachos (id_clientes, fecha_despacho, tipocompra, estado, activo) 
+
+        VALUES (v_id_cliente, v_fecha_despacho, 'Online', 'Por Despachar', 1);
+
+        
+
+        -- Capturamos el ID generado de forma aislada
+
+        SET v_id_despacho = LAST_INSERT_ID();
+
+        
+
+        -- Reiniciamos la bandera de control antes de abrir el cursor de detalles
+
+        SET v_fin = 0;
+
+        
+
+        -- Procesamiento del bucle directamente en la Base de Datos mediante el Cursor
+
+        OPEN cur_detalles;
+
+        read_loop: LOOP
+
+            FETCH cur_detalles INTO v_id_producto, v_cantidad;
+
+            IF v_fin = 1 THEN 
+
+                LEAVE read_loop; 
+
+            END IF;
+
+            
+
+            -- Inserción del detalle del despacho
+
+            INSERT INTO tbl_despacho_detalle (id_despacho, id_producto, cantidad) 
+
+            VALUES (v_id_despacho, v_id_producto, v_cantidad);
+
+        END LOOP;
+
+        CLOSE cur_detalles;
+
+        
+
+    END IF;
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(), 
+
+        'Ordenes de despacho', 
+
+        'CAMBIAR ESTADO', 
+
+        JSON_OBJECT('id_orden_despachos', p_id_orden, 'estado', p_nuevo_estado), 
+
+        JSON_OBJECT('id_orden_despachos', p_id_orden, 'estado', v_estado_anterior), 
+
+        p_id_usuario_auditor, 
+
+        'media', 
+
+        CONCAT('Se cambió el estado de la orden de despacho ID: ', p_id_orden, ' a ', p_nuevo_estado, '.')
+
+    );
+
+
+
+    COMMIT;
+
+
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1512,51 +1965,95 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_proveedor`(
-    IN p_id_proveedor INT,
-    IN p_nuevo_estado ENUM('habilitado', 'inhabilitado'),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_estado_proveedor`(
+
+    IN p_id_proveedor INT,
+
+    IN p_nuevo_estado ENUM('habilitado', 'inhabilitado'),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_proveedor VARCHAR(2048);
-    DECLARE v_rif_proveedor VARCHAR(15);
-    DECLARE v_estado_viejo ENUM('habilitado', 'inhabilitado');
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        ROLLBACK; 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo conmutar el estado del proveedor.'; 
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo y obtención forense corta
-    SELECT `nombre_proveedor`, `rif_proveedor`, `estado`
-    INTO v_nombre_proveedor, v_rif_proveedor, v_estado_viejo
-    FROM `tbl_proveedores`
-    WHERE `id_proveedor` = p_id_proveedor
-    LIMIT 1
-    FOR UPDATE;
-
-    -- Modificación de estado energético
-    UPDATE `tbl_proveedores` SET `estado` = p_nuevo_estado WHERE `id_proveedor` = p_id_proveedor;
-
-    -- Reporte de auditoría síncrono
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    ) VALUES (
-        NOW(), 
-        'Proveedores', 
-        'MODIFICAR', 
-        JSON_OBJECT('id_proveedor', p_id_proveedor, 'estado', p_nuevo_estado), 
-        JSON_OBJECT('id_proveedor', p_id_proveedor, 'estado', v_estado_viejo), 
-        p_id_usuario_auditor, 
-        'media', 
-        CONCAT('Se cambió el estado del proveedor "', IFNULL(v_nombre_proveedor, 'Desconocido'), '" a: ', UPPER(p_nuevo_estado), '.')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_proveedor VARCHAR(2048);
+
+    DECLARE v_rif_proveedor VARCHAR(15);
+
+    DECLARE v_estado_viejo ENUM('habilitado', 'inhabilitado');
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        ROLLBACK; 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo conmutar el estado del proveedor.'; 
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo y obtención forense corta
+
+    SELECT `nombre_proveedor`, `rif_proveedor`, `estado`
+
+    INTO v_nombre_proveedor, v_rif_proveedor, v_estado_viejo
+
+    FROM `tbl_proveedores`
+
+    WHERE `id_proveedor` = p_id_proveedor
+
+    LIMIT 1
+
+    FOR UPDATE;
+
+
+
+    -- Modificación de estado energético
+
+    UPDATE `tbl_proveedores` SET `estado` = p_nuevo_estado WHERE `id_proveedor` = p_id_proveedor;
+
+
+
+    -- Reporte de auditoría síncrono
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    ) VALUES (
+
+        NOW(), 
+
+        'Proveedores', 
+
+        'MODIFICAR', 
+
+        JSON_OBJECT('id_proveedor', p_id_proveedor, 'estado', p_nuevo_estado), 
+
+        JSON_OBJECT('id_proveedor', p_id_proveedor, 'estado', v_estado_viejo), 
+
+        p_id_usuario_auditor, 
+
+        'media', 
+
+        CONCAT('Se cambió el estado del proveedor "', IFNULL(v_nombre_proveedor, 'Desconocido'), '" a: ', UPPER(p_nuevo_estado), '.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1574,24 +2071,42 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_cliente`()
-BEGIN
-    -- Manejador general de excepciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo realizar la consulta de los clientes.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Seleccionamos los datos visibles + los campos de control del Frontend
-    SELECT `id_clientes`, `nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo` 
-    FROM `tbl_clientes` 
-    ORDER BY `id_clientes` DESC
-    FOR UPDATE;
-
-    COMMIT;
+BEGIN
+
+    -- Manejador general de excepciones
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo realizar la consulta de los clientes.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Seleccionamos los datos visibles + los campos de control del Frontend
+
+    SELECT `id_clientes`, `nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo` 
+
+    FROM `tbl_clientes` 
+
+    ORDER BY `id_clientes` DESC
+
+    FOR UPDATE;
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1609,14 +2124,22 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_cuenta`()
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error estructural al cargar la tabla de cuentas.';
-    END;
-
-    SELECT * FROM `tbl_cuentas` 
-    ORDER BY `id_cuenta` DESC;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error estructural al cargar la tabla de cuentas.';
+
+    END;
+
+
+
+    SELECT * FROM `tbl_cuentas` 
+
+    ORDER BY `id_cuenta` DESC;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1634,23 +2157,40 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_despachos_activos`()
-BEGIN
-    SELECT 
-        r.id_despachos,
-        r.fecha_despacho AS fecha,
-        r.tipocompra,
-        r.estado,
-        c.nombre AS nombre_cliente,
-        c.cedula AS cedula_cliente,
-        SUM(d.cantidad) AS total_productos,
-        SUM(d.cantidad * p.precio) AS valor_total
-    FROM tbl_despachos AS r
-    INNER JOIN tbl_despacho_detalle AS d ON d.id_despacho = r.id_despachos
-    INNER JOIN tbl_clientes AS c ON c.id_clientes = r.id_clientes
-    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
-    WHERE r.activo = 1
-    GROUP BY r.id_despachos, r.fecha_despacho, r.tipocompra, r.estado, c.nombre, c.cedula
-    ORDER BY r.fecha_despacho DESC;
+BEGIN
+
+    SELECT 
+
+        r.id_despachos,
+
+        r.fecha_despacho AS fecha,
+
+        r.tipocompra,
+
+        r.estado,
+
+        c.nombre AS nombre_cliente,
+
+        c.cedula AS cedula_cliente,
+
+        SUM(d.cantidad) AS total_productos,
+
+        SUM(d.cantidad * p.precio) AS valor_total
+
+    FROM tbl_despachos AS r
+
+    INNER JOIN tbl_despacho_detalle AS d ON d.id_despacho = r.id_despachos
+
+    INNER JOIN tbl_clientes AS c ON c.id_clientes = r.id_clientes
+
+    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
+
+    WHERE r.activo = 1
+
+    GROUP BY r.id_despachos, r.fecha_despacho, r.tipocompra, r.estado, c.nombre, c.cedula
+
+    ORDER BY r.fecha_despacho DESC;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1668,16 +2208,26 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_marcas`()
-BEGIN
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    SELECT `id_marca`, `nombre_marca` 
-    FROM `tbl_marcas` 
-    ORDER BY `nombre_marca` ASC
-    FOR UPDATE;
-
-    COMMIT;
+BEGIN
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    SELECT `id_marca`, `nombre_marca` 
+
+    FROM `tbl_marcas` 
+
+    ORDER BY `nombre_marca` ASC
+
+    FOR UPDATE;
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1695,17 +2245,28 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_modelos`()
-BEGIN
-    -- Selección estructurada con INNER JOIN y ordenamiento descendente por ID
-    SELECT 
-        mo.`id_modelo`,
-        mo.`id_marca`,
-        mo.`nombre_modelo`,
-        ma.`nombre_marca` 
-    FROM `tbl_modelos` AS mo
-    INNER JOIN `tbl_marcas` AS ma ON mo.`id_marca` = ma.`id_marca`
-    ORDER BY mo.`id_modelo` DESC
-    FOR UPDATE;
+BEGIN
+
+    -- Selección estructurada con INNER JOIN y ordenamiento descendente por ID
+
+    SELECT 
+
+        mo.`id_modelo`,
+
+        mo.`id_marca`,
+
+        mo.`nombre_modelo`,
+
+        ma.`nombre_marca` 
+
+    FROM `tbl_modelos` AS mo
+
+    INNER JOIN `tbl_marcas` AS ma ON mo.`id_marca` = ma.`id_marca`
+
+    ORDER BY mo.`id_modelo` DESC
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1723,26 +2284,46 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_ordenes_despacho`()
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo cargar el listado de órdenes de despacho.'; 
-    END;
-
-    -- Consulta optimizada con indices nativos
-    SELECT 
-        od.id_orden_despachos,
-        od.id_factura,
-        c.cedula,
-        od.cliente,
-        od.fecha_despacho,
-        od.estado,
-        od.activo
-    FROM tbl_orden_despachos AS od
-    INNER JOIN tbl_facturas f ON f.id_factura = od.id_factura
-    INNER JOIN tbl_clientes c ON c.id_clientes = f.cliente
-    WHERE od.activo = 1
-    ORDER BY od.fecha_despacho DESC, od.id_orden_despachos DESC;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo cargar el listado de órdenes de despacho.'; 
+
+    END;
+
+
+
+    -- Consulta optimizada con indices nativos
+
+    SELECT 
+
+        od.id_orden_despachos,
+
+        od.id_factura,
+
+        c.cedula,
+
+        od.cliente,
+
+        od.fecha_despacho,
+
+        od.estado,
+
+        od.activo
+
+    FROM tbl_orden_despachos AS od
+
+    INNER JOIN tbl_facturas f ON f.id_factura = od.id_factura
+
+    INNER JOIN tbl_clientes c ON c.id_clientes = f.cliente
+
+    WHERE od.activo = 1
+
+    ORDER BY od.fecha_despacho DESC, od.id_orden_despachos DESC;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1760,12 +2341,18 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_productos_recepcion`()
-BEGIN
-    SELECT p.id_producto, p.nombre_producto, m.nombre_modelo, mar.nombre_marca, p.serial
-    FROM tbl_productos p
-    INNER JOIN tbl_modelos m ON m.id_modelo = p.id_modelo
-    INNER JOIN tbl_marcas mar ON mar.id_marca = m.id_marca
-    ORDER BY p.nombre_producto, p.id_producto;
+BEGIN
+
+    SELECT p.id_producto, p.nombre_producto, m.nombre_modelo, mar.nombre_marca, p.serial
+
+    FROM tbl_productos p
+
+    INNER JOIN tbl_modelos m ON m.id_modelo = p.id_modelo
+
+    INNER JOIN tbl_marcas mar ON mar.id_marca = m.id_marca
+
+    ORDER BY p.nombre_producto, p.id_producto;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1783,27 +2370,48 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_proveedores`()
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la lista de proveedores.'; 
-    END;
-
-    SELECT 
-        `id_proveedor`, 
-        `nombre_proveedor`, 
-        `rif_proveedor`, 
-        `nombre_representante`, 
-        `rif_representante`, 
-        `correo_proveedor`, 
-        `direccion_proveedor`, 
-        `telefono_1`, 
-        `telefono_2`, 
-        `observacion`, 
-        `estado`
-    FROM `tbl_proveedores`
-    ORDER BY `nombre_proveedor`
-    FOR UPDATE;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la lista de proveedores.'; 
+
+    END;
+
+
+
+    SELECT 
+
+        `id_proveedor`, 
+
+        `nombre_proveedor`, 
+
+        `rif_proveedor`, 
+
+        `nombre_representante`, 
+
+        `rif_representante`, 
+
+        `correo_proveedor`, 
+
+        `direccion_proveedor`, 
+
+        `telefono_1`, 
+
+        `telefono_2`, 
+
+        `observacion`, 
+
+        `estado`
+
+    FROM `tbl_proveedores`
+
+    ORDER BY `nombre_proveedor`
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1821,10 +2429,14 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_proveedores_recepcion`()
-BEGIN
-    SELECT id_proveedor, nombre_proveedor
-    FROM tbl_proveedores
-    ORDER BY nombre_proveedor, id_proveedor;
+BEGIN
+
+    SELECT id_proveedor, nombre_proveedor
+
+    FROM tbl_proveedores
+
+    ORDER BY nombre_proveedor, id_proveedor;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1841,49 +2453,91 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_recepciones`(
-    IN p_id_recepcion INT,
-    IN p_correlativo VARCHAR(255),
-    IN p_id_proveedor INT,
-    IN p_fecha_inicio DATE,
-    IN p_fecha_fin DATE,
-    IN p_estado VARCHAR(20),
-    IN p_pagina INT,
-    IN p_limite INT,
-    OUT p_total INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_consultar_recepciones`(
+
+    IN p_id_recepcion INT,
+
+    IN p_correlativo VARCHAR(255),
+
+    IN p_id_proveedor INT,
+
+    IN p_fecha_inicio DATE,
+
+    IN p_fecha_fin DATE,
+
+    IN p_estado VARCHAR(20),
+
+    IN p_pagina INT,
+
+    IN p_limite INT,
+
+    OUT p_total INT
+
 )
-BEGIN
-    DECLARE v_offset INT DEFAULT 0;
-    SET p_pagina = IFNULL(NULLIF(p_pagina, 0), 1);
-    SET p_limite = IFNULL(NULLIF(p_limite, 0), 100);
-    SET v_offset = (p_pagina - 1) * p_limite;
-
-    SELECT COUNT(*) INTO p_total
-    FROM tbl_recepcion_productos r
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    WHERE (p_id_recepcion IS NULL OR r.id_recepcion = p_id_recepcion)
-      AND (p_correlativo IS NULL OR r.correlativo LIKE CONCAT('%', p_correlativo, '%'))
-      AND (p_id_proveedor IS NULL OR r.id_proveedor = p_id_proveedor)
-      AND (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
-      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
-      AND (p_estado IS NULL OR r.estado = p_estado);
-
-    SELECT r.id_recepcion, r.fecha, r.correlativo, p.nombre_proveedor,
-           COALESCE(SUM(d.cantidad * d.costo), 0) AS costo_inversion,
-           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura, r.estado
-    FROM tbl_recepcion_productos r
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    LEFT JOIN tbl_detalle_recepcion_productos d ON d.id_recepcion = r.id_recepcion
-    WHERE (p_id_recepcion IS NULL OR r.id_recepcion = p_id_recepcion)
-      AND (p_correlativo IS NULL OR r.correlativo LIKE CONCAT('%', p_correlativo, '%'))
-      AND (p_id_proveedor IS NULL OR r.id_proveedor = p_id_proveedor)
-      AND (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
-      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
-      AND (p_estado IS NULL OR r.estado = p_estado)
-    GROUP BY r.id_recepcion, r.fecha, r.correlativo, p.nombre_proveedor,
-             r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura, r.estado
-    ORDER BY r.fecha DESC, r.correlativo DESC
-    LIMIT v_offset, p_limite;
+BEGIN
+
+    DECLARE v_offset INT DEFAULT 0;
+
+    SET p_pagina = IFNULL(NULLIF(p_pagina, 0), 1);
+
+    SET p_limite = IFNULL(NULLIF(p_limite, 0), 100);
+
+    SET v_offset = (p_pagina - 1) * p_limite;
+
+
+
+    SELECT COUNT(*) INTO p_total
+
+    FROM tbl_recepcion_productos r
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    WHERE (p_id_recepcion IS NULL OR r.id_recepcion = p_id_recepcion)
+
+      AND (p_correlativo IS NULL OR r.correlativo LIKE CONCAT('%', p_correlativo, '%'))
+
+      AND (p_id_proveedor IS NULL OR r.id_proveedor = p_id_proveedor)
+
+      AND (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
+
+      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
+
+      AND (p_estado IS NULL OR r.estado = p_estado);
+
+
+
+    SELECT r.id_recepcion, r.fecha, r.correlativo, p.nombre_proveedor,
+
+           COALESCE(SUM(d.cantidad * d.costo), 0) AS costo_inversion,
+
+           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura, r.estado
+
+    FROM tbl_recepcion_productos r
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    LEFT JOIN tbl_detalle_recepcion_productos d ON d.id_recepcion = r.id_recepcion
+
+    WHERE (p_id_recepcion IS NULL OR r.id_recepcion = p_id_recepcion)
+
+      AND (p_correlativo IS NULL OR r.correlativo LIKE CONCAT('%', p_correlativo, '%'))
+
+      AND (p_id_proveedor IS NULL OR r.id_proveedor = p_id_proveedor)
+
+      AND (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
+
+      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
+
+      AND (p_estado IS NULL OR r.estado = p_estado)
+
+    GROUP BY r.id_recepcion, r.fecha, r.correlativo, p.nombre_proveedor,
+
+             r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura, r.estado
+
+    ORDER BY r.fecha DESC, r.correlativo DESC
+
+    LIMIT v_offset, p_limite;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1901,152 +2555,298 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_categoria`(IN `p_id_categoria` INT, IN `p_nombre_tabla` VARCHAR(255), IN `p_id_usuario_auditor` INT)
-BEGIN
-    -- 1. DECLARACIÓN DE VARIABLES LOCALES AL INICIO ESTRICTO
-    DECLARE v_nombre_categoria VARCHAR(255);
-    DECLARE v_productos_count INT;
-    DECLARE v_datos_viejos JSON;
-    DECLARE v_error_msg VARCHAR(500);
-
-    -- 2. MANEJAdores de EXCEPCIONES (Deben ir antes de cualquier comando ejecutable)
-    -- MANEJADOR ESPECÍFICO PARA EL ESCENARIO DE LLAVE FORÁNEA (Error 1451)
-    DECLARE EXIT HANDLER FOR 1451
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar la categoría porque posee registros históricos asociados.';
-    END;
-
-    -- Manejador general para cualquier otro tipo de error
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1
-        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
-        
-        -- Mensajes específicos según el código de error
-        IF @errno = 1146 THEN
-            SET v_error_msg = 'Error: La tabla especificada no existe en la base de datos';
-        ELSEIF @errno = 1050 THEN
-            SET v_error_msg = 'Error: La tabla ya existe (conflicto de nombres)';
-        ELSEIF @errno = 1062 THEN
-            SET v_error_msg = 'Error: Duplicidad de datos en la base de datos';
-        ELSEIF @errno = 1213 THEN
-            SET v_error_msg = 'Error: Conflicto de bloqueo, intente nuevamente';
-        ELSE
-            SET v_error_msg = CONCAT('Error interno (Código: ', @errno, '): ', @text);
-        END IF;
-        
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
-    END;
-
-    -- 3. INICIO DE LÓGICA Y TRANSACCIONES
-
-    -- Validación de parámetros de entrada (Movido aquí de forma segura)
-    IF p_id_categoria IS NULL OR p_id_categoria <= 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de categoría inválido';
-    END IF;
-    
-    IF p_nombre_tabla IS NULL OR p_nombre_tabla = '' THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nombre de tabla inválido';
-    END IF;
-    
-    IF p_id_usuario_auditor IS NULL OR p_id_usuario_auditor <= 0 THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario auditor inválido';
-    END IF;
-
-    -- Bloqueo exclusivo de seguridad y captura pre-mortem
-    SELECT nombre_categoria INTO v_nombre_categoria 
-    FROM tbl_categoria 
-    WHERE id_categoria = p_id_categoria
-    LIMIT 1
-    FOR UPDATE;
-        
-    -- Validación de existencia
-    IF v_nombre_categoria IS NULL THEN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Categoría no encontrada';
-    END IF;
-        
-    -- Preparación del objeto JSON de auditoría
-    SET v_datos_viejos = JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', v_nombre_categoria, 'tabla', p_nombre_tabla);
-        
-    -- Verificar si la tabla dinámica existe
-    SET @table_exists = 0;
-    SELECT COUNT(*) INTO @table_exists
-    FROM INFORMATION_SCHEMA.TABLES 
-    WHERE TABLE_SCHEMA = 'casalai_principal' 
-    AND TABLE_NAME = p_nombre_tabla;
-        
-    IF @table_exists > 0 THEN
-        -- Inicializamos la variable de usuario para el conteo
-        SET @prod_count = 0;
-        
-        -- Construcción limpia del SQL dinámico
-        SET @count_sql = CONCAT('SELECT COUNT(*) INTO @prod_count FROM `', p_nombre_tabla, '`');
-        PREPARE stmt FROM @count_sql;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-                
-        SET v_productos_count = @prod_count;
-                
-        IF v_productos_count > 0 THEN
-            ROLLBACK;
-            SET v_error_msg = CONCAT('No se puede eliminar porque tiene ', v_productos_count, ' productos asociados');
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
-        END IF;
-                
-        -- Eliminar la tabla dinámica
-        SET @drop_sql = CONCAT('DROP TABLE IF EXISTS `', p_nombre_tabla, '`');
-        PREPARE stmt FROM @drop_sql;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-        
-        -- Verificar que la tabla se eliminó correctamente
-        SET @table_exists_after = 0;
-        SELECT COUNT(*) INTO @table_exists_after
-        FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_SCHEMA = 'casalai_principal' 
-        AND TABLE_NAME = p_nombre_tabla;
-        
-        IF @table_exists_after > 0 THEN
-            ROLLBACK;
-            SET v_error_msg = CONCAT('No se pudo eliminar la tabla dinámica: ', p_nombre_tabla);
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
-        END IF;
-    END IF;
-        
-    -- Remoción física del registro
-    DELETE FROM tbl_categoria WHERE id_categoria = p_id_categoria;
-    
-    -- Verificar que la categoría se eliminó correctamente
-    SET @categoria_deleted = 0;
-    SELECT COUNT(*) INTO @categoria_deleted
-    FROM tbl_categoria 
-    WHERE id_categoria = p_id_categoria;
-    
-    IF @categoria_deleted > 0 THEN
-        ROLLBACK;
-        SET v_error_msg = CONCAT('No se pudo eliminar el registro de la categoría con ID: ', p_id_categoria);
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
-    END IF;
-        
-    -- Registro de expulsión en bitácora con prioridad ALTA
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Categorías', 
-        'ELIMINAR', 
-        NULL, 
-        v_datos_viejos, 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se eliminó físicamente la categoría "', IFNULL(v_nombre_categoria, 'Desconocido'), '" del sistema y su tabla asociada: ', p_nombre_tabla)
-    );
-
-
+BEGIN
+
+    -- 1. DECLARACIÓN DE VARIABLES LOCALES AL INICIO ESTRICTO
+
+    DECLARE v_nombre_categoria VARCHAR(255);
+
+    DECLARE v_productos_count INT;
+
+    DECLARE v_datos_viejos JSON;
+
+    DECLARE v_error_msg VARCHAR(500);
+
+
+
+    -- 2. MANEJAdores de EXCEPCIONES (Deben ir antes de cualquier comando ejecutable)
+
+    -- MANEJADOR ESPECÍFICO PARA EL ESCENARIO DE LLAVE FORÁNEA (Error 1451)
+
+    DECLARE EXIT HANDLER FOR 1451
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar la categoría porque posee registros históricos asociados.';
+
+    END;
+
+
+
+    -- Manejador general para cualquier otro tipo de error
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        GET DIAGNOSTICS CONDITION 1
+
+        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+
+        
+
+        -- Mensajes específicos según el código de error
+
+        IF @errno = 1146 THEN
+
+            SET v_error_msg = 'Error: La tabla especificada no existe en la base de datos';
+
+        ELSEIF @errno = 1050 THEN
+
+            SET v_error_msg = 'Error: La tabla ya existe (conflicto de nombres)';
+
+        ELSEIF @errno = 1062 THEN
+
+            SET v_error_msg = 'Error: Duplicidad de datos en la base de datos';
+
+        ELSEIF @errno = 1213 THEN
+
+            SET v_error_msg = 'Error: Conflicto de bloqueo, intente nuevamente';
+
+        ELSE
+
+            SET v_error_msg = CONCAT('Error interno (Código: ', @errno, '): ', @text);
+
+        END IF;
+
+        
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+
+    END;
+
+
+
+    -- 3. INICIO DE LÓGICA Y TRANSACCIONES
+
+
+
+    -- Validación de parámetros de entrada (Movido aquí de forma segura)
+
+    IF p_id_categoria IS NULL OR p_id_categoria <= 0 THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de categoría inválido';
+
+    END IF;
+
+    
+
+    IF p_nombre_tabla IS NULL OR p_nombre_tabla = '' THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nombre de tabla inválido';
+
+    END IF;
+
+    
+
+    IF p_id_usuario_auditor IS NULL OR p_id_usuario_auditor <= 0 THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ID de usuario auditor inválido';
+
+    END IF;
+
+
+
+    -- Bloqueo exclusivo de seguridad y captura pre-mortem
+
+    SELECT nombre_categoria INTO v_nombre_categoria 
+
+    FROM tbl_categoria 
+
+    WHERE id_categoria = p_id_categoria
+
+    LIMIT 1
+
+    FOR UPDATE;
+
+        
+
+    -- Validación de existencia
+
+    IF v_nombre_categoria IS NULL THEN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Categoría no encontrada';
+
+    END IF;
+
+        
+
+    -- Preparación del objeto JSON de auditoría
+
+    SET v_datos_viejos = JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', v_nombre_categoria, 'tabla', p_nombre_tabla);
+
+        
+
+    -- Verificar si la tabla dinámica existe
+
+    SET @table_exists = 0;
+
+    SELECT COUNT(*) INTO @table_exists
+
+    FROM INFORMATION_SCHEMA.TABLES 
+
+    WHERE TABLE_SCHEMA = 'casalai_principal' 
+
+    AND TABLE_NAME = p_nombre_tabla;
+
+        
+
+    IF @table_exists > 0 THEN
+
+        -- Inicializamos la variable de usuario para el conteo
+
+        SET @prod_count = 0;
+
+        
+
+        -- Construcción limpia del SQL dinámico
+
+        SET @count_sql = CONCAT('SELECT COUNT(*) INTO @prod_count FROM `', p_nombre_tabla, '`');
+
+        PREPARE stmt FROM @count_sql;
+
+        EXECUTE stmt;
+
+        DEALLOCATE PREPARE stmt;
+
+                
+
+        SET v_productos_count = @prod_count;
+
+                
+
+        IF v_productos_count > 0 THEN
+
+            ROLLBACK;
+
+            SET v_error_msg = CONCAT('No se puede eliminar porque tiene ', v_productos_count, ' productos asociados');
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+
+        END IF;
+
+                
+
+        -- Eliminar la tabla dinámica
+
+        SET @drop_sql = CONCAT('DROP TABLE IF EXISTS `', p_nombre_tabla, '`');
+
+        PREPARE stmt FROM @drop_sql;
+
+        EXECUTE stmt;
+
+        DEALLOCATE PREPARE stmt;
+
+        
+
+        -- Verificar que la tabla se eliminó correctamente
+
+        SET @table_exists_after = 0;
+
+        SELECT COUNT(*) INTO @table_exists_after
+
+        FROM INFORMATION_SCHEMA.TABLES 
+
+        WHERE TABLE_SCHEMA = 'casalai_principal' 
+
+        AND TABLE_NAME = p_nombre_tabla;
+
+        
+
+        IF @table_exists_after > 0 THEN
+
+            ROLLBACK;
+
+            SET v_error_msg = CONCAT('No se pudo eliminar la tabla dinámica: ', p_nombre_tabla);
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+
+        END IF;
+
+    END IF;
+
+        
+
+    -- Remoción física del registro
+
+    DELETE FROM tbl_categoria WHERE id_categoria = p_id_categoria;
+
+    
+
+    -- Verificar que la categoría se eliminó correctamente
+
+    SET @categoria_deleted = 0;
+
+    SELECT COUNT(*) INTO @categoria_deleted
+
+    FROM tbl_categoria 
+
+    WHERE id_categoria = p_id_categoria;
+
+    
+
+    IF @categoria_deleted > 0 THEN
+
+        ROLLBACK;
+
+        SET v_error_msg = CONCAT('No se pudo eliminar el registro de la categoría con ID: ', p_id_categoria);
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+
+    END IF;
+
+        
+
+    -- Registro de expulsión en bitácora con prioridad ALTA
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Categorías', 
+
+        'ELIMINAR', 
+
+        NULL, 
+
+        v_datos_viejos, 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se eliminó físicamente la categoría "', IFNULL(v_nombre_categoria, 'Desconocido'), '" del sistema y su tabla asociada: ', p_nombre_tabla)
+
+    );
+
+
+
+
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2063,56 +2863,105 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_cliente`(
-    IN p_id_cliente INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_cliente`(
+
+    IN p_id_cliente INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_eliminado VARCHAR(255);
-    DECLARE v_cedula_eliminado VARCHAR(10);
-
-    -- MANEJADOR ESPECÍFICO PARA EL ESCENARIO DE LLAVE FORÁNEA (Error 1451)
-    DECLARE EXIT HANDLER FOR 1451
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar el cliente porque posee registros históricos asociados (Facturas o Despachos).';
-    END;
-
-    -- Manejador general para cualquier otro tipo de error
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física del cliente.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de seguridad y captura pre-mortem
-    SELECT `nombre`, `cedula` INTO v_nombre_eliminado, v_cedula_eliminado
-    FROM `tbl_clientes`
-    WHERE `id_clientes` = p_id_cliente
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Remoción física del registro
-    DELETE FROM `tbl_clientes`
-    WHERE `id_clientes` = p_id_cliente;
-
-    -- Registro de expulsión en bitácora con prioridad ALTA
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Clientes', 
-        'ELIMINAR', 
-        NULL, 
-        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', v_nombre_eliminado, 'cedula', v_cedula_eliminado), 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se eliminó físicamente al cliente "', IFNULL(v_nombre_eliminado, 'Desconocido'), '" (C.I: ', IFNULL(v_cedula_eliminado, 'Desconocido'), ') del sistema.')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_eliminado VARCHAR(255);
+
+    DECLARE v_cedula_eliminado VARCHAR(10);
+
+
+
+    -- MANEJADOR ESPECÍFICO PARA EL ESCENARIO DE LLAVE FORÁNEA (Error 1451)
+
+    DECLARE EXIT HANDLER FOR 1451
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar el cliente porque posee registros históricos asociados (Facturas o Despachos).';
+
+    END;
+
+
+
+    -- Manejador general para cualquier otro tipo de error
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física del cliente.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de seguridad y captura pre-mortem
+
+    SELECT `nombre`, `cedula` INTO v_nombre_eliminado, v_cedula_eliminado
+
+    FROM `tbl_clientes`
+
+    WHERE `id_clientes` = p_id_cliente
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Remoción física del registro
+
+    DELETE FROM `tbl_clientes`
+
+    WHERE `id_clientes` = p_id_cliente;
+
+
+
+    -- Registro de expulsión en bitácora con prioridad ALTA
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Clientes', 
+
+        'ELIMINAR', 
+
+        NULL, 
+
+        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', v_nombre_eliminado, 'cedula', v_cedula_eliminado), 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se eliminó físicamente al cliente "', IFNULL(v_nombre_eliminado, 'Desconocido'), '" (C.I: ', IFNULL(v_cedula_eliminado, 'Desconocido'), ') del sistema.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2129,57 +2978,107 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_cuenta`(
-    IN p_id_cuenta INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_cuenta`(
+
+    IN p_id_cuenta INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_banco_eliminar VARCHAR(255);
-    DECLARE v_rif_cuenta_eliminar VARCHAR(15);
-
-    -- MANEJADOR ESPECÍFICO PARA RESTRICCIÓN RELACIONAL (Error 1451)
-    -- Si la cuenta ya está vinculada a pagos de facturas o compras, impide el borrado.
-    DECLARE EXIT HANDLER FOR 1451
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar la cuenta porque registra movimientos históricos en el sistema. Considere inhabilitarla.';
-    END;
-
-    -- Manejador de fallas generales
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física de la cuenta.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de seguridad y extracción forense pre-mortem
-    SELECT `nombre_banco`, `rif_cuenta` INTO v_nombre_banco_eliminar, v_rif_cuenta_eliminar
-    FROM `tbl_cuentas`
-    WHERE `id_cuenta` = p_id_cuenta
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Remoción física del registro
-    DELETE FROM `tbl_cuentas`
-    WHERE `id_cuenta` = p_id_cuenta;
-
-    -- Envío síncrono a bitácora con prioridad ALTA
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Cuentas bancarias', 
-        'ELIMINAR', 
-        NULL, 
-        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', v_nombre_banco_eliminar, 'rif_cuenta', v_rif_cuenta_eliminar), 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se eliminó físicamente del sistema la cuenta bancaria "', IFNULL(v_nombre_banco_eliminar, 'Desconocido'), '" (RIF: ', IFNULL(v_rif_cuenta_eliminar, 'Desconocido'), ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_banco_eliminar VARCHAR(255);
+
+    DECLARE v_rif_cuenta_eliminar VARCHAR(15);
+
+
+
+    -- MANEJADOR ESPECÍFICO PARA RESTRICCIÓN RELACIONAL (Error 1451)
+
+    -- Si la cuenta ya está vinculada a pagos de facturas o compras, impide el borrado.
+
+    DECLARE EXIT HANDLER FOR 1451
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar la cuenta porque registra movimientos históricos en el sistema. Considere inhabilitarla.';
+
+    END;
+
+
+
+    -- Manejador de fallas generales
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física de la cuenta.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de seguridad y extracción forense pre-mortem
+
+    SELECT `nombre_banco`, `rif_cuenta` INTO v_nombre_banco_eliminar, v_rif_cuenta_eliminar
+
+    FROM `tbl_cuentas`
+
+    WHERE `id_cuenta` = p_id_cuenta
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Remoción física del registro
+
+    DELETE FROM `tbl_cuentas`
+
+    WHERE `id_cuenta` = p_id_cuenta;
+
+
+
+    -- Envío síncrono a bitácora con prioridad ALTA
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Cuentas bancarias', 
+
+        'ELIMINAR', 
+
+        NULL, 
+
+        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', v_nombre_banco_eliminar, 'rif_cuenta', v_rif_cuenta_eliminar), 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se eliminó físicamente del sistema la cuenta bancaria "', IFNULL(v_nombre_banco_eliminar, 'Desconocido'), '" (RIF: ', IFNULL(v_rif_cuenta_eliminar, 'Desconocido'), ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2196,48 +3095,89 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_marca`(
-    IN p_id_marca INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_marca`(
+
+    IN p_id_marca INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_marca_eliminar VARCHAR(25);
-
-    -- El manejador interceptará también fallos por restricción de clave foránea (FK)
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar la marca. Es posible que esté asociada a productos existentes.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo defensivo FOR UPDATE del registro candidato a eliminación
-    SELECT `nombre_marca` INTO v_nombre_marca_eliminar 
-    FROM `tbl_marcas` 
-    WHERE `id_marca` = p_id_marca 
-    FOR UPDATE;
-
-    DELETE FROM `tbl_marcas` 
-    WHERE `id_marca` = p_id_marca;
-
-    -- Envío síncrono a bitácora con prioridad ALTA por ser destrucción de datos
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Marcas',
-        'ELIMINAR',
-        NULL,
-        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', v_nombre_marca_eliminar),
-        p_id_usuario_auditor,
-        'alta',
-        CONCAT('Se eliminó físicamente del sistema la marca "', v_nombre_marca_eliminar, '" (ID: ', p_id_marca, ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_marca_eliminar VARCHAR(25);
+
+
+
+    -- El manejador interceptará también fallos por restricción de clave foránea (FK)
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar la marca. Es posible que esté asociada a productos existentes.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo defensivo FOR UPDATE del registro candidato a eliminación
+
+    SELECT `nombre_marca` INTO v_nombre_marca_eliminar 
+
+    FROM `tbl_marcas` 
+
+    WHERE `id_marca` = p_id_marca 
+
+    FOR UPDATE;
+
+
+
+    DELETE FROM `tbl_marcas` 
+
+    WHERE `id_marca` = p_id_marca;
+
+
+
+    -- Envío síncrono a bitácora con prioridad ALTA por ser destrucción de datos
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Marcas',
+
+        'ELIMINAR',
+
+        NULL,
+
+        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', v_nombre_marca_eliminar),
+
+        p_id_usuario_auditor,
+
+        'alta',
+
+        CONCAT('Se eliminó físicamente del sistema la marca "', v_nombre_marca_eliminar, '" (ID: ', p_id_marca, ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2254,50 +3194,93 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_modelo`(
-    IN p_id_modelo INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_modelo`(
+
+    IN p_id_modelo INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_modelo_eliminar VARCHAR(25);
-    DECLARE v_id_marca_eliminar INT;
-
-    -- Intercepta excepciones de integridad referencial si el modelo está en uso por otra tabla (FK)
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar el modelo. Es posible que esté asociado a productos u otras entidades del sistema.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo defensivo FOR UPDATE antes de la destrucción del registro
-    SELECT `nombre_modelo`, `id_marca` INTO v_nombre_modelo_eliminar, v_id_marca_eliminar
-    FROM `tbl_modelos` 
-    WHERE `id_modelo` = p_id_modelo 
-    FOR UPDATE;
-
-    -- Eliminación física
-    DELETE FROM `tbl_modelos` 
-    WHERE `id_modelo` = p_id_modelo;
-
-    -- Auditoría de destrucción física con prioridad Alta
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Modelos',
-        'ELIMINAR',
-        NULL,
-        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', v_nombre_modelo_eliminar, 'id_marca', v_id_marca_eliminar),
-        p_id_usuario_auditor,
-        'alta',
-        CONCAT('Se eliminó físicamente del sistema el modelo "', v_nombre_modelo_eliminar, '" (ID: ', p_id_modelo, ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_modelo_eliminar VARCHAR(25);
+
+    DECLARE v_id_marca_eliminar INT;
+
+
+
+    -- Intercepta excepciones de integridad referencial si el modelo está en uso por otra tabla (FK)
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar el modelo. Es posible que esté asociado a productos u otras entidades del sistema.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo defensivo FOR UPDATE antes de la destrucción del registro
+
+    SELECT `nombre_modelo`, `id_marca` INTO v_nombre_modelo_eliminar, v_id_marca_eliminar
+
+    FROM `tbl_modelos` 
+
+    WHERE `id_modelo` = p_id_modelo 
+
+    FOR UPDATE;
+
+
+
+    -- Eliminación física
+
+    DELETE FROM `tbl_modelos` 
+
+    WHERE `id_modelo` = p_id_modelo;
+
+
+
+    -- Auditoría de destrucción física con prioridad Alta
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Modelos',
+
+        'ELIMINAR',
+
+        NULL,
+
+        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', v_nombre_modelo_eliminar, 'id_marca', v_id_marca_eliminar),
+
+        p_id_usuario_auditor,
+
+        'alta',
+
+        CONCAT('Se eliminó físicamente del sistema el modelo "', v_nombre_modelo_eliminar, '" (ID: ', p_id_modelo, ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2314,56 +3297,105 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_producto`(
-    IN p_id_producto INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_producto`(
+
+    IN p_id_producto INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_producto_eliminar VARCHAR(255);
-    DECLARE v_serial_producto_eliminar VARCHAR(15);
-
-    -- MANEJADOR ESPECÍFICO PARA RESTRICCIÓN RELACIONAL (Error 1451)
-    -- Si la cuenta ya está vinculada a pagos de facturas o compras, impide el borrado.
-    DECLARE EXIT HANDLER FOR 1451
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar producto porque registra movimientos históricos en el sistema. Considere inhabilitarla.';
-    END;
-
-    -- Manejador de fallas generales
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física del producto';
-    END;
-
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de seguridad y extracción forense pre-mortem
-    SELECT `nombre_producto`, `serial` INTO v_nombre_producto_eliminar, v_serial_producto_eliminar
-    FROM `tbl_productos`
-    WHERE `id_producto` = p_id_producto
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Remoción física del registro
-    DELETE FROM `tbl_productos`
-    WHERE `id_producto` = p_id_producto;
-
-    -- Envío síncrono a bitácora con prioridad ALTA
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Productos', 
-        'ELIMINAR', 
-        NULL, 
-        JSON_OBJECT('id_producto', p_id_producto, 'nombre_producto', v_nombre_producto_eliminar, 'serial', v_serial_producto_eliminar), 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se eliminó físicamente del sistema el producto "', IFNULL(v_nombre_producto_eliminar, 'Desconocido'), '" (SERIAL: ', IFNULL(v_serial_producto_eliminar, 'Desconocido'), ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_producto_eliminar VARCHAR(255);
+
+    DECLARE v_serial_producto_eliminar VARCHAR(15);
+
+
+
+    -- MANEJADOR ESPECÍFICO PARA RESTRICCIÓN RELACIONAL (Error 1451)
+
+    -- Si la cuenta ya está vinculada a pagos de facturas o compras, impide el borrado.
+
+    DECLARE EXIT HANDLER FOR 1451
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: No se puede eliminar producto porque registra movimientos históricos en el sistema. Considere inhabilitarla.';
+
+    END;
+
+
+
+    -- Manejador de fallas generales
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar la eliminación física del producto';
+
+    END;
+
+
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de seguridad y extracción forense pre-mortem
+
+    SELECT `nombre_producto`, `serial` INTO v_nombre_producto_eliminar, v_serial_producto_eliminar
+
+    FROM `tbl_productos`
+
+    WHERE `id_producto` = p_id_producto
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Remoción física del registro
+
+    DELETE FROM `tbl_productos`
+
+    WHERE `id_producto` = p_id_producto;
+
+
+
+    -- Envío síncrono a bitácora con prioridad ALTA
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Productos', 
+
+        'ELIMINAR', 
+
+        NULL, 
+
+        JSON_OBJECT('id_producto', p_id_producto, 'nombre_producto', v_nombre_producto_eliminar, 'serial', v_serial_producto_eliminar), 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se eliminó físicamente del sistema el producto "', IFNULL(v_nombre_producto_eliminar, 'Desconocido'), '" (SERIAL: ', IFNULL(v_serial_producto_eliminar, 'Desconocido'), ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2380,57 +3412,107 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_proveedor`(
-    IN p_id_proveedor INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_eliminar_proveedor`(
+
+    IN p_id_proveedor INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_proveedor_eliminar VARCHAR(50);
-    DECLARE v_rif_proveedor_eliminar VARCHAR(15);
-
-    -- Manejo controlado de fallas de integridad referencial (Error MySQL 1451)
-    DECLARE EXIT HANDLER FOR 1451
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: El proveedor registra dependencias o movimientos históricos en el inventario. Considere inhabilitarlo.';
-    END;
-
-    -- Manejador general
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        ROLLBACK; 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo completar la eliminación del proveedor.'; 
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo atómico pre-mortem para asegurar consistencia del registro a borrar
-    SELECT `nombre_proveedor`, `rif_proveedor` 
-    INTO v_nombre_proveedor_eliminar, v_rif_proveedor_eliminar
-    FROM `tbl_proveedores`
-    WHERE `id_proveedor` = p_id_proveedor
-    LIMIT 1
-    FOR UPDATE;
-
-    -- Remoción física
-    DELETE FROM `tbl_proveedores` WHERE `id_proveedor` = p_id_proveedor;
-
-    -- Registro forense completo en bitácora de seguridad
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    ) VALUES (
-        NOW(), 
-        'Proveedores', 
-        'ELIMINAR', 
-        NULL, 
-        JSON_OBJECT('id_proveedor', p_id_proveedor, 'nombre_proveedor', v_nombre_proveedor_eliminar, 'rif_proveedor', v_rif_proveedor_eliminar), 
-        p_id_usuario_auditor, 
-        'alta', 
-        CONCAT('Se eliminó físicamente del sistema el proveedor "', IFNULL(v_nombre_proveedor_eliminar, 'Desconocido'), '" (RIF: ', IFNULL(v_rif_proveedor_eliminar, 'N/A'), ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_proveedor_eliminar VARCHAR(50);
+
+    DECLARE v_rif_proveedor_eliminar VARCHAR(15);
+
+
+
+    -- Manejo controlado de fallas de integridad referencial (Error MySQL 1451)
+
+    DECLARE EXIT HANDLER FOR 1451
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Operación denegada: El proveedor registra dependencias o movimientos históricos en el inventario. Considere inhabilitarlo.';
+
+    END;
+
+
+
+    -- Manejador general
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        ROLLBACK; 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo completar la eliminación del proveedor.'; 
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo atómico pre-mortem para asegurar consistencia del registro a borrar
+
+    SELECT `nombre_proveedor`, `rif_proveedor` 
+
+    INTO v_nombre_proveedor_eliminar, v_rif_proveedor_eliminar
+
+    FROM `tbl_proveedores`
+
+    WHERE `id_proveedor` = p_id_proveedor
+
+    LIMIT 1
+
+    FOR UPDATE;
+
+
+
+    -- Remoción física
+
+    DELETE FROM `tbl_proveedores` WHERE `id_proveedor` = p_id_proveedor;
+
+
+
+    -- Registro forense completo en bitácora de seguridad
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    ) VALUES (
+
+        NOW(), 
+
+        'Proveedores', 
+
+        'ELIMINAR', 
+
+        NULL, 
+
+        JSON_OBJECT('id_proveedor', p_id_proveedor, 'nombre_proveedor', v_nombre_proveedor_eliminar, 'rif_proveedor', v_rif_proveedor_eliminar), 
+
+        p_id_usuario_auditor, 
+
+        'alta', 
+
+        CONCAT('Se eliminó físicamente del sistema el proveedor "', IFNULL(v_nombre_proveedor_eliminar, 'Desconocido'), '" (RIF: ', IFNULL(v_rif_proveedor_eliminar, 'N/A'), ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2447,195 +3529,383 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_categoria`(
-    IN p_id_categoria INT,
-    IN p_nuevo_nombre VARCHAR(255),
-    IN p_caracteristicas JSON,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_categoria`(
+
+    IN p_id_categoria INT,
+
+    IN p_nuevo_nombre VARCHAR(255),
+
+    IN p_caracteristicas JSON,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_actual VARCHAR(255);
-    DECLARE v_tabla_antigua VARCHAR(255);
-    DECLARE v_tabla_nueva VARCHAR(255);
-    DECLARE v_datos_viejos JSON;
-    DECLARE v_contador INT DEFAULT 0;
-    DECLARE v_total_caracteristicas INT;
-    DECLARE v_nombre_campo VARCHAR(255);
-    DECLARE v_tipo_campo VARCHAR(50);
-    DECLARE v_max_length INT;
-    DECLARE v_max_length_raw JSON;
-    DECLARE v_tipo_sql VARCHAR(100);
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE v_column_name VARCHAR(255);
-    DECLARE v_column_type VARCHAR(100);
-    DECLARE v_column_exists INT;
-    
-    
-    DECLARE cur_columns CURSOR FOR 
-        SELECT COLUMN_NAME, COLUMN_TYPE 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = 'casalai_principal' 
-        AND TABLE_NAME = v_tabla_antigua 
-        AND COLUMN_NAME NOT IN ('id', 'id_producto');
-    
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        GET DIAGNOSTICS CONDITION 1
-        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
-        SET @error_message = CONCAT('Error interno: ', @text, ' (SQLSTATE: ', @sqlstate, ', Errno: ', @errno, ')');
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @error_message;
-    END;
-
-    
-    SELECT nombre_categoria INTO v_nombre_actual 
-    FROM tbl_categoria 
-    WHERE id_categoria = p_id_categoria;
-    
-    IF v_nombre_actual IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Categor??a no encontrada';
-    END IF;
-    
-    
-    IF p_nuevo_nombre IS NULL OR TRIM(p_nuevo_nombre) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El nombre de la categor??a no puede estar vac??o';
-    END IF;
-    
-    
-    SET v_tabla_antigua = CONCAT('cat_', LOWER(REPLACE(v_nombre_actual, ' ', '_')));
-    SET v_tabla_nueva = CONCAT('cat_', LOWER(REPLACE(p_nuevo_nombre, ' ', '_')));
-    
-    
-    SET v_datos_viejos = JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', v_nombre_actual, 'tabla', v_tabla_antigua);
-    
-    
-    SET done = FALSE;
-    OPEN cur_columns;
-    
-    read_loop: LOOP
-        FETCH cur_columns INTO v_column_name, v_column_type;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        
-        
-        SET v_contador = 0;
-        SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
-        SET v_column_exists = 0;
-        
-        WHILE v_contador < v_total_caracteristicas DO
-            SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
-            
-            IF v_nombre_campo = v_column_name THEN
-                SET v_column_exists = 1;
-            END IF;
-            
-            SET v_contador = v_contador + 1;
-        END WHILE;
-        
-        
-        IF v_column_exists = 0 THEN
-            SET @drop_sql = CONCAT('ALTER TABLE `', v_tabla_antigua, '` DROP COLUMN `', v_column_name, '`');
-            PREPARE stmt FROM @drop_sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        END IF;
-    END LOOP;
-    
-    CLOSE cur_columns;
-    
-    
-    UPDATE tbl_categoria 
-    SET nombre_categoria = p_nuevo_nombre 
-    WHERE id_categoria = p_id_categoria;
-    
-    
-    IF v_tabla_antigua != v_tabla_nueva THEN
-        SET @rename_sql = CONCAT('RENAME TABLE `', v_tabla_antigua, '` TO `', v_tabla_nueva, '`');
-        PREPARE stmt FROM @rename_sql;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-    
-    
-    SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
-    SET v_contador = 0;
-    
-    WHILE v_contador < v_total_caracteristicas DO
-        SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
-        SET v_tipo_campo = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].tipo')));
-        SET v_max_length_raw = JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].max'));
-        
-        
-        IF v_max_length_raw IS NULL THEN
-            SET v_max_length = 255;
-        ELSE
-            
-            SET v_max_length = CAST(JSON_UNQUOTE(v_max_length_raw) AS UNSIGNED);
-            IF v_max_length = 0 OR v_max_length > 255 THEN
-                SET v_max_length = 255;
-            END IF;
-        END IF;
-        
-        
-        CASE v_tipo_campo
-            WHEN 'int' THEN
-                SET v_tipo_sql = 'INT';
-            WHEN 'float' THEN
-                SET v_tipo_sql = 'FLOAT';
-            WHEN 'string' THEN
-                SET v_tipo_sql = CONCAT('VARCHAR(', v_max_length, ')');
-            ELSE
-                SET v_tipo_sql = CONCAT('VARCHAR(', v_max_length, ')');
-        END CASE;
-        
-        
-        SELECT COUNT(*) INTO v_column_exists
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = 'casalai_principal' 
-        AND TABLE_NAME = v_tabla_nueva 
-        AND COLUMN_NAME = v_nombre_campo;
-        
-        IF v_column_exists = 0 THEN
-            
-            SET @add_sql = CONCAT('ALTER TABLE `', v_tabla_nueva, '` ADD COLUMN `', v_nombre_campo, '` ', v_tipo_sql);
-            PREPARE stmt FROM @add_sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        ELSE
-            
-            SELECT COLUMN_TYPE INTO v_column_type
-            FROM INFORMATION_SCHEMA.COLUMNS 
-            WHERE TABLE_SCHEMA = 'casalai_principal' 
-            AND TABLE_NAME = v_tabla_nueva 
-            AND COLUMN_NAME = v_nombre_campo;
-            
-            
-            IF v_column_type != v_tipo_sql THEN
-                SET @modify_sql = CONCAT('ALTER TABLE `', v_tabla_nueva, '` MODIFY COLUMN `', v_nombre_campo, '` ', v_tipo_sql);
-                PREPARE stmt FROM @modify_sql;
-                EXECUTE stmt;
-                DEALLOCATE PREPARE stmt;
-            END IF;
-        END IF;
-        
-        SET v_contador = v_contador + 1;
-    END WHILE;
-    
-    
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Categor??as', 
-        'MODIFICAR', 
-        JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', p_nuevo_nombre, 'tabla', v_tabla_nueva, 'caracteristicas', p_caracteristicas), 
-        v_datos_viejos, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se modific?? la categor??a: ', v_nombre_actual, ' -> ', p_nuevo_nombre)
-    );
+BEGIN
+
+    DECLARE v_nombre_actual VARCHAR(255);
+
+    DECLARE v_tabla_antigua VARCHAR(255);
+
+    DECLARE v_tabla_nueva VARCHAR(255);
+
+    DECLARE v_datos_viejos JSON;
+
+    DECLARE v_contador INT DEFAULT 0;
+
+    DECLARE v_total_caracteristicas INT;
+
+    DECLARE v_nombre_campo VARCHAR(255);
+
+    DECLARE v_tipo_campo VARCHAR(50);
+
+    DECLARE v_max_length INT;
+
+    DECLARE v_max_length_raw JSON;
+
+    DECLARE v_tipo_sql VARCHAR(100);
+
+    DECLARE done INT DEFAULT FALSE;
+
+    DECLARE v_column_name VARCHAR(255);
+
+    DECLARE v_column_type VARCHAR(100);
+
+    DECLARE v_column_exists INT;
+
+    
+
+    
+
+    DECLARE cur_columns CURSOR FOR 
+
+        SELECT COLUMN_NAME, COLUMN_TYPE 
+
+        FROM INFORMATION_SCHEMA.COLUMNS 
+
+        WHERE TABLE_SCHEMA = 'casalai_principal' 
+
+        AND TABLE_NAME = v_tabla_antigua 
+
+        AND COLUMN_NAME NOT IN ('id', 'id_producto');
+
+    
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    
+
+    
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        GET DIAGNOSTICS CONDITION 1
+
+        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+
+        SET @error_message = CONCAT('Error interno: ', @text, ' (SQLSTATE: ', @sqlstate, ', Errno: ', @errno, ')');
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @error_message;
+
+    END;
+
+
+
+    
+
+    SELECT nombre_categoria INTO v_nombre_actual 
+
+    FROM tbl_categoria 
+
+    WHERE id_categoria = p_id_categoria;
+
+    
+
+    IF v_nombre_actual IS NULL THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Categor??a no encontrada';
+
+    END IF;
+
+    
+
+    
+
+    IF p_nuevo_nombre IS NULL OR TRIM(p_nuevo_nombre) = '' THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El nombre de la categor??a no puede estar vac??o';
+
+    END IF;
+
+    
+
+    
+
+    SET v_tabla_antigua = CONCAT('cat_', LOWER(REPLACE(v_nombre_actual, ' ', '_')));
+
+    SET v_tabla_nueva = CONCAT('cat_', LOWER(REPLACE(p_nuevo_nombre, ' ', '_')));
+
+    
+
+    
+
+    SET v_datos_viejos = JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', v_nombre_actual, 'tabla', v_tabla_antigua);
+
+    
+
+    
+
+    SET done = FALSE;
+
+    OPEN cur_columns;
+
+    
+
+    read_loop: LOOP
+
+        FETCH cur_columns INTO v_column_name, v_column_type;
+
+        IF done THEN
+
+            LEAVE read_loop;
+
+        END IF;
+
+        
+
+        
+
+        SET v_contador = 0;
+
+        SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
+
+        SET v_column_exists = 0;
+
+        
+
+        WHILE v_contador < v_total_caracteristicas DO
+
+            SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
+
+            
+
+            IF v_nombre_campo = v_column_name THEN
+
+                SET v_column_exists = 1;
+
+            END IF;
+
+            
+
+            SET v_contador = v_contador + 1;
+
+        END WHILE;
+
+        
+
+        
+
+        IF v_column_exists = 0 THEN
+
+            SET @drop_sql = CONCAT('ALTER TABLE `', v_tabla_antigua, '` DROP COLUMN `', v_column_name, '`');
+
+            PREPARE stmt FROM @drop_sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        END IF;
+
+    END LOOP;
+
+    
+
+    CLOSE cur_columns;
+
+    
+
+    
+
+    UPDATE tbl_categoria 
+
+    SET nombre_categoria = p_nuevo_nombre 
+
+    WHERE id_categoria = p_id_categoria;
+
+    
+
+    
+
+    IF v_tabla_antigua != v_tabla_nueva THEN
+
+        SET @rename_sql = CONCAT('RENAME TABLE `', v_tabla_antigua, '` TO `', v_tabla_nueva, '`');
+
+        PREPARE stmt FROM @rename_sql;
+
+        EXECUTE stmt;
+
+        DEALLOCATE PREPARE stmt;
+
+    END IF;
+
+    
+
+    
+
+    SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
+
+    SET v_contador = 0;
+
+    
+
+    WHILE v_contador < v_total_caracteristicas DO
+
+        SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
+
+        SET v_tipo_campo = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].tipo')));
+
+        SET v_max_length_raw = JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].max'));
+
+        
+
+        
+
+        IF v_max_length_raw IS NULL THEN
+
+            SET v_max_length = 255;
+
+        ELSE
+
+            
+
+            SET v_max_length = CAST(JSON_UNQUOTE(v_max_length_raw) AS UNSIGNED);
+
+            IF v_max_length = 0 OR v_max_length > 255 THEN
+
+                SET v_max_length = 255;
+
+            END IF;
+
+        END IF;
+
+        
+
+        
+
+        CASE v_tipo_campo
+
+            WHEN 'int' THEN
+
+                SET v_tipo_sql = 'INT';
+
+            WHEN 'float' THEN
+
+                SET v_tipo_sql = 'FLOAT';
+
+            WHEN 'string' THEN
+
+                SET v_tipo_sql = CONCAT('VARCHAR(', v_max_length, ')');
+
+            ELSE
+
+                SET v_tipo_sql = CONCAT('VARCHAR(', v_max_length, ')');
+
+        END CASE;
+
+        
+
+        
+
+        SELECT COUNT(*) INTO v_column_exists
+
+        FROM INFORMATION_SCHEMA.COLUMNS 
+
+        WHERE TABLE_SCHEMA = 'casalai_principal' 
+
+        AND TABLE_NAME = v_tabla_nueva 
+
+        AND COLUMN_NAME = v_nombre_campo;
+
+        
+
+        IF v_column_exists = 0 THEN
+
+            
+
+            SET @add_sql = CONCAT('ALTER TABLE `', v_tabla_nueva, '` ADD COLUMN `', v_nombre_campo, '` ', v_tipo_sql);
+
+            PREPARE stmt FROM @add_sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        ELSE
+
+            
+
+            SELECT COLUMN_TYPE INTO v_column_type
+
+            FROM INFORMATION_SCHEMA.COLUMNS 
+
+            WHERE TABLE_SCHEMA = 'casalai_principal' 
+
+            AND TABLE_NAME = v_tabla_nueva 
+
+            AND COLUMN_NAME = v_nombre_campo;
+
+            
+
+            
+
+            IF v_column_type != v_tipo_sql THEN
+
+                SET @modify_sql = CONCAT('ALTER TABLE `', v_tabla_nueva, '` MODIFY COLUMN `', v_nombre_campo, '` ', v_tipo_sql);
+
+                PREPARE stmt FROM @modify_sql;
+
+                EXECUTE stmt;
+
+                DEALLOCATE PREPARE stmt;
+
+            END IF;
+
+        END IF;
+
+        
+
+        SET v_contador = v_contador + 1;
+
+    END WHILE;
+
+    
+
+    
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Categor??as', 
+
+        'MODIFICAR', 
+
+        JSON_OBJECT('id_categoria', p_id_categoria, 'nombre_categoria', p_nuevo_nombre, 'tabla', v_tabla_nueva, 'caracteristicas', p_caracteristicas), 
+
+        v_datos_viejos, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se modific?? la categor??a: ', v_nombre_actual, ' -> ', p_nuevo_nombre)
+
+    );
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2652,67 +3922,127 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_cliente`(
-    IN p_id_cliente INT,
-    IN p_nombre VARCHAR(400),
-    IN p_cedula VARCHAR(10),
-    IN p_direccion TEXT,
-    IN p_telefono VARCHAR(400),
-    IN p_correo VARCHAR(550),
-    IN p_activo TINYINT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_cliente`(
+
+    IN p_id_cliente INT,
+
+    IN p_nombre VARCHAR(400),
+
+    IN p_cedula VARCHAR(10),
+
+    IN p_direccion TEXT,
+
+    IN p_telefono VARCHAR(400),
+
+    IN p_correo VARCHAR(550),
+
+    IN p_activo TINYINT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- Declaración estricta de variables de respaldo histórico al inicio
-    DECLARE v_nombre_viejo VARCHAR(255);
-    DECLARE v_cedula_viejo VARCHAR(10);
-    DECLARE v_direccion_viejo TEXT;
-    DECLARE v_telefono_viejo VARCHAR(255);
-    DECLARE v_correo_viejo VARCHAR(255);
-    DECLARE v_activo_viejo TINYINT;
-
-    -- Manejador general de excepciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron actualizar los datos del cliente.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de fila y extracción del estado previo completo
-    SELECT `nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo`
-    INTO v_nombre_viejo, v_cedula_viejo, v_direccion_viejo, v_telefono_viejo, v_correo_viejo, v_activo_viejo
-    FROM `tbl_clientes`
-    WHERE `id_clientes` = p_id_cliente
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Actualización física de la fila
-    UPDATE `tbl_clientes` 
-    SET `nombre` = p_nombre, 
-        `cedula` = p_cedula, 
-        `direccion` = p_direccion, 
-        `telefono` = p_telefono, 
-        `correo` = p_correo,
-        `activo` = p_activo 
-    WHERE `id_clientes` = p_id_cliente;
-
-    -- Volcado síncrono a bitácora mapeando estados (JSON Viejo vs JSON Nuevo)
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(),
-        'Clientes',
-        'MODIFICAR',
-        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', p_nombre, 'cedula', p_cedula, 'direccion', p_direccion, 'telefono', p_telefono, 'correo', p_correo, 'activo', p_activo),
-        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', v_nombre_viejo, 'cedula', v_cedula_viejo, 'direccion', v_direccion_viejo, 'telefono', v_telefono_viejo, 'correo', v_correo_viejo, 'activo', v_activo_viejo),
-        p_id_usuario_auditor, 
-        'media',
-        CONCAT('Se actualizaron los datos de contacto del cliente: ', p_nombre, '.')
-    );
-
-    COMMIT;
+BEGIN
+
+    -- Declaración estricta de variables de respaldo histórico al inicio
+
+    DECLARE v_nombre_viejo VARCHAR(255);
+
+    DECLARE v_cedula_viejo VARCHAR(10);
+
+    DECLARE v_direccion_viejo TEXT;
+
+    DECLARE v_telefono_viejo VARCHAR(255);
+
+    DECLARE v_correo_viejo VARCHAR(255);
+
+    DECLARE v_activo_viejo TINYINT;
+
+
+
+    -- Manejador general de excepciones
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron actualizar los datos del cliente.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de fila y extracción del estado previo completo
+
+    SELECT `nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo`
+
+    INTO v_nombre_viejo, v_cedula_viejo, v_direccion_viejo, v_telefono_viejo, v_correo_viejo, v_activo_viejo
+
+    FROM `tbl_clientes`
+
+    WHERE `id_clientes` = p_id_cliente
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Actualización física de la fila
+
+    UPDATE `tbl_clientes` 
+
+    SET `nombre` = p_nombre, 
+
+        `cedula` = p_cedula, 
+
+        `direccion` = p_direccion, 
+
+        `telefono` = p_telefono, 
+
+        `correo` = p_correo,
+
+        `activo` = p_activo 
+
+    WHERE `id_clientes` = p_id_cliente;
+
+
+
+    -- Volcado síncrono a bitácora mapeando estados (JSON Viejo vs JSON Nuevo)
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(),
+
+        'Clientes',
+
+        'MODIFICAR',
+
+        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', p_nombre, 'cedula', p_cedula, 'direccion', p_direccion, 'telefono', p_telefono, 'correo', p_correo, 'activo', p_activo),
+
+        JSON_OBJECT('id_clientes', p_id_cliente, 'nombre', v_nombre_viejo, 'cedula', v_cedula_viejo, 'direccion', v_direccion_viejo, 'telefono', v_telefono_viejo, 'correo', v_correo_viejo, 'activo', v_activo_viejo),
+
+        p_id_usuario_auditor, 
+
+        'media',
+
+        CONCAT('Se actualizaron los datos de contacto del cliente: ', p_nombre, '.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2729,68 +4059,129 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_cuenta`(
-    IN p_id_cuenta INT,
-    IN p_nombre_banco VARCHAR(500),
-    IN p_numero_cuenta VARCHAR(25),
-    IN p_rif_cuenta VARCHAR(15),
-    IN p_telefono_cuenta VARCHAR(500),
-    IN p_correo_cuenta VARCHAR(500),
-    IN p_metodos SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $'),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_cuenta`(
+
+    IN p_id_cuenta INT,
+
+    IN p_nombre_banco VARCHAR(500),
+
+    IN p_numero_cuenta VARCHAR(25),
+
+    IN p_rif_cuenta VARCHAR(15),
+
+    IN p_telefono_cuenta VARCHAR(500),
+
+    IN p_correo_cuenta VARCHAR(500),
+
+    IN p_metodos SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $'),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- Agrupación estricta de declaraciones de variables al inicio del bloque
-    DECLARE v_nombre_banco_viejo VARCHAR(500);
-    DECLARE v_numero_cuenta_viejo VARCHAR(25);
-    DECLARE v_rif_cuenta_viejo VARCHAR(15);
-    DECLARE v_telefono_cuenta_viejo VARCHAR(500);
-    DECLARE v_correo_cuenta_viejo VARCHAR(500);
-    DECLARE v_metodos_viejo SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $');
-    DECLARE v_estado_viejo ENUM('habilitado','inhabilitado');
-
-    -- Manejador general de excepciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron actualizar los datos de la cuenta.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de fila (FOR UPDATE) y extracción del estado histórico viejo
-    SELECT `nombre_banco`, `numero_cuenta`, `rif_cuenta`, `telefono_cuenta`, `correo_cuenta`, `metodos`, `estado`
-    INTO v_nombre_banco_viejo, v_numero_cuenta_viejo, v_rif_cuenta_viejo, v_telefono_cuenta_viejo, v_correo_cuenta_viejo, v_metodos_viejo, v_estado_viejo
-    FROM `tbl_cuentas`
-    WHERE `id_cuenta` = p_id_cuenta
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Actualización física de la tupla
-    UPDATE `tbl_cuentas` 
-    SET `nombre_banco` = p_nombre_banco, 
-        `numero_cuenta` = p_numero_cuenta, 
-        `rif_cuenta` = p_rif_cuenta, 
-        `telefono_cuenta` = p_telefono_cuenta, 
-        `correo_cuenta` = p_correo_cuenta, 
-        `metodos` = p_metodos 
-    WHERE `id_cuenta` = p_id_cuenta;
-
-    -- Volcado a bitácora mapeando los objetos JSON de estado antiguo y nuevo
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(),
-        'Cuentas bancarias',
-        'MODIFICAR',
-        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', p_nombre_banco, 'numero_cuenta', p_numero_cuenta, 'rif_cuenta', p_rif_cuenta, 'telefono_cuenta', p_telefono_cuenta, 'correo_cuenta', p_correo_cuenta, 'metodos', p_metodos, 'estado', v_estado_viejo),
-        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', v_nombre_banco_viejo, 'numero_cuenta', v_numero_cuenta_viejo, 'rif_cuenta', v_rif_cuenta_viejo, 'telefono_cuenta', v_telefono_cuenta_viejo, 'correo_cuenta', v_correo_cuenta_viejo, 'metodos', v_metodos_viejo, 'estado', v_estado_viejo),
-        p_id_usuario_auditor, 
-        'media',
-        CONCAT('Se actualizaron los datos de la cuenta bancaria: ', p_nombre_banco, '.')
-    );
-
-    COMMIT;
+BEGIN
+
+    -- Agrupación estricta de declaraciones de variables al inicio del bloque
+
+    DECLARE v_nombre_banco_viejo VARCHAR(500);
+
+    DECLARE v_numero_cuenta_viejo VARCHAR(25);
+
+    DECLARE v_rif_cuenta_viejo VARCHAR(15);
+
+    DECLARE v_telefono_cuenta_viejo VARCHAR(500);
+
+    DECLARE v_correo_cuenta_viejo VARCHAR(500);
+
+    DECLARE v_metodos_viejo SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $');
+
+    DECLARE v_estado_viejo ENUM('habilitado','inhabilitado');
+
+
+
+    -- Manejador general de excepciones
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron actualizar los datos de la cuenta.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de fila (FOR UPDATE) y extracción del estado histórico viejo
+
+    SELECT `nombre_banco`, `numero_cuenta`, `rif_cuenta`, `telefono_cuenta`, `correo_cuenta`, `metodos`, `estado`
+
+    INTO v_nombre_banco_viejo, v_numero_cuenta_viejo, v_rif_cuenta_viejo, v_telefono_cuenta_viejo, v_correo_cuenta_viejo, v_metodos_viejo, v_estado_viejo
+
+    FROM `tbl_cuentas`
+
+    WHERE `id_cuenta` = p_id_cuenta
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Actualización física de la tupla
+
+    UPDATE `tbl_cuentas` 
+
+    SET `nombre_banco` = p_nombre_banco, 
+
+        `numero_cuenta` = p_numero_cuenta, 
+
+        `rif_cuenta` = p_rif_cuenta, 
+
+        `telefono_cuenta` = p_telefono_cuenta, 
+
+        `correo_cuenta` = p_correo_cuenta, 
+
+        `metodos` = p_metodos 
+
+    WHERE `id_cuenta` = p_id_cuenta;
+
+
+
+    -- Volcado a bitácora mapeando los objetos JSON de estado antiguo y nuevo
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(),
+
+        'Cuentas bancarias',
+
+        'MODIFICAR',
+
+        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', p_nombre_banco, 'numero_cuenta', p_numero_cuenta, 'rif_cuenta', p_rif_cuenta, 'telefono_cuenta', p_telefono_cuenta, 'correo_cuenta', p_correo_cuenta, 'metodos', p_metodos, 'estado', v_estado_viejo),
+
+        JSON_OBJECT('id_cuenta', p_id_cuenta, 'nombre_banco', v_nombre_banco_viejo, 'numero_cuenta', v_numero_cuenta_viejo, 'rif_cuenta', v_rif_cuenta_viejo, 'telefono_cuenta', v_telefono_cuenta_viejo, 'correo_cuenta', v_correo_cuenta_viejo, 'metodos', v_metodos_viejo, 'estado', v_estado_viejo),
+
+        p_id_usuario_auditor, 
+
+        'media',
+
+        CONCAT('Se actualizaron los datos de la cuenta bancaria: ', p_nombre_banco, '.')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2807,50 +4198,93 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_marca`(
-    IN p_id_marca INT,
-    IN p_nombre_marca VARCHAR(25),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_marca`(
+
+    IN p_id_marca INT,
+
+    IN p_nombre_marca VARCHAR(25),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- Variables para almacenar estados anteriores y validaciones
-    DECLARE v_nombre_marca_viejo VARCHAR(25);
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al modificar la marca. Cambios revertidos.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    SELECT `nombre_marca` INTO v_nombre_marca_viejo 
-    FROM `tbl_marcas` 
-    WHERE `id_marca` = p_id_marca 
-    FOR UPDATE;
-
-    -- Actualización efectiva del registro
-    UPDATE `tbl_marcas` 
-    SET `nombre_marca` = p_nombre_marca 
-    WHERE `id_marca` = p_id_marca;
-
-    -- Registro detallado en bitácora mapeando el estado de antes y después
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Marcas',
-        'MODIFICAR',
-        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', p_nombre_marca),
-        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', v_nombre_marca_viejo),
-        p_id_usuario_auditor,
-        'media',
-        CONCAT('Se modificó la marca con ID ', p_id_marca, '. Nombre anterior: "', v_nombre_marca_viejo, '", Nombre nuevo: "', p_nombre_marca, '".')
-    );
-
-    COMMIT;
+BEGIN
+
+    -- Variables para almacenar estados anteriores y validaciones
+
+    DECLARE v_nombre_marca_viejo VARCHAR(25);
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al modificar la marca. Cambios revertidos.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    SELECT `nombre_marca` INTO v_nombre_marca_viejo 
+
+    FROM `tbl_marcas` 
+
+    WHERE `id_marca` = p_id_marca 
+
+    FOR UPDATE;
+
+
+
+    -- Actualización efectiva del registro
+
+    UPDATE `tbl_marcas` 
+
+    SET `nombre_marca` = p_nombre_marca 
+
+    WHERE `id_marca` = p_id_marca;
+
+
+
+    -- Registro detallado en bitácora mapeando el estado de antes y después
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Marcas',
+
+        'MODIFICAR',
+
+        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', p_nombre_marca),
+
+        JSON_OBJECT('id_marca', p_id_marca, 'nombre_marca', v_nombre_marca_viejo),
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT('Se modificó la marca con ID ', p_id_marca, '. Nombre anterior: "', v_nombre_marca_viejo, '", Nombre nuevo: "', p_nombre_marca, '".')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2867,53 +4301,99 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_modelo`(
-    IN p_id_modelo INT,
-    IN p_nombre_modelo VARCHAR(25),
-    IN p_id_marca INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_modelo`(
+
+    IN p_id_modelo INT,
+
+    IN p_nombre_modelo VARCHAR(25),
+
+    IN p_id_marca INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nombre_modelo_viejo VARCHAR(25);
-    DECLARE v_id_marca_viejo INT;
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno en el servidor de datos al modificar el modelo.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- CONCURRENCIA: Bloqueo de fila exclusivo para evitar lecturas sucias o sobreescritura asíncrona
-    SELECT `nombre_modelo`, `id_marca` INTO v_nombre_modelo_viejo, v_id_marca_viejo
-    FROM `tbl_modelos` 
-    WHERE `id_modelo` = p_id_modelo 
-    FOR UPDATE;
-
-    -- Actualización de los campos
-    UPDATE `tbl_modelos` 
-    SET `nombre_modelo` = p_nombre_modelo, 
-        `id_marca` = p_id_marca 
-    WHERE `id_modelo` = p_id_modelo;
-
-    -- Registro en la bitácora guardando estados anteriores y nuevos
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Modelos',
-        'MODIFICAR',
-        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', p_nombre_modelo, 'id_marca', p_id_marca),
-        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', v_nombre_modelo_viejo, 'id_marca', v_id_marca_viejo),
-        p_id_usuario_auditor,
-        'media',
-        CONCAT('Se modificó el modelo con ID ', p_id_modelo, '. Nombre anterior: "', v_nombre_modelo_viejo, '", Nombre nuevo: "', p_nombre_modelo, '".')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nombre_modelo_viejo VARCHAR(25);
+
+    DECLARE v_id_marca_viejo INT;
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno en el servidor de datos al modificar el modelo.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- CONCURRENCIA: Bloqueo de fila exclusivo para evitar lecturas sucias o sobreescritura asíncrona
+
+    SELECT `nombre_modelo`, `id_marca` INTO v_nombre_modelo_viejo, v_id_marca_viejo
+
+    FROM `tbl_modelos` 
+
+    WHERE `id_modelo` = p_id_modelo 
+
+    FOR UPDATE;
+
+
+
+    -- Actualización de los campos
+
+    UPDATE `tbl_modelos` 
+
+    SET `nombre_modelo` = p_nombre_modelo, 
+
+        `id_marca` = p_id_marca 
+
+    WHERE `id_modelo` = p_id_modelo;
+
+
+
+    -- Registro en la bitácora guardando estados anteriores y nuevos
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Modelos',
+
+        'MODIFICAR',
+
+        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', p_nombre_modelo, 'id_marca', p_id_marca),
+
+        JSON_OBJECT('id_modelo', p_id_modelo, 'nombre_modelo', v_nombre_modelo_viejo, 'id_marca', v_id_marca_viejo),
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT('Se modificó el modelo con ID ', p_id_modelo, '. Nombre anterior: "', v_nombre_modelo_viejo, '", Nombre nuevo: "', p_nombre_modelo, '".')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -2930,174 +4410,341 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_producto`(
-    IN p_id_producto INT,
-    IN p_serial VARCHAR(20),
-    IN p_nombre_producto VARCHAR(20),
-    IN p_descripcion_producto VARCHAR(255),
-    IN p_id_modelo INT(11),
-    IN p_stock INT(3),
-    IN p_stock_minimo INT(3),
-    IN p_stock_maximo INT(3),
-    IN p_clausula_garantia VARCHAR(255),
-    IN p_precio FLOAT(10,2),
-    IN p_estado VARCHAR(20),
-    IN p_nombre_categoria VARCHAR(20),
-    IN p_id_usuario_auditor INT,
-    IN p_caracteristicas JSON,
-    IN p_imagen VARCHAR(255),
-    OUT p_resultado INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_producto`(
+
+    IN p_id_producto INT,
+
+    IN p_serial VARCHAR(20),
+
+    IN p_nombre_producto VARCHAR(20),
+
+    IN p_descripcion_producto VARCHAR(255),
+
+    IN p_id_modelo INT(11),
+
+    IN p_stock INT(3),
+
+    IN p_stock_minimo INT(3),
+
+    IN p_stock_maximo INT(3),
+
+    IN p_clausula_garantia VARCHAR(255),
+
+    IN p_precio FLOAT(10,2),
+
+    IN p_estado VARCHAR(20),
+
+    IN p_nombre_categoria VARCHAR(20),
+
+    IN p_id_usuario_auditor INT,
+
+    IN p_caracteristicas JSON,
+
+    IN p_imagen VARCHAR(255),
+
+    OUT p_resultado INT
+
 )
-BEGIN
-    DECLARE v_id_categoria INT;
-    DECLARE v_nombre_categoria_normalizado VARCHAR(50);
-    DECLARE v_nombre_tabla_caracteristicas VARCHAR(100);
-    DECLARE v_nombre_categoria_actual VARCHAR(50);
-    DECLARE v_nombre_tabla_caracteristicas_actual VARCHAR(100);
-
-    -- Manejador de excepciones simplificado
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SET p_resultado = 0;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-    
-    SET v_nombre_categoria_normalizado = LOWER(TRIM(p_nombre_categoria));
-    
-    SET v_id_categoria = (SELECT id_categoria FROM tbl_categoria WHERE LOWER(TRIM(nombre_categoria)) = v_nombre_categoria_normalizado LIMIT 1);
-
-    IF v_id_categoria IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoría especificada no existe.';
-    END IF;
-
-    -- Obtener categoría actual del producto
-    SELECT c.nombre_categoria INTO v_nombre_categoria_actual
-    FROM tbl_productos p
-    LEFT JOIN tbl_categoria c ON p.id_categoria = c.id_categoria
-    WHERE p.id_producto = p_id_producto;
-
-    -- Si la categoría cambió, eliminar de la tabla anterior
-    IF v_nombre_categoria_actual IS NOT NULL AND v_nombre_categoria_actual != v_nombre_categoria_normalizado THEN
-        SET v_nombre_tabla_caracteristicas_actual = CONCAT('cat_', REPLACE(LOWER(v_nombre_categoria_actual), ' ', '_'));
-        
-        IF EXISTS (
-            SELECT 1 FROM information_schema.tables 
-            WHERE table_schema = DATABASE() 
-            AND table_name = v_nombre_tabla_caracteristicas_actual
-        ) THEN
-            SET @sql = CONCAT('DELETE FROM ', v_nombre_tabla_caracteristicas_actual, ' WHERE id_producto = ', p_id_producto);
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        END IF;
-    END IF;
-
-    -- Actualizar producto principal
-    UPDATE tbl_productos 
-    SET serial = p_serial,
-        nombre_producto = p_nombre_producto,
-        descripcion_producto = p_descripcion_producto,
-        id_modelo = p_id_modelo,
-        id_categoria = v_id_categoria,
-        stock = p_stock,
-        stock_minimo = p_stock_minimo,
-        stock_maximo = p_stock_maximo,
-        clausula_garantia = p_clausula_garantia,
-        precio = p_precio,
-        estado = p_estado,
-        imagen = p_imagen
-    WHERE id_producto = p_id_producto;
-
-    -- Insertar o actualizar características en la nueva tabla de categoría
-    SET v_nombre_tabla_caracteristicas = CONCAT('cat_', REPLACE(v_nombre_categoria_normalizado, ' ', '_'));
-    
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = DATABASE() 
-        AND table_name = v_nombre_tabla_caracteristicas
-    ) THEN
-        IF p_caracteristicas IS NOT NULL AND JSON_LENGTH(p_caracteristicas) > 0 THEN
-            -- Verificar si ya existe registro de características
-            SET @sql = CONCAT('SELECT COUNT(*) FROM ', v_nombre_tabla_caracteristicas, ' WHERE id_producto = ', p_id_producto);
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-            
-            -- Usar la variable de sesión para obtener el resultado
-            SET @existe = FOUND_ROWS();
-            
-            IF @existe > 0 THEN
-                -- Actualizar características existentes
-                SET @sql = CONCAT('UPDATE ', v_nombre_tabla_caracteristicas, ' SET ');
-                
-                SET @keys = JSON_KEYS(p_caracteristicas);
-                SET @key_count = JSON_LENGTH(@keys);
-                SET @i = 0;
-                
-                WHILE @i < @key_count DO
-                    SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
-                    SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
-                    
-                    IF @i > 0 THEN
-                        SET @sql = CONCAT(@sql, ', ');
-                    END IF;
-                    
-                    SET @sql = CONCAT(@sql, @key, ' = ', QUOTE(@value));
-                    
-                    SET @i = @i + 1;
-                END WHILE;
-                
-                SET @sql = CONCAT(@sql, ' WHERE id_producto = ', p_id_producto);
-                PREPARE stmt FROM @sql;
-                EXECUTE stmt;
-                DEALLOCATE PREPARE stmt;
-            ELSE
-                -- Insertar nuevas características
-                SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' SET id_producto = ', p_id_producto);
-                
-                SET @keys = JSON_KEYS(p_caracteristicas);
-                SET @key_count = JSON_LENGTH(@keys);
-                SET @i = 0;
-                
-                WHILE @i < @key_count DO
-                    SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
-                    SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
-                    
-                    SET @sql = CONCAT(@sql, ', ', @key, ' = ', QUOTE(@value));
-                    
-                    SET @i = @i + 1;
-                END WHILE;
-                
-                PREPARE stmt FROM @sql;
-                EXECUTE stmt;
-                DEALLOCATE PREPARE stmt;
-            END IF;
-        ELSE
-            -- Asegurar que exista un registro aunque no haya características
-            SET @sql = CONCAT('INSERT IGNORE INTO ', v_nombre_tabla_caracteristicas, ' (id_producto) VALUES (', p_id_producto, ')');
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        END IF;
-    END IF;
-
-    INSERT INTO casalai_seguridad.tbl_bitacora (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
-    VALUES (
-        NOW(), 
-        'Productos', 
-        'MODIFICAR', 
-        JSON_OBJECT('id_producto', p_id_producto, 'serial', p_serial, 'nombre_producto', p_nombre_producto, 'descripcion_producto', p_descripcion_producto, 'id_modelo', p_id_modelo, 'id_categoria', v_id_categoria, 'stock', p_stock, 'stock_minimo', p_stock_minimo, 'stock_maximo', p_stock_maximo, 'clausula_garantia', p_clausula_garantia, 'precio', p_precio, 'estado', p_estado, 'caracteristicas', p_caracteristicas, 'imagen', p_imagen), 
-        NULL, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se modificó el producto: ', p_nombre_producto, ' (ID: ', p_id_producto, ', Serial: ', p_serial, ', Categoría: ', p_nombre_categoria, ')')
-    );
-
-    COMMIT;
-    SET p_resultado = 1;
+BEGIN
+
+    DECLARE v_id_categoria INT;
+
+    DECLARE v_nombre_categoria_normalizado VARCHAR(50);
+
+    DECLARE v_nombre_tabla_caracteristicas VARCHAR(100);
+
+    DECLARE v_nombre_categoria_actual VARCHAR(50);
+
+    DECLARE v_nombre_tabla_caracteristicas_actual VARCHAR(100);
+
+
+
+    -- Manejador de excepciones simplificado
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SET p_resultado = 0;
+
+        RESIGNAL;
+
+    END;
+
+
+
+    START TRANSACTION;
+
+    
+
+    SET v_nombre_categoria_normalizado = LOWER(TRIM(p_nombre_categoria));
+
+    
+
+    SET v_id_categoria = (SELECT id_categoria FROM tbl_categoria WHERE LOWER(TRIM(nombre_categoria)) = v_nombre_categoria_normalizado LIMIT 1);
+
+
+
+    IF v_id_categoria IS NULL THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoría especificada no existe.';
+
+    END IF;
+
+
+
+    -- Obtener categoría actual del producto
+
+    SELECT c.nombre_categoria INTO v_nombre_categoria_actual
+
+    FROM tbl_productos p
+
+    LEFT JOIN tbl_categoria c ON p.id_categoria = c.id_categoria
+
+    WHERE p.id_producto = p_id_producto;
+
+
+
+    -- Si la categoría cambió, eliminar de la tabla anterior
+
+    IF v_nombre_categoria_actual IS NOT NULL AND v_nombre_categoria_actual != v_nombre_categoria_normalizado THEN
+
+        SET v_nombre_tabla_caracteristicas_actual = CONCAT('cat_', REPLACE(LOWER(v_nombre_categoria_actual), ' ', '_'));
+
+        
+
+        IF EXISTS (
+
+            SELECT 1 FROM information_schema.tables 
+
+            WHERE table_schema = DATABASE() 
+
+            AND table_name = v_nombre_tabla_caracteristicas_actual
+
+        ) THEN
+
+            SET @sql = CONCAT('DELETE FROM ', v_nombre_tabla_caracteristicas_actual, ' WHERE id_producto = ', p_id_producto);
+
+            PREPARE stmt FROM @sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        END IF;
+
+    END IF;
+
+
+
+    -- Actualizar producto principal
+
+    UPDATE tbl_productos 
+
+    SET serial = p_serial,
+
+        nombre_producto = p_nombre_producto,
+
+        descripcion_producto = p_descripcion_producto,
+
+        id_modelo = p_id_modelo,
+
+        id_categoria = v_id_categoria,
+
+        stock = p_stock,
+
+        stock_minimo = p_stock_minimo,
+
+        stock_maximo = p_stock_maximo,
+
+        clausula_garantia = p_clausula_garantia,
+
+        precio = p_precio,
+
+        estado = p_estado,
+
+        imagen = p_imagen
+
+    WHERE id_producto = p_id_producto;
+
+
+
+    -- Insertar o actualizar características en la nueva tabla de categoría
+
+    SET v_nombre_tabla_caracteristicas = CONCAT('cat_', REPLACE(v_nombre_categoria_normalizado, ' ', '_'));
+
+    
+
+    IF EXISTS (
+
+        SELECT 1 FROM information_schema.tables 
+
+        WHERE table_schema = DATABASE() 
+
+        AND table_name = v_nombre_tabla_caracteristicas
+
+    ) THEN
+
+        IF p_caracteristicas IS NOT NULL AND JSON_LENGTH(p_caracteristicas) > 0 THEN
+
+            -- Verificar si ya existe registro de características
+
+            SET @sql = CONCAT('SELECT COUNT(*) FROM ', v_nombre_tabla_caracteristicas, ' WHERE id_producto = ', p_id_producto);
+
+            PREPARE stmt FROM @sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+            
+
+            -- Usar la variable de sesión para obtener el resultado
+
+            SET @existe = FOUND_ROWS();
+
+            
+
+            IF @existe > 0 THEN
+
+                -- Actualizar características existentes
+
+                SET @sql = CONCAT('UPDATE ', v_nombre_tabla_caracteristicas, ' SET ');
+
+                
+
+                SET @keys = JSON_KEYS(p_caracteristicas);
+
+                SET @key_count = JSON_LENGTH(@keys);
+
+                SET @i = 0;
+
+                
+
+                WHILE @i < @key_count DO
+
+                    SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
+
+                    SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
+
+                    
+
+                    IF @i > 0 THEN
+
+                        SET @sql = CONCAT(@sql, ', ');
+
+                    END IF;
+
+                    
+
+                    SET @sql = CONCAT(@sql, @key, ' = ', QUOTE(@value));
+
+                    
+
+                    SET @i = @i + 1;
+
+                END WHILE;
+
+                
+
+                SET @sql = CONCAT(@sql, ' WHERE id_producto = ', p_id_producto);
+
+                PREPARE stmt FROM @sql;
+
+                EXECUTE stmt;
+
+                DEALLOCATE PREPARE stmt;
+
+            ELSE
+
+                -- Insertar nuevas características
+
+                SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' SET id_producto = ', p_id_producto);
+
+                
+
+                SET @keys = JSON_KEYS(p_caracteristicas);
+
+                SET @key_count = JSON_LENGTH(@keys);
+
+                SET @i = 0;
+
+                
+
+                WHILE @i < @key_count DO
+
+                    SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
+
+                    SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
+
+                    
+
+                    SET @sql = CONCAT(@sql, ', ', @key, ' = ', QUOTE(@value));
+
+                    
+
+                    SET @i = @i + 1;
+
+                END WHILE;
+
+                
+
+                PREPARE stmt FROM @sql;
+
+                EXECUTE stmt;
+
+                DEALLOCATE PREPARE stmt;
+
+            END IF;
+
+        ELSE
+
+            -- Asegurar que exista un registro aunque no haya características
+
+            SET @sql = CONCAT('INSERT IGNORE INTO ', v_nombre_tabla_caracteristicas, ' (id_producto) VALUES (', p_id_producto, ')');
+
+            PREPARE stmt FROM @sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        END IF;
+
+    END IF;
+
+
+
+    INSERT INTO casalai_seguridad.tbl_bitacora (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
+
+    VALUES (
+
+        NOW(), 
+
+        'Productos', 
+
+        'MODIFICAR', 
+
+        JSON_OBJECT('id_producto', p_id_producto, 'serial', p_serial, 'nombre_producto', p_nombre_producto, 'descripcion_producto', p_descripcion_producto, 'id_modelo', p_id_modelo, 'id_categoria', v_id_categoria, 'stock', p_stock, 'stock_minimo', p_stock_minimo, 'stock_maximo', p_stock_maximo, 'clausula_garantia', p_clausula_garantia, 'precio', p_precio, 'estado', p_estado, 'caracteristicas', p_caracteristicas, 'imagen', p_imagen), 
+
+        NULL, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se modificó el producto: ', p_nombre_producto, ' (ID: ', p_id_producto, ', Serial: ', p_serial, ', Categoría: ', p_nombre_categoria, ')')
+
+    );
+
+
+
+    COMMIT;
+
+    SET p_resultado = 1;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3114,91 +4761,175 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_proveedor`(
-    IN p_id_proveedor INT,
-    IN p_nombre_proveedor VARCHAR(2048),
-    IN p_rif_proveedor VARCHAR(15),
-    IN p_nombre_representante VARCHAR(2048),
-    IN p_rif_representante VARCHAR(15),
-    IN p_correo_proveedor VARCHAR(2048),
-    IN p_direccion_proveedor VARCHAR(2048),
-    IN p_telefono_1 VARCHAR(2048),
-    IN p_telefono_2 VARCHAR(2048),
-    IN p_observacion TEXT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_proveedor`(
+
+    IN p_id_proveedor INT,
+
+    IN p_nombre_proveedor VARCHAR(2048),
+
+    IN p_rif_proveedor VARCHAR(15),
+
+    IN p_nombre_representante VARCHAR(2048),
+
+    IN p_rif_representante VARCHAR(15),
+
+    IN p_correo_proveedor VARCHAR(2048),
+
+    IN p_direccion_proveedor VARCHAR(2048),
+
+    IN p_telefono_1 VARCHAR(2048),
+
+    IN p_telefono_2 VARCHAR(2048),
+
+    IN p_observacion TEXT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    -- Variables para la extracción forense de los datos anteriores
-    DECLARE v_nombre_proveedor_viejo VARCHAR(2048);
-    DECLARE v_rif_proveedor_viejo VARCHAR(15);
-    DECLARE v_nombre_representante_viejo VARCHAR(2048);
-    DECLARE v_rif_representante_viejo VARCHAR(15);
-    DECLARE v_correo_proveedor_viejo VARCHAR(2048);
-    DECLARE v_direccion_proveedor_viejo VARCHAR(2048);
-    DECLARE v_telefono_1_viejo VARCHAR(2048);
-    DECLARE v_telefono_2_viejo VARCHAR(2048);
-    DECLARE v_observacion_viejo TEXT;
-    DECLARE v_estado_viejo ENUM('habilitado','inhabilitado');
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        ROLLBACK; 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron guardar los cambios del proveedor.'; 
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Bloqueo exclusivo de la fila (X-Lock) para resguardar la consistencia y capturar datos viejos
-    SELECT 
-        `nombre_proveedor`, `rif_proveedor`, `nombre_representante`, `rif_representante`, 
-        `correo_proveedor`, `direccion_proveedor`, `telefono_1`, `telefono_2`, `observacion`, `estado`
-    INTO 
-        v_nombre_proveedor_viejo, v_rif_proveedor_viejo, v_nombre_representante_viejo, v_rif_representante_viejo, 
-        v_correo_proveedor_viejo, v_direccion_proveedor_viejo, v_telefono_1_viejo, v_telefono_2_viejo, v_observacion_viejo, v_estado_viejo
-    FROM `tbl_proveedores` 
-    WHERE `id_proveedor` = p_id_proveedor 
-    LIMIT 1 
-    FOR UPDATE;
-
-    -- Ejecución de la actualización física
-    UPDATE `tbl_proveedores` SET 
-        `nombre_proveedor` = p_nombre_proveedor,
-        `rif_proveedor` = p_rif_proveedor,
-        `nombre_representante` = p_nombre_representante,
-        `rif_representante` = p_rif_representante,
-        `correo_proveedor` = p_correo_proveedor,
-        `direccion_proveedor` = p_direccion_proveedor,
-        `telefono_1` = p_telefono_1,
-        `telefono_2` = p_telefono_2,
-        `observacion` = p_observacion
-    WHERE `id_proveedor` = p_id_proveedor;
-
-    -- Inserción en bitácora mapeando los cambios en formato JSON
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    ) VALUES (
-        NOW(), 
-        'Proveedores', 
-        'MODIFICAR', 
-        JSON_OBJECT(
-            'id_proveedor', p_id_proveedor, 'nombre_proveedor', p_nombre_proveedor, 'rif_proveedor', p_rif_proveedor,
-            'nombre_representante', p_nombre_representante, 'rif_representante', p_rif_representante,
-            'correo_proveedor', p_correo_proveedor, 'direccion_proveedor', p_direccion_proveedor,
-            'telefono_1', p_telefono_1, 'telefono_2', p_telefono_2, 'observacion', p_observacion, 'estado', v_estado_viejo
-        ), 
-        JSON_OBJECT(
-            'id_proveedor', p_id_proveedor, 'nombre_proveedor', v_nombre_proveedor_viejo, 'rif_proveedor', v_rif_proveedor_viejo,
-            'nombre_representante', v_nombre_representante_viejo, 'rif_representante', v_rif_representante_viejo,
-            'correo_proveedor', v_correo_proveedor_viejo, 'direccion_proveedor', v_direccion_proveedor_viejo,
-            'telefono_1', v_telefono_1_viejo, 'telefono_2', v_telefono_2_viejo, 'observacion', v_observacion_viejo, 'estado', v_estado_viejo
-        ), 
-        p_id_usuario_auditor, 
-        'media', 
-        CONCAT('Se actualizaron los datos comerciales del proveedor: "', p_nombre_proveedor, '" (ID: ', p_id_proveedor, ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    -- Variables para la extracción forense de los datos anteriores
+
+    DECLARE v_nombre_proveedor_viejo VARCHAR(2048);
+
+    DECLARE v_rif_proveedor_viejo VARCHAR(15);
+
+    DECLARE v_nombre_representante_viejo VARCHAR(2048);
+
+    DECLARE v_rif_representante_viejo VARCHAR(15);
+
+    DECLARE v_correo_proveedor_viejo VARCHAR(2048);
+
+    DECLARE v_direccion_proveedor_viejo VARCHAR(2048);
+
+    DECLARE v_telefono_1_viejo VARCHAR(2048);
+
+    DECLARE v_telefono_2_viejo VARCHAR(2048);
+
+    DECLARE v_observacion_viejo TEXT;
+
+    DECLARE v_estado_viejo ENUM('habilitado','inhabilitado');
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        ROLLBACK; 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron guardar los cambios del proveedor.'; 
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Bloqueo exclusivo de la fila (X-Lock) para resguardar la consistencia y capturar datos viejos
+
+    SELECT 
+
+        `nombre_proveedor`, `rif_proveedor`, `nombre_representante`, `rif_representante`, 
+
+        `correo_proveedor`, `direccion_proveedor`, `telefono_1`, `telefono_2`, `observacion`, `estado`
+
+    INTO 
+
+        v_nombre_proveedor_viejo, v_rif_proveedor_viejo, v_nombre_representante_viejo, v_rif_representante_viejo, 
+
+        v_correo_proveedor_viejo, v_direccion_proveedor_viejo, v_telefono_1_viejo, v_telefono_2_viejo, v_observacion_viejo, v_estado_viejo
+
+    FROM `tbl_proveedores` 
+
+    WHERE `id_proveedor` = p_id_proveedor 
+
+    LIMIT 1 
+
+    FOR UPDATE;
+
+
+
+    -- Ejecución de la actualización física
+
+    UPDATE `tbl_proveedores` SET 
+
+        `nombre_proveedor` = p_nombre_proveedor,
+
+        `rif_proveedor` = p_rif_proveedor,
+
+        `nombre_representante` = p_nombre_representante,
+
+        `rif_representante` = p_rif_representante,
+
+        `correo_proveedor` = p_correo_proveedor,
+
+        `direccion_proveedor` = p_direccion_proveedor,
+
+        `telefono_1` = p_telefono_1,
+
+        `telefono_2` = p_telefono_2,
+
+        `observacion` = p_observacion
+
+    WHERE `id_proveedor` = p_id_proveedor;
+
+
+
+    -- Inserción en bitácora mapeando los cambios en formato JSON
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    ) VALUES (
+
+        NOW(), 
+
+        'Proveedores', 
+
+        'MODIFICAR', 
+
+        JSON_OBJECT(
+
+            'id_proveedor', p_id_proveedor, 'nombre_proveedor', p_nombre_proveedor, 'rif_proveedor', p_rif_proveedor,
+
+            'nombre_representante', p_nombre_representante, 'rif_representante', p_rif_representante,
+
+            'correo_proveedor', p_correo_proveedor, 'direccion_proveedor', p_direccion_proveedor,
+
+            'telefono_1', p_telefono_1, 'telefono_2', p_telefono_2, 'observacion', p_observacion, 'estado', v_estado_viejo
+
+        ), 
+
+        JSON_OBJECT(
+
+            'id_proveedor', p_id_proveedor, 'nombre_proveedor', v_nombre_proveedor_viejo, 'rif_proveedor', v_rif_proveedor_viejo,
+
+            'nombre_representante', v_nombre_representante_viejo, 'rif_representante', v_rif_representante_viejo,
+
+            'correo_proveedor', v_correo_proveedor_viejo, 'direccion_proveedor', v_direccion_proveedor_viejo,
+
+            'telefono_1', v_telefono_1_viejo, 'telefono_2', v_telefono_2_viejo, 'observacion', v_observacion_viejo, 'estado', v_estado_viejo
+
+        ), 
+
+        p_id_usuario_auditor, 
+
+        'media', 
+
+        CONCAT('Se actualizaron los datos comerciales del proveedor: "', p_nombre_proveedor, '" (ID: ', p_id_proveedor, ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3215,20 +4946,33 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_cliente_por_id`(
-    IN p_id_cliente INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_cliente_por_id`(
+
+    IN p_id_cliente INT
+
 )
-BEGIN
-    -- Manejador de fallas generales con mensaje personalizado
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información del cliente.';
-    END;
-
-    SELECT * FROM `tbl_clientes` 
-    WHERE `id_clientes` = p_id_cliente
-    LIMIT 1
-    FOR UPDATE;
+BEGIN
+
+    -- Manejador de fallas generales con mensaje personalizado
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información del cliente.';
+
+    END;
+
+
+
+    SELECT * FROM `tbl_clientes` 
+
+    WHERE `id_clientes` = p_id_cliente
+
+    LIMIT 1
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3245,20 +4989,33 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_cuenta_por_id`(
-    IN p_id_cuenta INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_cuenta_por_id`(
+
+    IN p_id_cuenta INT
+
 )
-BEGIN
-    -- Manejador de fallas generales con mensaje personalizado
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información de la cuenta bancaria.';
-    END;
-
-    SELECT * FROM `tbl_cuentas` 
-    WHERE `id_cuenta` = p_id_cuenta
-    LIMIT 1
-    FOR UPDATE;
+BEGIN
+
+    -- Manejador de fallas generales con mensaje personalizado
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información de la cuenta bancaria.';
+
+    END;
+
+
+
+    SELECT * FROM `tbl_cuentas` 
+
+    WHERE `id_cuenta` = p_id_cuenta
+
+    LIMIT 1
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3275,26 +5032,45 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_despacho_por_id`(
-    IN p_id_despacho INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_despacho_por_id`(
+
+    IN p_id_despacho INT
+
 )
-BEGIN
-    SELECT 
-        r.id_despachos,
-        r.fecha_despacho AS fecha,
-        r.tipocompra,
-        r.estado,
-        r.id_clientes,
-        c.nombre AS nombre_cliente,
-        c.cedula AS cedula_cliente,
-        SUM(d.cantidad) AS total_productos,
-        SUM(d.cantidad * p.precio) AS valor_total
-    FROM tbl_despachos AS r
-    INNER JOIN tbl_despacho_detalle AS d ON d.id_despacho = r.id_despachos
-    INNER JOIN tbl_clientes AS c ON c.id_clientes = r.id_clientes
-    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
-    WHERE r.id_despachos = p_id_despacho AND r.activo = 1
-    GROUP BY r.id_despachos, r.fecha_despacho, r.tipocompra, r.estado, c.nombre, c.cedula;
+BEGIN
+
+    SELECT 
+
+        r.id_despachos,
+
+        r.fecha_despacho AS fecha,
+
+        r.tipocompra,
+
+        r.estado,
+
+        r.id_clientes,
+
+        c.nombre AS nombre_cliente,
+
+        c.cedula AS cedula_cliente,
+
+        SUM(d.cantidad) AS total_productos,
+
+        SUM(d.cantidad * p.precio) AS valor_total
+
+    FROM tbl_despachos AS r
+
+    INNER JOIN tbl_despacho_detalle AS d ON d.id_despacho = r.id_despachos
+
+    INNER JOIN tbl_clientes AS c ON c.id_clientes = r.id_clientes
+
+    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
+
+    WHERE r.id_despachos = p_id_despacho AND r.activo = 1
+
+    GROUP BY r.id_despachos, r.fecha_despacho, r.tipocompra, r.estado, c.nombre, c.cedula;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3311,25 +5087,43 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_detalle_despacho`(
-    IN p_id_despacho INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_detalle_despacho`(
+
+    IN p_id_despacho INT
+
 )
-BEGIN
-    SELECT 
-        p.id_producto AS codigo,
-        p.nombre_producto AS producto,
-        m.nombre_modelo AS modelo,
-        mar.nombre_marca AS marca,
-        p.serial,
-        d.cantidad,
-        d.id_detalle AS id_detalle,
-        p.precio AS precio_unitario,
-        (d.cantidad * p.precio) AS subtotal
-    FROM tbl_despacho_detalle AS d
-    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
-    INNER JOIN tbl_modelos AS m ON p.id_modelo = m.id_modelo
-    INNER JOIN tbl_marcas AS mar ON m.id_marca = mar.id_marca
-    WHERE d.id_despacho = p_id_despacho;
+BEGIN
+
+    SELECT 
+
+        p.id_producto AS codigo,
+
+        p.nombre_producto AS producto,
+
+        m.nombre_modelo AS modelo,
+
+        mar.nombre_marca AS marca,
+
+        p.serial,
+
+        d.cantidad,
+
+        d.id_detalle AS id_detalle,
+
+        p.precio AS precio_unitario,
+
+        (d.cantidad * p.precio) AS subtotal
+
+    FROM tbl_despacho_detalle AS d
+
+    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
+
+    INNER JOIN tbl_modelos AS m ON p.id_modelo = m.id_modelo
+
+    INNER JOIN tbl_marcas AS mar ON m.id_marca = mar.id_marca
+
+    WHERE d.id_despacho = p_id_despacho;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3346,20 +5140,33 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_marca_por_id`(
-    IN p_id_marca INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_marca_por_id`(
+
+    IN p_id_marca INT
+
 )
-BEGIN
-    -- Manejador de fallas generales con mensaje personalizado
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información de la marca.';
-    END;
-
-    SELECT * FROM `tbl_marcas` 
-    WHERE `id_marca` = p_id_marca
-    LIMIT 1
-    FOR UPDATE;
+BEGIN
+
+    -- Manejador de fallas generales con mensaje personalizado
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo obtener la información de la marca.';
+
+    END;
+
+
+
+    SELECT * FROM `tbl_marcas` 
+
+    WHERE `id_marca` = p_id_marca
+
+    LIMIT 1
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3376,20 +5183,33 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_modelo_por_id`(
-    IN p_id_modelo INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_modelo_por_id`(
+
+    IN p_id_modelo INT
+
 )
-BEGIN
-    SELECT 
-        mo.`id_modelo`, 
-        mo.`nombre_modelo`, 
-        mo.`id_marca`,
-        ma.`nombre_marca`
-    FROM `tbl_modelos` mo
-    LEFT JOIN `tbl_marcas` ma ON mo.`id_marca` = ma.`id_marca`
-    WHERE mo.`id_modelo` = p_id_modelo
-    LIMIT 1
-    FOR UPDATE;
+BEGIN
+
+    SELECT 
+
+        mo.`id_modelo`, 
+
+        mo.`nombre_modelo`, 
+
+        mo.`id_marca`,
+
+        ma.`nombre_marca`
+
+    FROM `tbl_modelos` mo
+
+    LEFT JOIN `tbl_marcas` ma ON mo.`id_marca` = ma.`id_marca`
+
+    WHERE mo.`id_modelo` = p_id_modelo
+
+    LIMIT 1
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3406,19 +5226,31 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_orden_despacho_por_id`(
-    IN p_id_orden INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_orden_despacho_por_id`(
+
+    IN p_id_orden INT
+
 )
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se encontró la orden de despacho solicitada.'; 
-    END;
-
-    SELECT * FROM tbl_orden_despachos 
-    WHERE id_orden_despachos = p_id_orden 
-    LIMIT 1
-    FOR UPDATE;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se encontró la orden de despacho solicitada.'; 
+
+    END;
+
+
+
+    SELECT * FROM tbl_orden_despachos 
+
+    WHERE id_orden_despachos = p_id_orden 
+
+    LIMIT 1
+
+    FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3435,31 +5267,55 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_productos_factura_despacho`(
-    IN p_id_factura INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_productos_factura_despacho`(
+
+    IN p_id_factura INT
+
 )
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron extraer los productos del despacho.'; 
-    END;
-
-    SELECT 
-        p.imagen,
-        p.id_producto AS codigo,
-        p.nombre_producto AS producto,
-        m.nombre_modelo AS modelo,
-        mar.nombre_marca AS marca,
-        p.serial,
-        d.cantidad,
-        d.id AS id_detalle,
-        p.precio AS precio_unitario,
-        (d.cantidad * p.precio) AS subtotal
-    FROM tbl_factura_detalle AS d
-    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
-    INNER JOIN tbl_modelos AS m ON p.id_modelo = m.id_modelo
-    INNER JOIN tbl_marcas AS mar ON m.id_marca = mar.id_marca
-    WHERE d.factura_id = p_id_factura;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudieron extraer los productos del despacho.'; 
+
+    END;
+
+
+
+    SELECT 
+
+        p.imagen,
+
+        p.id_producto AS codigo,
+
+        p.nombre_producto AS producto,
+
+        m.nombre_modelo AS modelo,
+
+        mar.nombre_marca AS marca,
+
+        p.serial,
+
+        d.cantidad,
+
+        d.id AS id_detalle,
+
+        p.precio AS precio_unitario,
+
+        (d.cantidad * p.precio) AS subtotal
+
+    FROM tbl_factura_detalle AS d
+
+    INNER JOIN tbl_productos AS p ON p.id_producto = d.id_producto
+
+    INNER JOIN tbl_modelos AS m ON p.id_modelo = m.id_modelo
+
+    INNER JOIN tbl_marcas AS mar ON m.id_marca = mar.id_marca
+
+    WHERE d.factura_id = p_id_factura;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3477,16 +5333,26 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_productos_recepcion`(IN p_id_recepcion INT)
-BEGIN
-    SELECT p.id_producto AS codigo, p.nombre_producto AS nombre_producto,
-           m.nombre_modelo AS modelo, mar.nombre_marca AS marca, p.serial,
-           d.cantidad, d.costo
-    FROM tbl_detalle_recepcion_productos d
-    INNER JOIN tbl_productos p ON p.id_producto = d.id_producto
-    INNER JOIN tbl_modelos m ON m.id_modelo = p.id_modelo
-    INNER JOIN tbl_marcas mar ON mar.id_marca = m.id_marca
-    WHERE d.id_recepcion = p_id_recepcion
-    ORDER BY d.id_detalle_recepcion_productos;
+BEGIN
+
+    SELECT p.id_producto AS codigo, p.nombre_producto AS nombre_producto,
+
+           m.nombre_modelo AS modelo, mar.nombre_marca AS marca, p.serial,
+
+           d.cantidad, d.costo
+
+    FROM tbl_detalle_recepcion_productos d
+
+    INNER JOIN tbl_productos p ON p.id_producto = d.id_producto
+
+    INNER JOIN tbl_modelos m ON m.id_modelo = p.id_modelo
+
+    INNER JOIN tbl_marcas mar ON mar.id_marca = m.id_marca
+
+    WHERE d.id_recepcion = p_id_recepcion
+
+    ORDER BY d.id_detalle_recepcion_productos;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3503,19 +5369,31 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_proveedor_por_id`(
-    IN p_id_proveedor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_proveedor_por_id`(
+
+    IN p_id_proveedor INT
+
 )
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo extraer la información del proveedor solicitado.'; 
-    END;
-
-    -- Consulta unitaria limpia
-    SELECT * FROM `tbl_proveedores`
-    WHERE `id_proveedor` = p_id_proveedor
-    LIMIT 1 FOR UPDATE;
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo extraer la información del proveedor solicitado.'; 
+
+    END;
+
+
+
+    -- Consulta unitaria limpia
+
+    SELECT * FROM `tbl_proveedores`
+
+    WHERE `id_proveedor` = p_id_proveedor
+
+    LIMIT 1 FOR UPDATE;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3533,16 +5411,26 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_recepcion_por_correlativo`(IN p_correlativo VARCHAR(255))
-BEGIN
-    SELECT r.id_recepcion, r.id_proveedor, p.nombre_proveedor, r.fecha, r.correlativo, r.estado,
-           (SELECT COALESCE(SUM(d.cantidad * d.costo), 0)
-            FROM tbl_detalle_recepcion_productos d WHERE d.id_recepcion = r.id_recepcion) AS costo_inversion,
-           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura
-    FROM tbl_recepcion_productos r
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    WHERE r.correlativo = p_correlativo
-    ORDER BY r.id_recepcion DESC
-    LIMIT 1;
+BEGIN
+
+    SELECT r.id_recepcion, r.id_proveedor, p.nombre_proveedor, r.fecha, r.correlativo, r.estado,
+
+           (SELECT COALESCE(SUM(d.cantidad * d.costo), 0)
+
+            FROM tbl_detalle_recepcion_productos d WHERE d.id_recepcion = r.id_recepcion) AS costo_inversion,
+
+           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura
+
+    FROM tbl_recepcion_productos r
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    WHERE r.correlativo = p_correlativo
+
+    ORDER BY r.id_recepcion DESC
+
+    LIMIT 1;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3560,15 +5448,24 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_obtener_ultima_recepcion`()
-BEGIN
-    SELECT r.id_recepcion, r.id_proveedor, p.nombre_proveedor, r.fecha, r.correlativo, r.estado,
-           (SELECT COALESCE(SUM(d.cantidad * d.costo), 0)
-            FROM tbl_detalle_recepcion_productos d WHERE d.id_recepcion = r.id_recepcion) AS costo_inversion,
-           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura
-    FROM tbl_recepcion_productos r
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    ORDER BY r.id_recepcion DESC
-    LIMIT 1;
+BEGIN
+
+    SELECT r.id_recepcion, r.id_proveedor, p.nombre_proveedor, r.fecha, r.correlativo, r.estado,
+
+           (SELECT COALESCE(SUM(d.cantidad * d.costo), 0)
+
+            FROM tbl_detalle_recepcion_productos d WHERE d.id_recepcion = r.id_recepcion) AS costo_inversion,
+
+           r.subtotal_factura, r.porcentaje_iva, r.monto_iva, r.total_factura
+
+    FROM tbl_recepcion_productos r
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    ORDER BY r.id_recepcion DESC
+
+    LIMIT 1;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3585,89 +5482,171 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_categoria`(
-    IN p_nombre_categoria VARCHAR(255),
-    IN p_caracteristicas JSON,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_categoria`(
+
+    IN p_nombre_categoria VARCHAR(255),
+
+    IN p_caracteristicas JSON,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nuevo_id_categoria INT;
-    DECLARE v_nombre_tabla VARCHAR(255);
-    DECLARE v_sql_create TEXT;
-    DECLARE v_contador INT DEFAULT 0;
-    DECLARE v_total_caracteristicas INT;
-    DECLARE v_nombre_campo VARCHAR(255);
-    DECLARE v_tipo_campo VARCHAR(50);
-    DECLARE v_max_length INT;
-    DECLARE v_max_length_raw JSON;
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        GET DIAGNOSTICS CONDITION 1
-        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
-        SET @error_message = CONCAT('Error interno: ', @text, ' (SQLSTATE: ', @sqlstate, ', Errno: ', @errno, ')');
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @error_message;
-    END;
-
-    SET v_nombre_tabla = CONCAT('cat_', LOWER(REPLACE(p_nombre_categoria, ' ', '_')));
-
-    INSERT INTO `tbl_categoria` (`nombre_categoria`)
-    VALUES (p_nombre_categoria);
-
-    SET v_nuevo_id_categoria = LAST_INSERT_ID();
-
-    SET v_sql_create = CONCAT('CREATE TABLE IF NOT EXISTS `', v_nombre_tabla, '` (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        id_producto INT NOT NULL,');
-    
-    SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
-    
-    WHILE v_contador < v_total_caracteristicas DO
-        SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
-        SET v_tipo_campo = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].tipo')));
-        SET v_max_length_raw = JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].max'));
-        
-        IF v_max_length_raw IS NULL THEN
-            SET v_max_length = 255;
-        ELSE
-            SET v_max_length = CAST(JSON_UNQUOTE(v_max_length_raw) AS UNSIGNED);
-            IF v_max_length = 0 OR v_max_length > 255 THEN
-                SET v_max_length = 255;
-            END IF;
-        END IF;
-        
-        CASE v_tipo_campo
-            WHEN 'int' THEN
-                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` INT,'));
-            WHEN 'float' THEN
-                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` FLOAT,'));
-            WHEN 'string' THEN
-                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` VARCHAR(', v_max_length, '),'));
-        END CASE;
-        
-        SET v_contador = v_contador + 1;
-    END WHILE;
-    
-    SET v_sql_create = CONCAT(LEFT(v_sql_create, LENGTH(v_sql_create) - 1), 
-        ', FOREIGN KEY (id_producto) REFERENCES tbl_productos(id_producto) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-    
-    SET @sql = v_sql_create;
-    PREPARE stmt FROM @sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Categor??as', 
-        'INCLUIR', 
-        JSON_OBJECT('id_categoria', v_nuevo_id_categoria, 'nombre_categoria', p_nombre_categoria, 'tabla', v_nombre_tabla, 'caracteristicas', p_caracteristicas), 
-        NULL, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se incluy?? una nueva categor??a en el sistema: ', p_nombre_categoria)
-    );
+BEGIN
+
+    DECLARE v_nuevo_id_categoria INT;
+
+    DECLARE v_nombre_tabla VARCHAR(255);
+
+    DECLARE v_sql_create TEXT;
+
+    DECLARE v_contador INT DEFAULT 0;
+
+    DECLARE v_total_caracteristicas INT;
+
+    DECLARE v_nombre_campo VARCHAR(255);
+
+    DECLARE v_tipo_campo VARCHAR(50);
+
+    DECLARE v_max_length INT;
+
+    DECLARE v_max_length_raw JSON;
+
+    
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        GET DIAGNOSTICS CONDITION 1
+
+        @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+
+        SET @error_message = CONCAT('Error interno: ', @text, ' (SQLSTATE: ', @sqlstate, ', Errno: ', @errno, ')');
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @error_message;
+
+    END;
+
+
+
+    SET v_nombre_tabla = CONCAT('cat_', LOWER(REPLACE(p_nombre_categoria, ' ', '_')));
+
+
+
+    INSERT INTO `tbl_categoria` (`nombre_categoria`)
+
+    VALUES (p_nombre_categoria);
+
+
+
+    SET v_nuevo_id_categoria = LAST_INSERT_ID();
+
+
+
+    SET v_sql_create = CONCAT('CREATE TABLE IF NOT EXISTS `', v_nombre_tabla, '` (
+
+        id INT AUTO_INCREMENT PRIMARY KEY,
+
+        id_producto INT NOT NULL,');
+
+    
+
+    SET v_total_caracteristicas = JSON_LENGTH(p_caracteristicas);
+
+    
+
+    WHILE v_contador < v_total_caracteristicas DO
+
+        SET v_nombre_campo = LOWER(REPLACE(JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].nombre'))), ' ', '_'));
+
+        SET v_tipo_campo = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].tipo')));
+
+        SET v_max_length_raw = JSON_EXTRACT(p_caracteristicas, CONCAT('$[', v_contador, '].max'));
+
+        
+
+        IF v_max_length_raw IS NULL THEN
+
+            SET v_max_length = 255;
+
+        ELSE
+
+            SET v_max_length = CAST(JSON_UNQUOTE(v_max_length_raw) AS UNSIGNED);
+
+            IF v_max_length = 0 OR v_max_length > 255 THEN
+
+                SET v_max_length = 255;
+
+            END IF;
+
+        END IF;
+
+        
+
+        CASE v_tipo_campo
+
+            WHEN 'int' THEN
+
+                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` INT,'));
+
+            WHEN 'float' THEN
+
+                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` FLOAT,'));
+
+            WHEN 'string' THEN
+
+                SET v_sql_create = CONCAT(v_sql_create, CONCAT(' `', v_nombre_campo, '` VARCHAR(', v_max_length, '),'));
+
+        END CASE;
+
+        
+
+        SET v_contador = v_contador + 1;
+
+    END WHILE;
+
+    
+
+    SET v_sql_create = CONCAT(LEFT(v_sql_create, LENGTH(v_sql_create) - 1), 
+
+        ', FOREIGN KEY (id_producto) REFERENCES tbl_productos(id_producto) ON DELETE CASCADE
+
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+
+    
+
+    SET @sql = v_sql_create;
+
+    PREPARE stmt FROM @sql;
+
+    EXECUTE stmt;
+
+    DEALLOCATE PREPARE stmt;
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Categor??as', 
+
+        'INCLUIR', 
+
+        JSON_OBJECT('id_categoria', v_nuevo_id_categoria, 'nombre_categoria', p_nombre_categoria, 'tabla', v_nombre_tabla, 'caracteristicas', p_caracteristicas), 
+
+        NULL, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se incluy?? una nueva categor??a en el sistema: ', p_nombre_categoria)
+
+    );
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3684,49 +5663,91 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_cliente`(
-    IN p_nombre VARCHAR(400),
-    IN p_cedula VARCHAR(10),
-    IN p_direccion TEXT,
-    IN p_telefono VARCHAR(400),
-    IN p_correo VARCHAR(550),
-    IN p_activo TINYINT(1),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_cliente`(
+
+    IN p_nombre VARCHAR(400),
+
+    IN p_cedula VARCHAR(10),
+
+    IN p_direccion TEXT,
+
+    IN p_telefono VARCHAR(400),
+
+    IN p_correo VARCHAR(550),
+
+    IN p_activo TINYINT(1),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nuevo_id_cliente INT;
-
-    -- Manejador general de excepciones
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar el registro del cliente.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Inserción física (Por defecto inicia activo = 1)
-    INSERT INTO `tbl_clientes` (`nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo`)
-    VALUES (p_nombre, p_cedula, p_direccion, p_telefono, p_correo, 1);
-
-    -- Captura síncrona del ID asignado
-    SET v_nuevo_id_cliente = LAST_INSERT_ID();
-
-    -- Auditoría atómica en bitácora
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Clientes', 
-        'INCLUIR', 
-        JSON_OBJECT('id_clientes', v_nuevo_id_cliente, 'nombre', p_nombre, 'cedula', p_cedula, 'correo', p_correo, 'activo', 1), 
-        NULL, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se incluyó un nuevo cliente en el sistema: ', p_nombre, ' (C.I: ', p_cedula, ')')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nuevo_id_cliente INT;
+
+
+
+    -- Manejador general de excepciones
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo procesar el registro del cliente.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Inserción física (Por defecto inicia activo = 1)
+
+    INSERT INTO `tbl_clientes` (`nombre`, `cedula`, `direccion`, `telefono`, `correo`, `activo`)
+
+    VALUES (p_nombre, p_cedula, p_direccion, p_telefono, p_correo, 1);
+
+
+
+    -- Captura síncrona del ID asignado
+
+    SET v_nuevo_id_cliente = LAST_INSERT_ID();
+
+
+
+    -- Auditoría atómica en bitácora
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Clientes', 
+
+        'INCLUIR', 
+
+        JSON_OBJECT('id_clientes', v_nuevo_id_cliente, 'nombre', p_nombre, 'cedula', p_cedula, 'correo', p_correo, 'activo', 1), 
+
+        NULL, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se incluyó un nuevo cliente en el sistema: ', p_nombre, ' (C.I: ', p_cedula, ')')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3743,216 +5764,425 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_compra_presencial`(
-    IN p_id_cliente INT,
-    IN p_productos JSON,
-    IN p_pagos JSON,
-    IN p_fecha DATE,
-    IN p_id_usuario_auditor INT,
-    OUT p_resultado JSON
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_compra_presencial`(
+
+    IN p_id_cliente INT,
+
+    IN p_productos JSON,
+
+    IN p_pagos JSON,
+
+    IN p_fecha DATE,
+
+    IN p_id_usuario_auditor INT,
+
+    OUT p_resultado JSON
+
 )
-BEGIN
-    DECLARE v_id_despacho INT;
-    DECLARE v_id_factura INT;
-    DECLARE v_monto_total DECIMAL(10,2) DEFAULT 0;
-    DECLARE v_descripcion TEXT DEFAULT 'Venta: ';
-    DECLARE v_contador INT DEFAULT 0;
-    DECLARE v_total_productos INT;
-    DECLARE v_total_pagos INT;
-    DECLARE v_id_producto INT;
-    DECLARE v_cantidad INT;
-    DECLARE v_precio DECIMAL(10,2);
-    DECLARE v_nombre_producto VARCHAR(255);
-    DECLARE v_nombre_modelo VARCHAR(255);
-    DECLARE v_nombre_marca VARCHAR(255);
-    DECLARE v_serial VARCHAR(100);
-    DECLARE v_subtotal DECIMAL(10,2);
-    DECLARE v_nombre_cliente VARCHAR(255);
-    DECLARE v_cedula VARCHAR(50);
-    DECLARE v_telefono VARCHAR(50);
-    DECLARE v_correo VARCHAR(255);
-    DECLARE v_pago_tipo VARCHAR(50);
-    DECLARE v_pago_monto DECIMAL(10,2);
-    DECLARE v_pago_referencia VARCHAR(100);
-    DECLARE v_pago_id_cuenta INT;
-    DECLARE v_pago_comprobante VARCHAR(255);
-    DECLARE v_error_msg VARCHAR(500);
-    DECLARE v_productos_json JSON DEFAULT '[]';
-    DECLARE v_pagos_json JSON DEFAULT '[]';
-    DECLARE v_producto_item JSON;
-    DECLARE v_pago_item JSON;
-    DECLARE v_debug_log TEXT DEFAULT '';
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        GET DIAGNOSTICS CONDITION 1
-            @sqlstate = RETURNED_SQLSTATE,
-            @errno = MYSQL_ERRNO,
-            @text = MESSAGE_TEXT;
-
-        SET v_debug_log = CONCAT(v_debug_log, '[ERROR] Código: ', @errno, ', Mensaje: ', @text);
-        SET p_resultado = JSON_OBJECT(
-            'status', 'error',
-            'mensaje', CONCAT('Error interno: ', @text),
-            'debug', v_debug_log,
-            'codigo_error', @errno
-        );
-        ROLLBACK;
-    END;
-
-    IF p_id_usuario_auditor IS NULL OR p_id_usuario_auditor <= 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El usuario auditor de la venta no es válido.';
-    END IF;
-
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Iniciando lógica dentro de transacción existente\n');
-
-    INSERT INTO `tbl_despachos` (`id_clientes`, `fecha_despacho`, `tipocompra`, `activo`)
-    VALUES (p_id_cliente, p_fecha, 'Presencial', 1);
-    SET v_id_despacho = LAST_INSERT_ID();
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Despacho creado ID: ', v_id_despacho, '\n');
-
-    SET v_total_productos = JSON_LENGTH(p_productos);
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Total productos: ', v_total_productos, '\n');
-
-    WHILE v_contador < v_total_productos DO
-        SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].id_producto')));
-        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].cantidad')));
-        SET v_cantidad = CAST(v_cantidad AS UNSIGNED);
-
-        SET v_debug_log = CONCAT(v_debug_log, '[INFO] Procesando producto ID: ', v_id_producto, ', Cantidad: ', v_cantidad, '\n');
-
-        INSERT INTO `tbl_despacho_detalle` (`id_despacho`, `id_producto`, `cantidad`)
-        VALUES (v_id_despacho, v_id_producto, v_cantidad);
-
-        SELECT p.nombre_producto, m.nombre_modelo, mar.nombre_marca, p.serial, p.precio
-        INTO v_nombre_producto, v_nombre_modelo, v_nombre_marca, v_serial, v_precio
-        FROM tbl_productos p
-        INNER JOIN tbl_modelos m ON p.id_modelo = m.id_modelo
-        INNER JOIN tbl_marcas mar ON m.id_marca = mar.id_marca
-        WHERE p.id_producto = v_id_producto
-        FOR UPDATE;
-
-        SET v_subtotal = v_precio * v_cantidad;
-        SET v_monto_total = v_monto_total + v_subtotal;
-        SET v_descripcion = CONCAT(v_descripcion, v_nombre_producto, ' (', v_cantidad, '), ');
-        SET v_producto_item = JSON_OBJECT(
-            'id_producto', v_id_producto,
-            'codigo', v_id_producto,
-            'nombre', v_nombre_producto,
-            'modelo', v_nombre_modelo,
-            'marca', v_nombre_marca,
-            'serial', v_serial,
-            'precio', v_precio,
-            'cantidad', v_cantidad,
-            'subtotal', v_subtotal
-        );
-        SET v_productos_json = JSON_ARRAY_APPEND(v_productos_json, '$', v_producto_item);
-        SET v_debug_log = CONCAT(v_debug_log, '[INFO] Producto: ', v_nombre_producto, ', Subtotal: ', v_subtotal, '\n');
-        SET v_contador = v_contador + 1;
-    END WHILE;
-
-    SET v_descripcion = TRIM(TRAILING ', ' FROM v_descripcion);
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Monto total: ', v_monto_total, '\n');
-
-    INSERT INTO `tbl_facturas` (`cliente`, `fecha`, `descuento`, `estatus`)
-    VALUES (p_id_cliente, p_fecha, 0, 'Pagada en Oficina');
-    SET v_id_factura = LAST_INSERT_ID();
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Factura creada ID: ', v_id_factura, '\n');
-
-    SET v_contador = 0;
-    WHILE v_contador < v_total_productos DO
-        SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].id_producto')));
-        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].cantidad')));
-        SET v_cantidad = CAST(v_cantidad AS UNSIGNED);
-
-        INSERT INTO `tbl_factura_detalle` (`factura_id`, `id_producto`, `cantidad`)
-        VALUES (v_id_factura, v_id_producto, v_cantidad);
-        SET v_contador = v_contador + 1;
-    END WHILE;
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Detalles de factura insertados\n');
-
-    SELECT nombre, cedula, telefono, correo
-    INTO v_nombre_cliente, v_cedula, v_telefono, v_correo
-    FROM tbl_clientes
-    WHERE id_clientes = p_id_cliente;
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Cliente: ', v_nombre_cliente, '\n');
-
-    IF p_pagos IS NOT NULL AND JSON_LENGTH(p_pagos) > 0 THEN
-        SET v_contador = 0;
-        SET v_total_pagos = JSON_LENGTH(p_pagos);
-
-        WHILE v_contador < v_total_pagos DO
-            SET v_pago_tipo = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].tipo')));
-            SET v_pago_monto = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].monto')));
-            SET v_pago_referencia = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].referencia')));
-            SET v_pago_id_cuenta = JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].cuenta'));
-            SET v_pago_comprobante = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].comprobante')));
-            SET v_pago_monto = CAST(v_pago_monto AS DECIMAL(10,2));
-
-            INSERT INTO `tbl_detalles_pago` (`id_factura`, `tipo`, `id_cuenta`, `referencia`, `monto`, `comprobante`, `fecha`)
-            VALUES (v_id_factura, v_pago_tipo, v_pago_id_cuenta, v_pago_referencia, v_pago_monto, v_pago_comprobante, NOW());
-
-            SET v_pago_item = JSON_OBJECT(
-                'tipo', v_pago_tipo,
-                'monto', v_pago_monto,
-                'referencia', v_pago_referencia,
-                'id_cuenta', v_pago_id_cuenta,
-                'comprobante', v_pago_comprobante,
-                'estatus', 'Pago Procesado'
-            );
-            SET v_pagos_json = JSON_ARRAY_APPEND(v_pagos_json, '$', v_pago_item);
-            SET v_debug_log = CONCAT(v_debug_log, '[INFO] Pago registrado: ', v_pago_tipo, ', Monto: ', v_pago_monto, '\n');
-            SET v_contador = v_contador + 1;
-        END WHILE;
-    END IF;
-
-    INSERT INTO `tbl_ingresos_egresos` (`id_despacho`, `tipo`, `monto`, `descripcion`, `fecha`, `estado`)
-    VALUES (v_id_despacho, 'ingreso', v_monto_total, CONCAT('Venta presencial #', v_id_factura, ' - ', v_descripcion), NOW(), 1);
-    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Ingreso registrado en finanzas\n');
-
-    SET p_resultado = JSON_OBJECT(
-        'status', 'success',
-        'id_factura', v_id_factura,
-        'fecha_factura', p_fecha,
-        'id_despacho', v_id_despacho,
-        'nombre_cliente', v_nombre_cliente,
-        'cedula', v_cedula,
-        'telefono', v_telefono,
-        'correo', v_correo,
-        'monto_total', v_monto_total,
-        'descripcion', v_descripcion,
-        'debug', v_debug_log
-    );
-    SET p_resultado = JSON_SET(p_resultado, '$.productos', v_productos_json);
-    SET p_resultado = JSON_SET(p_resultado, '$.pagos', v_pagos_json);
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`,
-        `id_usuario`, `prioridad`, `descripcion`
-    ) VALUES (
-        NOW(),
-        'Venta Presencial',
-        'INCLUIR',
-        JSON_OBJECT(
-            'id_despacho', v_id_despacho,
-            'id_factura', v_id_factura,
-            'id_cliente', p_id_cliente,
-            'nombre_cliente', v_nombre_cliente,
-            'productos', JSON_EXTRACT(v_productos_json, '$'),
-            'pagos', JSON_EXTRACT(v_pagos_json, '$'),
-            'monto_total', v_monto_total,
-            'fecha', p_fecha,
-            'descripcion', v_descripcion
-        ),
-        NULL,
-        p_id_usuario_auditor,
-        'media',
-        CONCAT(
-            'Se registró una venta presencial #', v_id_factura,
-            ' para el cliente "', IFNULL(v_nombre_cliente, 'N/A'), '".'
-        )
-    );
+BEGIN
+
+    DECLARE v_id_despacho INT;
+
+    DECLARE v_id_factura INT;
+
+    DECLARE v_monto_total DECIMAL(10,2) DEFAULT 0;
+
+    DECLARE v_descripcion TEXT DEFAULT 'Venta: ';
+
+    DECLARE v_contador INT DEFAULT 0;
+
+    DECLARE v_total_productos INT;
+
+    DECLARE v_total_pagos INT;
+
+    DECLARE v_id_producto INT;
+
+    DECLARE v_cantidad INT;
+
+    DECLARE v_precio DECIMAL(10,2);
+
+    DECLARE v_nombre_producto VARCHAR(255);
+
+    DECLARE v_nombre_modelo VARCHAR(255);
+
+    DECLARE v_nombre_marca VARCHAR(255);
+
+    DECLARE v_serial VARCHAR(100);
+
+    DECLARE v_subtotal DECIMAL(10,2);
+
+    DECLARE v_nombre_cliente VARCHAR(255);
+
+    DECLARE v_cedula VARCHAR(50);
+
+    DECLARE v_telefono VARCHAR(50);
+
+    DECLARE v_correo VARCHAR(255);
+
+    DECLARE v_pago_tipo VARCHAR(50);
+
+    DECLARE v_pago_monto DECIMAL(10,2);
+
+    DECLARE v_pago_referencia VARCHAR(2048);
+
+    DECLARE v_pago_id_cuenta INT;
+
+    DECLARE v_pago_comprobante VARCHAR(255);
+
+    DECLARE v_error_msg VARCHAR(500);
+
+    DECLARE v_productos_json JSON DEFAULT '[]';
+
+    DECLARE v_pagos_json JSON DEFAULT '[]';
+
+    DECLARE v_producto_item JSON;
+
+    DECLARE v_pago_item JSON;
+
+    DECLARE v_debug_log TEXT DEFAULT '';
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        GET DIAGNOSTICS CONDITION 1
+
+            @sqlstate = RETURNED_SQLSTATE,
+
+            @errno = MYSQL_ERRNO,
+
+            @text = MESSAGE_TEXT;
+
+
+
+        SET v_debug_log = CONCAT(v_debug_log, '[ERROR] Código: ', @errno, ', Mensaje: ', @text);
+
+        SET p_resultado = JSON_OBJECT(
+
+            'status', 'error',
+
+            'mensaje', CONCAT('Error interno: ', @text),
+
+            'debug', v_debug_log,
+
+            'codigo_error', @errno
+
+        );
+
+        ROLLBACK;
+
+    END;
+
+
+
+    IF p_id_usuario_auditor IS NULL OR p_id_usuario_auditor <= 0 THEN
+
+        SIGNAL SQLSTATE '45000'
+
+            SET MESSAGE_TEXT = 'El usuario auditor de la venta no es válido.';
+
+    END IF;
+
+
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Iniciando lógica dentro de transacción existente\n');
+
+
+
+    INSERT INTO `tbl_despachos` (`id_clientes`, `fecha_despacho`, `tipocompra`, `activo`)
+
+    VALUES (p_id_cliente, p_fecha, 'Presencial', 1);
+
+    SET v_id_despacho = LAST_INSERT_ID();
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Despacho creado ID: ', v_id_despacho, '\n');
+
+
+
+    SET v_total_productos = JSON_LENGTH(p_productos);
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Total productos: ', v_total_productos, '\n');
+
+
+
+    WHILE v_contador < v_total_productos DO
+
+        SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].id_producto')));
+
+        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].cantidad')));
+
+        SET v_cantidad = CAST(v_cantidad AS UNSIGNED);
+
+
+
+        SET v_debug_log = CONCAT(v_debug_log, '[INFO] Procesando producto ID: ', v_id_producto, ', Cantidad: ', v_cantidad, '\n');
+
+
+
+        INSERT INTO `tbl_despacho_detalle` (`id_despacho`, `id_producto`, `cantidad`)
+
+        VALUES (v_id_despacho, v_id_producto, v_cantidad);
+
+
+
+        SELECT p.nombre_producto, m.nombre_modelo, mar.nombre_marca, p.serial, p.precio
+
+        INTO v_nombre_producto, v_nombre_modelo, v_nombre_marca, v_serial, v_precio
+
+        FROM tbl_productos p
+
+        INNER JOIN tbl_modelos m ON p.id_modelo = m.id_modelo
+
+        INNER JOIN tbl_marcas mar ON m.id_marca = mar.id_marca
+
+        WHERE p.id_producto = v_id_producto
+
+        FOR UPDATE;
+
+
+
+        SET v_subtotal = v_precio * v_cantidad;
+
+        SET v_monto_total = v_monto_total + v_subtotal;
+
+        SET v_descripcion = CONCAT(v_descripcion, v_nombre_producto, ' (', v_cantidad, '), ');
+
+        SET v_producto_item = JSON_OBJECT(
+
+            'id_producto', v_id_producto,
+
+            'codigo', v_id_producto,
+
+            'nombre', v_nombre_producto,
+
+            'modelo', v_nombre_modelo,
+
+            'marca', v_nombre_marca,
+
+            'serial', v_serial,
+
+            'precio', v_precio,
+
+            'cantidad', v_cantidad,
+
+            'subtotal', v_subtotal
+
+        );
+
+        SET v_productos_json = JSON_ARRAY_APPEND(v_productos_json, '$', v_producto_item);
+
+        SET v_debug_log = CONCAT(v_debug_log, '[INFO] Producto: ', v_nombre_producto, ', Subtotal: ', v_subtotal, '\n');
+
+        SET v_contador = v_contador + 1;
+
+    END WHILE;
+
+
+
+    SET v_descripcion = TRIM(TRAILING ', ' FROM v_descripcion);
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Monto total: ', v_monto_total, '\n');
+
+
+
+    INSERT INTO `tbl_facturas` (`cliente`, `fecha`, `descuento`, `estatus`)
+
+    VALUES (p_id_cliente, p_fecha, 0, 'Pagada en Oficina');
+
+    SET v_id_factura = LAST_INSERT_ID();
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Factura creada ID: ', v_id_factura, '\n');
+
+
+
+    SET v_contador = 0;
+
+    WHILE v_contador < v_total_productos DO
+
+        SET v_id_producto = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].id_producto')));
+
+        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_contador, '].cantidad')));
+
+        SET v_cantidad = CAST(v_cantidad AS UNSIGNED);
+
+
+
+        INSERT INTO `tbl_factura_detalle` (`factura_id`, `id_producto`, `cantidad`)
+
+        VALUES (v_id_factura, v_id_producto, v_cantidad);
+
+        SET v_contador = v_contador + 1;
+
+    END WHILE;
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Detalles de factura insertados\n');
+
+
+
+    SELECT nombre, cedula, telefono, correo
+
+    INTO v_nombre_cliente, v_cedula, v_telefono, v_correo
+
+    FROM tbl_clientes
+
+    WHERE id_clientes = p_id_cliente;
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Cliente: ', v_nombre_cliente, '\n');
+
+
+
+    IF p_pagos IS NOT NULL AND JSON_LENGTH(p_pagos) > 0 THEN
+
+        SET v_contador = 0;
+
+        SET v_total_pagos = JSON_LENGTH(p_pagos);
+
+
+
+        WHILE v_contador < v_total_pagos DO
+
+            SET v_pago_tipo = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].tipo')));
+
+            SET v_pago_monto = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].monto')));
+
+            SET v_pago_referencia = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].referencia')));
+
+            SET v_pago_id_cuenta = JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].cuenta'));
+
+            SET v_pago_comprobante = JSON_UNQUOTE(JSON_EXTRACT(p_pagos, CONCAT('$[', v_contador, '].comprobante')));
+
+            SET v_pago_monto = CAST(v_pago_monto AS DECIMAL(10,2));
+
+
+
+            INSERT INTO `tbl_detalles_pago` (`id_factura`, `tipo`, `id_cuenta`, `referencia`, `monto`, `comprobante`, `fecha`)
+
+            VALUES (v_id_factura, v_pago_tipo, v_pago_id_cuenta, v_pago_referencia, v_pago_monto, v_pago_comprobante, NOW());
+
+
+
+            SET v_pago_item = JSON_OBJECT(
+
+                'tipo', v_pago_tipo,
+
+                'monto', v_pago_monto,
+
+                'referencia', v_pago_referencia,
+
+                'id_cuenta', v_pago_id_cuenta,
+
+                'comprobante', v_pago_comprobante,
+
+                'estatus', 'Pago Procesado'
+
+            );
+
+            SET v_pagos_json = JSON_ARRAY_APPEND(v_pagos_json, '$', v_pago_item);
+
+            SET v_debug_log = CONCAT(v_debug_log, '[INFO] Pago registrado: ', v_pago_tipo, ', Monto: ', v_pago_monto, '\n');
+
+            SET v_contador = v_contador + 1;
+
+        END WHILE;
+
+    END IF;
+
+
+
+    INSERT INTO `tbl_ingresos_egresos` (`id_despacho`, `tipo`, `monto`, `descripcion`, `fecha`, `estado`)
+
+    VALUES (v_id_despacho, 'ingreso', v_monto_total, CONCAT('Venta presencial #', v_id_factura, ' - ', v_descripcion), NOW(), 1);
+
+    SET v_debug_log = CONCAT(v_debug_log, '[INFO] Ingreso registrado en finanzas\n');
+
+
+
+    SET p_resultado = JSON_OBJECT(
+
+        'status', 'success',
+
+        'id_factura', v_id_factura,
+
+        'fecha_factura', p_fecha,
+
+        'id_despacho', v_id_despacho,
+
+        'nombre_cliente', v_nombre_cliente,
+
+        'cedula', v_cedula,
+
+        'telefono', v_telefono,
+
+        'correo', v_correo,
+
+        'monto_total', v_monto_total,
+
+        'descripcion', v_descripcion,
+
+        'debug', v_debug_log
+
+    );
+
+    SET p_resultado = JSON_SET(p_resultado, '$.productos', v_productos_json);
+
+    SET p_resultado = JSON_SET(p_resultado, '$.pagos', v_pagos_json);
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`,
+
+        `id_usuario`, `prioridad`, `descripcion`
+
+    ) VALUES (
+
+        NOW(),
+
+        'Venta Presencial',
+
+        'INCLUIR',
+
+        JSON_OBJECT(
+
+            'id_despacho', v_id_despacho,
+
+            'id_factura', v_id_factura,
+
+            'id_cliente', p_id_cliente,
+
+            'nombre_cliente', v_nombre_cliente,
+
+            'productos', JSON_EXTRACT(v_productos_json, '$'),
+
+            'pagos', JSON_EXTRACT(v_pagos_json, '$'),
+
+            'monto_total', v_monto_total,
+
+            'fecha', p_fecha,
+
+            'descripcion', v_descripcion
+
+        ),
+
+        NULL,
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT(
+
+            'Se registró una venta presencial #', v_id_factura,
+
+            ' para el cliente "', IFNULL(v_nombre_cliente, 'N/A'), '".'
+
+        )
+
+    );
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -3969,51 +6199,95 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_cuenta`(
-    IN p_nombre_banco VARCHAR(500),
-    IN p_numero_cuenta VARCHAR(25),
-    IN p_rif_cuenta VARCHAR(15),
-    IN p_telefono_cuenta VARCHAR(500),
-    IN p_correo_cuenta VARCHAR(500),
-    IN p_metodos SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $'),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_cuenta`(
+
+    IN p_nombre_banco VARCHAR(500),
+
+    IN p_numero_cuenta VARCHAR(25),
+
+    IN p_rif_cuenta VARCHAR(15),
+
+    IN p_telefono_cuenta VARCHAR(500),
+
+    IN p_correo_cuenta VARCHAR(500),
+
+    IN p_metodos SET('Pago Movil','Transferencia','Zelle','Efectivo','Efectivo $'),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nueva_id_cuenta INT;
-
-    -- Manejador general de excepciones transaccionales
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo registrar la cuenta bancaria.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Inserción física en la tabla (Inicia por defecto como 'habilitado')
-    INSERT INTO `tbl_cuentas` 
-    (`nombre_banco`, `numero_cuenta`, `rif_cuenta`, `telefono_cuenta`, `correo_cuenta`, `metodos`, `estado`)
-    VALUES 
-    (p_nombre_banco, p_numero_cuenta, p_rif_cuenta, p_telefono_cuenta, p_correo_cuenta, p_metodos, 'habilitado');
-
-    -- Captura síncrona del ID autogenerado
-    SET v_nueva_id_cuenta = LAST_INSERT_ID();
-
-    -- Registro atómico en la bitácora de seguridad
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
-    VALUES (
-        NOW(), 
-        'Cuentas bancarias', 
-        'INCLUIR', 
-        JSON_OBJECT('id_cuenta', v_nueva_id_cuenta, 'nombre_banco', p_nombre_banco, 'numero_cuenta', p_numero_cuenta, 'rif_cuenta', p_rif_cuenta, 'metodos', p_metodos, 'estado', 'habilitado'), 
-        NULL, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se registró una nueva cuenta bancaria: ', p_nombre_banco, ' (RIF: ', p_rif_cuenta, ')')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nueva_id_cuenta INT;
+
+
+
+    -- Manejador general de excepciones transaccionales
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo registrar la cuenta bancaria.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Inserción física en la tabla (Inicia por defecto como 'habilitado')
+
+    INSERT INTO `tbl_cuentas` 
+
+    (`nombre_banco`, `numero_cuenta`, `rif_cuenta`, `telefono_cuenta`, `correo_cuenta`, `metodos`, `estado`)
+
+    VALUES 
+
+    (p_nombre_banco, p_numero_cuenta, p_rif_cuenta, p_telefono_cuenta, p_correo_cuenta, p_metodos, 'habilitado');
+
+
+
+    -- Captura síncrona del ID autogenerado
+
+    SET v_nueva_id_cuenta = LAST_INSERT_ID();
+
+
+
+    -- Registro atómico en la bitácora de seguridad
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (`fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`)
+
+    VALUES (
+
+        NOW(), 
+
+        'Cuentas bancarias', 
+
+        'INCLUIR', 
+
+        JSON_OBJECT('id_cuenta', v_nueva_id_cuenta, 'nombre_banco', p_nombre_banco, 'numero_cuenta', p_numero_cuenta, 'rif_cuenta', p_rif_cuenta, 'metodos', p_metodos, 'estado', 'habilitado'), 
+
+        NULL, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se registró una nueva cuenta bancaria: ', p_nombre_banco, ' (RIF: ', p_rif_cuenta, ')')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4030,42 +6304,77 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_marca`(
-    IN p_nombre_marca VARCHAR(25),
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_marca`(
+
+    IN p_nombre_marca VARCHAR(25),
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_id_marca INT;
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al registrar la marca. Operación cancelada.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    INSERT INTO `tbl_marcas` (`nombre_marca`) 
-    VALUES (p_nombre_marca);
-
-    SET v_id_marca = LAST_INSERT_ID();
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Marcas',
-        'INCLUIR',
-        JSON_OBJECT('id_marca', v_id_marca, 'nombre_marca', TRIM(p_nombre_marca)),
-        NULL,
-        p_id_usuario_auditor,
-        'media',
-        CONCAT('El usuario incluyó una nueva marca en el sistema: "', TRIM(p_nombre_marca), '".')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_id_marca INT;
+
+    
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al registrar la marca. Operación cancelada.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    INSERT INTO `tbl_marcas` (`nombre_marca`) 
+
+    VALUES (p_nombre_marca);
+
+
+
+    SET v_id_marca = LAST_INSERT_ID();
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Marcas',
+
+        'INCLUIR',
+
+        JSON_OBJECT('id_marca', v_id_marca, 'nombre_marca', TRIM(p_nombre_marca)),
+
+        NULL,
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT('El usuario incluyó una nueva marca en el sistema: "', TRIM(p_nombre_marca), '".')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4082,46 +6391,85 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_modelo`(
-    IN p_nombre_modelo VARCHAR(25),
-    IN p_id_marca INT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_modelo`(
+
+    IN p_nombre_modelo VARCHAR(25),
+
+    IN p_id_marca INT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_id_modelo INT;
-
-    -- Manejador de excepciones para asegurar la atomicidad ante fallas del motor
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno en el servidor de datos al registrar el modelo.';
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Inserción directa (la validación de datos viene resuelta desde PHP)
-    INSERT INTO `tbl_modelos` (`nombre_modelo`, `id_marca`) 
-    VALUES (p_nombre_modelo, p_id_marca);
-
-    SET v_id_modelo = LAST_INSERT_ID();
-
-    -- Registro síncrono en la bitácora con mapeo estructurado JSON
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    )
-    VALUES (
-        NOW(),
-        'Modelos',
-        'INCLUIR',
-        JSON_OBJECT('id_modelo', v_id_modelo, 'nombre_modelo', p_nombre_modelo, 'id_marca', p_id_marca),
-        NULL,
-        p_id_usuario_auditor,
-        'media',
-        CONCAT('El usuario incluyó un nuevo modelo en el sistema: "', p_nombre_modelo, '".')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_id_modelo INT;
+
+
+
+    -- Manejador de excepciones para asegurar la atomicidad ante fallas del motor
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno en el servidor de datos al registrar el modelo.';
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Inserción directa (la validación de datos viene resuelta desde PHP)
+
+    INSERT INTO `tbl_modelos` (`nombre_modelo`, `id_marca`) 
+
+    VALUES (p_nombre_modelo, p_id_marca);
+
+
+
+    SET v_id_modelo = LAST_INSERT_ID();
+
+
+
+    -- Registro síncrono en la bitácora con mapeo estructurado JSON
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    )
+
+    VALUES (
+
+        NOW(),
+
+        'Modelos',
+
+        'INCLUIR',
+
+        JSON_OBJECT('id_modelo', v_id_modelo, 'nombre_modelo', p_nombre_modelo, 'id_marca', p_id_marca),
+
+        NULL,
+
+        p_id_usuario_auditor,
+
+        'media',
+
+        CONCAT('El usuario incluyó un nuevo modelo en el sistema: "', p_nombre_modelo, '".')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4138,99 +6486,191 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_producto`(
-    IN p_serial VARCHAR(20),
-    IN p_nombre_producto VARCHAR(20),
-    IN p_descripcion_producto VARCHAR(255),
-    IN p_id_modelo INT(11),
-    IN p_stock INT(3),
-    IN p_stock_minimo INT(3),
-    IN p_stock_maximo INT(3),
-    IN p_clausula_garantia VARCHAR(255),
-    IN p_precio FLOAT(10,2),
-    IN p_estado VARCHAR(20),
-    IN p_nombre_categoria VARCHAR(20),
-    IN p_id_usuario_auditor INT,
-    IN p_caracteristicas JSON,
-    IN p_imagen VARCHAR(255),
-    OUT p_id_producto INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_producto`(
+
+    IN p_serial VARCHAR(20),
+
+    IN p_nombre_producto VARCHAR(20),
+
+    IN p_descripcion_producto VARCHAR(255),
+
+    IN p_id_modelo INT(11),
+
+    IN p_stock INT(3),
+
+    IN p_stock_minimo INT(3),
+
+    IN p_stock_maximo INT(3),
+
+    IN p_clausula_garantia VARCHAR(255),
+
+    IN p_precio FLOAT(10,2),
+
+    IN p_estado VARCHAR(20),
+
+    IN p_nombre_categoria VARCHAR(20),
+
+    IN p_id_usuario_auditor INT,
+
+    IN p_caracteristicas JSON,
+
+    IN p_imagen VARCHAR(255),
+
+    OUT p_id_producto INT
+
 )
-BEGIN
-    DECLARE v_id_categoria INT;
-    DECLARE v_nombre_categoria_normalizado VARCHAR(50);
-    DECLARE v_nombre_tabla_caracteristicas VARCHAR(100);
-
-    -- Manejador de excepciones simplificado
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-    
-    SET v_nombre_categoria_normalizado = LOWER(TRIM(p_nombre_categoria));
-    
-    SET v_id_categoria = (SELECT id_categoria FROM tbl_categoria WHERE LOWER(TRIM(nombre_categoria)) = v_nombre_categoria_normalizado LIMIT 1);
-
-    IF v_id_categoria IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoría especificada no existe.';
-    END IF;
-
-    INSERT INTO tbl_productos 
-    (serial, nombre_producto, descripcion_producto, id_modelo, id_categoria, stock, stock_minimo, stock_maximo, clausula_garantia, precio, estado, imagen)
-    VALUES 
-    (p_serial, p_nombre_producto, p_descripcion_producto, p_id_modelo, v_id_categoria, p_stock, p_stock_minimo, p_stock_maximo, p_clausula_garantia, p_precio, p_estado, p_imagen);
-
-    SET p_id_producto = LAST_INSERT_ID();
-
-    SET v_nombre_tabla_caracteristicas = CONCAT('cat_', REPLACE(v_nombre_categoria_normalizado, ' ', '_'));
-    
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = DATABASE() 
-        AND table_name = v_nombre_tabla_caracteristicas
-    ) THEN
-        IF p_caracteristicas IS NOT NULL AND JSON_LENGTH(p_caracteristicas) > 0 THEN
-            SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' SET id_producto = ', p_id_producto);
-            
-            SET @keys = JSON_KEYS(p_caracteristicas);
-            SET @key_count = JSON_LENGTH(@keys);
-            SET @i = 0;
-            
-            WHILE @i < @key_count DO
-                SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
-                SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
-                
-                SET @sql = CONCAT(@sql, ', ', @key, ' = ', QUOTE(@value));
-                
-                SET @i = @i + 1;
-            END WHILE;
-            
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        ELSE
-            SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' (id_producto) VALUES (', p_id_producto, ')');
-            PREPARE stmt FROM @sql;
-            EXECUTE stmt;
-            DEALLOCATE PREPARE stmt;
-        END IF;
-    END IF;
-
-    INSERT INTO casalai_seguridad.tbl_bitacora (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
-    VALUES (
-        NOW(), 
-        'Productos', 
-        'INCLUIR', 
-        JSON_OBJECT('id_producto', p_id_producto, 'serial', p_serial, 'nombre_producto', p_nombre_producto, 'descripcion_producto', p_descripcion_producto, 'id_modelo', p_id_modelo, 'id_categoria', v_id_categoria, 'stock', p_stock, 'stock_minimo', p_stock_minimo, 'stock_maximo', p_stock_maximo, 'clausula_garantia', p_clausula_garantia, 'precio', p_precio, 'estado', p_estado, 'caracteristicas', p_caracteristicas, 'imagen', p_imagen), 
-        NULL, 
-        p_id_usuario_auditor,
-        'media', 
-        CONCAT('Se registró un nuevo producto: ', p_nombre_producto, ' (Serial: ', p_serial, ', Categoría: ', p_nombre_categoria, ')')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_id_categoria INT;
+
+    DECLARE v_nombre_categoria_normalizado VARCHAR(50);
+
+    DECLARE v_nombre_tabla_caracteristicas VARCHAR(100);
+
+
+
+    -- Manejador de excepciones simplificado
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        RESIGNAL;
+
+    END;
+
+
+
+    START TRANSACTION;
+
+    
+
+    SET v_nombre_categoria_normalizado = LOWER(TRIM(p_nombre_categoria));
+
+    
+
+    SET v_id_categoria = (SELECT id_categoria FROM tbl_categoria WHERE LOWER(TRIM(nombre_categoria)) = v_nombre_categoria_normalizado LIMIT 1);
+
+
+
+    IF v_id_categoria IS NULL THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La categoría especificada no existe.';
+
+    END IF;
+
+
+
+    INSERT INTO tbl_productos 
+
+    (serial, nombre_producto, descripcion_producto, id_modelo, id_categoria, stock, stock_minimo, stock_maximo, clausula_garantia, precio, estado, imagen)
+
+    VALUES 
+
+    (p_serial, p_nombre_producto, p_descripcion_producto, p_id_modelo, v_id_categoria, p_stock, p_stock_minimo, p_stock_maximo, p_clausula_garantia, p_precio, p_estado, p_imagen);
+
+
+
+    SET p_id_producto = LAST_INSERT_ID();
+
+
+
+    SET v_nombre_tabla_caracteristicas = CONCAT('cat_', REPLACE(v_nombre_categoria_normalizado, ' ', '_'));
+
+    
+
+    IF EXISTS (
+
+        SELECT 1 FROM information_schema.tables 
+
+        WHERE table_schema = DATABASE() 
+
+        AND table_name = v_nombre_tabla_caracteristicas
+
+    ) THEN
+
+        IF p_caracteristicas IS NOT NULL AND JSON_LENGTH(p_caracteristicas) > 0 THEN
+
+            SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' SET id_producto = ', p_id_producto);
+
+            
+
+            SET @keys = JSON_KEYS(p_caracteristicas);
+
+            SET @key_count = JSON_LENGTH(@keys);
+
+            SET @i = 0;
+
+            
+
+            WHILE @i < @key_count DO
+
+                SET @key = JSON_UNQUOTE(JSON_EXTRACT(@keys, CONCAT('$[', @i, ']')));
+
+                SET @value = JSON_UNQUOTE(JSON_EXTRACT(p_caracteristicas, CONCAT('$.', @key)));
+
+                
+
+                SET @sql = CONCAT(@sql, ', ', @key, ' = ', QUOTE(@value));
+
+                
+
+                SET @i = @i + 1;
+
+            END WHILE;
+
+            
+
+            PREPARE stmt FROM @sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        ELSE
+
+            SET @sql = CONCAT('INSERT INTO ', v_nombre_tabla_caracteristicas, ' (id_producto) VALUES (', p_id_producto, ')');
+
+            PREPARE stmt FROM @sql;
+
+            EXECUTE stmt;
+
+            DEALLOCATE PREPARE stmt;
+
+        END IF;
+
+    END IF;
+
+
+
+    INSERT INTO casalai_seguridad.tbl_bitacora (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
+
+    VALUES (
+
+        NOW(), 
+
+        'Productos', 
+
+        'INCLUIR', 
+
+        JSON_OBJECT('id_producto', p_id_producto, 'serial', p_serial, 'nombre_producto', p_nombre_producto, 'descripcion_producto', p_descripcion_producto, 'id_modelo', p_id_modelo, 'id_categoria', v_id_categoria, 'stock', p_stock, 'stock_minimo', p_stock_minimo, 'stock_maximo', p_stock_maximo, 'clausula_garantia', p_clausula_garantia, 'precio', p_precio, 'estado', p_estado, 'caracteristicas', p_caracteristicas, 'imagen', p_imagen), 
+
+        NULL, 
+
+        p_id_usuario_auditor,
+
+        'media', 
+
+        CONCAT('Se registró un nuevo producto: ', p_nombre_producto, ' (Serial: ', p_serial, ', Categoría: ', p_nombre_categoria, ')')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4247,63 +6687,119 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_proveedor`(
-    IN p_nombre_proveedor VARCHAR(2048),
-    IN p_rif_proveedor VARCHAR(15),
-    IN p_nombre_representante VARCHAR(2048),
-    IN p_rif_representante VARCHAR(15),
-    IN p_correo_proveedor VARCHAR(2048),
-    IN p_direccion_proveedor VARCHAR(2048),
-    IN p_telefono_1 VARCHAR(2048),
-    IN p_telefono_2 VARCHAR(2048),
-    IN p_observacion TEXT,
-    IN p_id_usuario_auditor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_proveedor`(
+
+    IN p_nombre_proveedor VARCHAR(2048),
+
+    IN p_rif_proveedor VARCHAR(15),
+
+    IN p_nombre_representante VARCHAR(2048),
+
+    IN p_rif_representante VARCHAR(15),
+
+    IN p_correo_proveedor VARCHAR(2048),
+
+    IN p_direccion_proveedor VARCHAR(2048),
+
+    IN p_telefono_1 VARCHAR(2048),
+
+    IN p_telefono_2 VARCHAR(2048),
+
+    IN p_observacion TEXT,
+
+    IN p_id_usuario_auditor INT
+
 )
-BEGIN
-    DECLARE v_nuevo_id INT;
-
-    -- Manejador de fallas generales con reversión completa
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
-    BEGIN 
-        ROLLBACK; 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo registrar el proveedor de forma segura.'; 
-    END;
-
-    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-    START TRANSACTION;
-
-    -- Inserción física en la tabla (Inicia habilitado por defecto)
-    INSERT INTO `tbl_proveedores` (
-        `nombre_proveedor`, `rif_proveedor`, `nombre_representante`, `rif_representante`, 
-        `correo_proveedor`, `direccion_proveedor`, `telefono_1`, `telefono_2`, `observacion`
-    ) VALUES (
-        p_nombre_proveedor, p_rif_proveedor, p_nombre_representante, p_rif_representante, 
-        p_correo_proveedor, p_direccion_proveedor, p_telefono_1, p_telefono_2, p_observacion
-    );
-
-    -- Captura atómica del ID asignado
-    SET v_nuevo_id = LAST_INSERT_ID();
-
-    -- Auditoría síncrona en la base de datos de seguridad
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
-        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
-    ) VALUES (
-        NOW(), 
-        'Proveedores', 
-        'INCLUIR', 
-        JSON_OBJECT(
-            'id_proveedor', v_nuevo_id, 'nombre_proveedor', p_nombre_proveedor, 'rif_proveedor', p_rif_proveedor,
-            'nombre_representante', p_nombre_representante, 'rif_representante', p_rif_representante,
-            'correo_proveedor', p_correo_proveedor, 'direccion_proveedor', p_direccion_proveedor,
-            'telefono_1', p_telefono_1, 'telefono_2', p_telefono_2, 'observacion', p_observacion
-        ), 
-        NULL, 
-        p_id_usuario_auditor, 
-        'media', 
-        CONCAT('Se registró un nuevo proveedor en el sistema: "', p_nombre_proveedor, '" (RIF: ', IFNULL(p_rif_proveedor, 'N/A'), ').')
-    );
-
-    COMMIT;
+BEGIN
+
+    DECLARE v_nuevo_id INT;
+
+
+
+    -- Manejador de fallas generales con reversión completa
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+
+    BEGIN 
+
+        ROLLBACK; 
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error interno: No se pudo registrar el proveedor de forma segura.'; 
+
+    END;
+
+
+
+    SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+    START TRANSACTION;
+
+
+
+    -- Inserción física en la tabla (Inicia habilitado por defecto)
+
+    INSERT INTO `tbl_proveedores` (
+
+        `nombre_proveedor`, `rif_proveedor`, `nombre_representante`, `rif_representante`, 
+
+        `correo_proveedor`, `direccion_proveedor`, `telefono_1`, `telefono_2`, `observacion`
+
+    ) VALUES (
+
+        p_nombre_proveedor, p_rif_proveedor, p_nombre_representante, p_rif_representante, 
+
+        p_correo_proveedor, p_direccion_proveedor, p_telefono_1, p_telefono_2, p_observacion
+
+    );
+
+
+
+    -- Captura atómica del ID asignado
+
+    SET v_nuevo_id = LAST_INSERT_ID();
+
+
+
+    -- Auditoría síncrona en la base de datos de seguridad
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora` (
+
+        `fecha_hora`, `nombre_modulo`, `accion`, `datos_nuevos`, `datos_viejos`, `id_usuario`, `prioridad`, `descripcion`
+
+    ) VALUES (
+
+        NOW(), 
+
+        'Proveedores', 
+
+        'INCLUIR', 
+
+        JSON_OBJECT(
+
+            'id_proveedor', v_nuevo_id, 'nombre_proveedor', p_nombre_proveedor, 'rif_proveedor', p_rif_proveedor,
+
+            'nombre_representante', p_nombre_representante, 'rif_representante', p_rif_representante,
+
+            'correo_proveedor', p_correo_proveedor, 'direccion_proveedor', p_direccion_proveedor,
+
+            'telefono_1', p_telefono_1, 'telefono_2', p_telefono_2, 'observacion', p_observacion
+
+        ), 
+
+        NULL, 
+
+        p_id_usuario_auditor, 
+
+        'media', 
+
+        CONCAT('Se registró un nuevo proveedor en el sistema: "', p_nombre_proveedor, '" (RIF: ', IFNULL(p_rif_proveedor, 'N/A'), ').')
+
+    );
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4320,131 +6816,247 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_recepcion`(
-    IN p_id_proveedor INT,
-    IN p_correlativo VARCHAR(255),
-    IN p_estado VARCHAR(20),
-    IN p_porcentaje_iva DECIMAL(7,2),
-    IN p_productos JSON,
-    IN p_id_usuario_auditor INT,
-    OUT p_id_recepcion INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_recepcion`(
+
+    IN p_id_proveedor INT,
+
+    IN p_correlativo VARCHAR(255),
+
+    IN p_estado VARCHAR(20),
+
+    IN p_porcentaje_iva DECIMAL(7,2),
+
+    IN p_productos JSON,
+
+    IN p_id_usuario_auditor INT,
+
+    OUT p_id_recepcion INT
+
 )
-BEGIN
-    DECLARE v_fecha DATE;
-    DECLARE v_indice INT DEFAULT 0;
-    DECLARE v_cantidad_items INT DEFAULT 0;
-    DECLARE v_id_producto INT;
-    DECLARE v_cantidad INT;
-    DECLARE v_costo DECIMAL(12,2);
-    DECLARE v_nombre_producto VARCHAR(255);
-    DECLARE v_producto_existe INT DEFAULT 0;
-    DECLARE v_subtotal DECIMAL(12,2) DEFAULT 0;
-    DECLARE v_monto_iva DECIMAL(12,2) DEFAULT 0;
-    DECLARE v_total_factura DECIMAL(12,2) DEFAULT 0;
-    DECLARE v_id_detalle INT;
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SET p_id_recepcion = NULL;
-        RESIGNAL;
-    END;
-
-    SET p_id_recepcion = NULL;
-    SET v_fecha = CURDATE();
-    SET v_cantidad_items = JSON_LENGTH(p_productos);
-
-    IF p_id_proveedor IS NULL OR NOT EXISTS (
-        SELECT 1 FROM tbl_proveedores WHERE id_proveedor = p_id_proveedor
-    ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El proveedor de la recepción no existe.';
-    END IF;
-    IF p_correlativo IS NULL OR TRIM(p_correlativo) = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de factura es obligatorio.';
-    END IF;
-    IF EXISTS (
-        SELECT 1 FROM tbl_recepcion_productos
-        WHERE correlativo = p_correlativo AND estado = 'habilitado'
-    ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ya existe una recepción activa con ese número de factura.';
-    END IF;
-    IF p_porcentaje_iva IS NULL OR p_porcentaje_iva < 0 OR p_porcentaje_iva > 100 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El porcentaje de IVA debe estar entre 0 y 100.';
-    END IF;
-    IF p_estado NOT IN ('habilitado', 'anulado') THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estado de la recepción no es válido.';
-    END IF;
-    IF p_productos IS NULL OR JSON_VALID(p_productos) = 0 OR v_cantidad_items = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción debe incluir al menos un producto.';
-    END IF;
-
-    START TRANSACTION;
-
-    WHILE v_indice < v_cantidad_items DO
-        SET v_id_producto = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].id_producto'))) AS UNSIGNED);
-        SET v_cantidad = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].cantidad'))) AS UNSIGNED);
-        SET v_costo = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].costo'))) AS DECIMAL(12,2));
-
-        SELECT COUNT(*), MAX(nombre_producto)
-        INTO v_producto_existe, v_nombre_producto
-        FROM tbl_productos
-        WHERE id_producto = v_id_producto;
-
-        IF v_producto_existe = 0 OR v_cantidad IS NULL OR v_cantidad < 1 OR v_costo IS NULL OR v_costo <= 0 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Uno de los productos, cantidades o costos de la recepción no es válido.';
-        END IF;
-
-        SET v_subtotal = v_subtotal + (v_cantidad * v_costo);
-        SET v_indice = v_indice + 1;
-    END WHILE;
-
-    SET v_subtotal = ROUND(v_subtotal, 2);
-    SET v_monto_iva = ROUND(v_subtotal * p_porcentaje_iva / 100, 2);
-    SET v_total_factura = ROUND(v_subtotal + v_monto_iva, 2);
-
-    INSERT INTO tbl_recepcion_productos
+BEGIN
+
+    DECLARE v_fecha DATE;
+
+    DECLARE v_indice INT DEFAULT 0;
+
+    DECLARE v_cantidad_items INT DEFAULT 0;
+
+    DECLARE v_id_producto INT;
+
+    DECLARE v_cantidad INT;
+
+    DECLARE v_costo DECIMAL(12,2);
+
+    DECLARE v_nombre_producto VARCHAR(255);
+
+    DECLARE v_producto_existe INT DEFAULT 0;
+
+    DECLARE v_subtotal DECIMAL(12,2) DEFAULT 0;
+
+    DECLARE v_monto_iva DECIMAL(12,2) DEFAULT 0;
+
+    DECLARE v_total_factura DECIMAL(12,2) DEFAULT 0;
+
+    DECLARE v_id_detalle INT;
+
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+
+    BEGIN
+
+        ROLLBACK;
+
+        SET p_id_recepcion = NULL;
+
+        RESIGNAL;
+
+    END;
+
+
+
+    SET p_id_recepcion = NULL;
+
+    SET v_fecha = CURDATE();
+
+    SET v_cantidad_items = JSON_LENGTH(p_productos);
+
+
+
+    IF p_id_proveedor IS NULL OR NOT EXISTS (
+
+        SELECT 1 FROM tbl_proveedores WHERE id_proveedor = p_id_proveedor
+
+    ) THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El proveedor de la recepción no existe.';
+
+    END IF;
+
+    IF p_correlativo IS NULL OR TRIM(p_correlativo) = '' THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El número de factura es obligatorio.';
+
+    END IF;
+
+    IF EXISTS (
+
+        SELECT 1 FROM tbl_recepcion_productos
+
+        WHERE correlativo = p_correlativo AND estado = 'habilitado'
+
+    ) THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ya existe una recepción activa con ese número de factura.';
+
+    END IF;
+
+    IF p_porcentaje_iva IS NULL OR p_porcentaje_iva < 0 OR p_porcentaje_iva > 100 THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El porcentaje de IVA debe estar entre 0 y 100.';
+
+    END IF;
+
+    IF p_estado NOT IN ('habilitado', 'anulado') THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El estado de la recepción no es válido.';
+
+    END IF;
+
+    IF p_productos IS NULL OR JSON_VALID(p_productos) = 0 OR v_cantidad_items = 0 THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La recepción debe incluir al menos un producto.';
+
+    END IF;
+
+
+
+    START TRANSACTION;
+
+
+
+    WHILE v_indice < v_cantidad_items DO
+
+        SET v_id_producto = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].id_producto'))) AS UNSIGNED);
+
+        SET v_cantidad = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].cantidad'))) AS UNSIGNED);
+
+        SET v_costo = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].costo'))) AS DECIMAL(12,2));
+
+
+
+        SELECT COUNT(*), MAX(nombre_producto)
+
+        INTO v_producto_existe, v_nombre_producto
+
+        FROM tbl_productos
+
+        WHERE id_producto = v_id_producto;
+
+
+
+        IF v_producto_existe = 0 OR v_cantidad IS NULL OR v_cantidad < 1 OR v_costo IS NULL OR v_costo <= 0 THEN
+
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Uno de los productos, cantidades o costos de la recepción no es válido.';
+
+        END IF;
+
+
+
+        SET v_subtotal = v_subtotal + (v_cantidad * v_costo);
+
+        SET v_indice = v_indice + 1;
+
+    END WHILE;
+
+
+
+    SET v_subtotal = ROUND(v_subtotal, 2);
+
+    SET v_monto_iva = ROUND(v_subtotal * p_porcentaje_iva / 100, 2);
+
+    SET v_total_factura = ROUND(v_subtotal + v_monto_iva, 2);
+
+
+
+    INSERT INTO tbl_recepcion_productos
+
         (id_proveedor, fecha, correlativo, estado, subtotal_factura, porcentaje_iva, monto_iva, total_factura, stock_aplicado)
-    VALUES
+    VALUES
+
         (p_id_proveedor, v_fecha, TRIM(p_correlativo), p_estado, v_subtotal, p_porcentaje_iva, v_monto_iva, v_total_factura, IF(p_estado = 'habilitado', 1, 0));
-    SET p_id_recepcion = LAST_INSERT_ID();
-
-    SET v_indice = 0;
-    WHILE v_indice < v_cantidad_items DO
-        SET v_id_producto = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].id_producto'))) AS UNSIGNED);
-        SET v_cantidad = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].cantidad'))) AS UNSIGNED);
-        SET v_costo = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].costo'))) AS DECIMAL(12,2));
-
-        INSERT INTO tbl_detalle_recepcion_productos (id_recepcion, id_producto, cantidad, costo)
-        VALUES (p_id_recepcion, v_id_producto, v_cantidad, v_costo);
-        SET v_id_detalle = LAST_INSERT_ID();
-
+    SET p_id_recepcion = LAST_INSERT_ID();
+
+
+
+    SET v_indice = 0;
+
+    WHILE v_indice < v_cantidad_items DO
+
+        SET v_id_producto = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].id_producto'))) AS UNSIGNED);
+
+        SET v_cantidad = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].cantidad'))) AS UNSIGNED);
+
+        SET v_costo = CAST(JSON_UNQUOTE(JSON_EXTRACT(p_productos, CONCAT('$[', v_indice, '].costo'))) AS DECIMAL(12,2));
+
+
+
+        INSERT INTO tbl_detalle_recepcion_productos (id_recepcion, id_producto, cantidad, costo)
+
+        VALUES (p_id_recepcion, v_id_producto, v_cantidad, v_costo);
+
+        SET v_id_detalle = LAST_INSERT_ID();
+
+
+
         IF p_estado = 'habilitado' THEN
             UPDATE tbl_productos
             SET stock = COALESCE(stock, 0) + v_cantidad
             WHERE id_producto = v_id_producto;
         END IF;
 
-        SELECT nombre_producto INTO v_nombre_producto
-        FROM tbl_productos
-        WHERE id_producto = v_id_producto;
-
-        INSERT INTO tbl_ingresos_egresos
-            (tipo, monto, descripcion, fecha, estado, id_detalle_recepcion_productos)
-        VALUES
-            ('egreso', v_costo * v_cantidad, CONCAT('Compra: ', v_nombre_producto, ' (x', v_cantidad, ')'), v_fecha, 1, v_id_detalle);
-
-        SET v_indice = v_indice + 1;
-    END WHILE;
-
-    INSERT INTO `casalai_seguridad`.`tbl_bitacora`
-        (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
-    VALUES
-        (NOW(), 'Recepcion', 'INCLUIR',
-         JSON_OBJECT('id_recepcion', p_id_recepcion, 'correlativo', p_correlativo, 'subtotal', v_subtotal,
-                     'porcentaje_iva', p_porcentaje_iva, 'monto_iva', v_monto_iva, 'total_factura', v_total_factura),
-         NULL, p_id_usuario_auditor, 'media', CONCAT('Se registró la recepción ', p_correlativo, '.'));
-
-    COMMIT;
+        SELECT nombre_producto INTO v_nombre_producto
+
+        FROM tbl_productos
+
+        WHERE id_producto = v_id_producto;
+
+
+
+        INSERT INTO tbl_ingresos_egresos
+
+            (tipo, monto, descripcion, fecha, estado, id_detalle_recepcion_productos)
+
+        VALUES
+
+            ('egreso', v_costo * v_cantidad, CONCAT('Compra: ', v_nombre_producto, ' (x', v_cantidad, ')'), v_fecha, 1, v_id_detalle);
+
+
+
+        SET v_indice = v_indice + 1;
+
+    END WHILE;
+
+
+
+    INSERT INTO `casalai_seguridad`.`tbl_bitacora`
+
+        (fecha_hora, nombre_modulo, accion, datos_nuevos, datos_viejos, id_usuario, prioridad, descripcion)
+
+    VALUES
+
+        (NOW(), 'Recepcion', 'INCLUIR',
+
+         JSON_OBJECT('id_recepcion', p_id_recepcion, 'correlativo', p_correlativo, 'subtotal', v_subtotal,
+
+                     'porcentaje_iva', p_porcentaje_iva, 'monto_iva', v_monto_iva, 'total_factura', v_total_factura),
+
+         NULL, p_id_usuario_auditor, 'media', CONCAT('Se registró la recepción ', p_correlativo, '.'));
+
+
+
+    COMMIT;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4461,21 +7073,35 @@ DELIMITER ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_productos_recepcion`(
-    IN p_fecha_inicio DATE,
-    IN p_fecha_fin DATE,
-    IN p_id_proveedor INT
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_productos_recepcion`(
+
+    IN p_fecha_inicio DATE,
+
+    IN p_fecha_fin DATE,
+
+    IN p_id_proveedor INT
+
 )
-BEGIN
-    SELECT pr.nombre_producto AS label, r.fecha, d.cantidad AS value, p.nombre_proveedor AS proveedor
-    FROM tbl_detalle_recepcion_productos d
-    INNER JOIN tbl_productos pr ON pr.id_producto = d.id_producto
-    INNER JOIN tbl_recepcion_productos r ON r.id_recepcion = d.id_recepcion
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    WHERE (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
-      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
-      AND (p_id_proveedor IS NULL OR p_id_proveedor = r.id_proveedor)
-    ORDER BY r.fecha DESC;
+BEGIN
+
+    SELECT pr.nombre_producto AS label, r.fecha, d.cantidad AS value, p.nombre_proveedor AS proveedor
+
+    FROM tbl_detalle_recepcion_productos d
+
+    INNER JOIN tbl_productos pr ON pr.id_producto = d.id_producto
+
+    INNER JOIN tbl_recepcion_productos r ON r.id_recepcion = d.id_recepcion
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    WHERE (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
+
+      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
+
+      AND (p_id_proveedor IS NULL OR p_id_proveedor = r.id_proveedor)
+
+    ORDER BY r.fecha DESC;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4493,12 +7119,18 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_recepciones_mensuales`(IN p_anio INT)
-BEGIN
-    SELECT MONTH(r.fecha) AS mes_num, YEAR(r.fecha) AS anio, COUNT(*) AS value
-    FROM tbl_recepcion_productos r
-    WHERE (p_anio IS NULL OR YEAR(r.fecha) = p_anio)
-    GROUP BY YEAR(r.fecha), MONTH(r.fecha)
-    ORDER BY anio, mes_num;
+BEGIN
+
+    SELECT MONTH(r.fecha) AS mes_num, YEAR(r.fecha) AS anio, COUNT(*) AS value
+
+    FROM tbl_recepcion_productos r
+
+    WHERE (p_anio IS NULL OR YEAR(r.fecha) = p_anio)
+
+    GROUP BY YEAR(r.fecha), MONTH(r.fecha)
+
+    ORDER BY anio, mes_num;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -4516,13 +7148,20 @@ DELIMITER ;
 /*!50003 SET collation_connection  = utf8mb4_unicode_ci */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_recepciones_proveedor`(IN p_fecha_inicio DATE, IN p_fecha_fin DATE)
-BEGIN
-    SELECT p.nombre_proveedor AS label, r.fecha, r.id_recepcion, 1 AS value
-    FROM tbl_recepcion_productos r
-    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
-    WHERE (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
-      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
-    ORDER BY r.fecha DESC;
+BEGIN
+
+    SELECT p.nombre_proveedor AS label, r.fecha, r.id_recepcion, 1 AS value
+
+    FROM tbl_recepcion_productos r
+
+    INNER JOIN tbl_proveedores p ON p.id_proveedor = r.id_proveedor
+
+    WHERE (p_fecha_inicio IS NULL OR r.fecha >= p_fecha_inicio)
+
+      AND (p_fecha_fin IS NULL OR r.fecha <= p_fecha_fin)
+
+    ORDER BY r.fecha DESC;
+
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;

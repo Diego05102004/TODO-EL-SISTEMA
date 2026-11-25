@@ -31,6 +31,7 @@ if ($id_usuario_header > 0) {
 
     $bd_casalai = null;
     $stmt_pago = null;
+    $encryptionHeader = new \Usuario\ProyectoCasalaiCa\Config\Encryption();
     foreach ($notificaciones as &$notificacion) {
         if ($notificacion['tipo'] !== 'pago' || empty($notificacion['id_referencia'])) {
             continue;
@@ -45,6 +46,13 @@ if ($id_usuario_header > 0) {
 
         $stmt_pago->execute([$notificacion['id_referencia']]);
         $notificacion['detalle_pago'] = $stmt_pago->fetch(PDO::FETCH_ASSOC);
+        if (is_array($notificacion['detalle_pago']) && !empty($notificacion['detalle_pago']['referencia'])) {
+            try {
+                $notificacion['detalle_pago']['referencia'] = $encryptionHeader->decrypt($notificacion['detalle_pago']['referencia']);
+            } catch (\Throwable $e) {
+                error_log('[HEADER] No se pudo descifrar una referencia de pago: ' . $e->getMessage());
+            }
+        }
     }
     unset($notificacion);
     if ($bd_casalai !== null) {

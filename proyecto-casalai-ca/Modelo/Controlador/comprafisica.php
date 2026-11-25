@@ -68,7 +68,7 @@ $facturaModel = new Factura();
 
 // Usar un nombre de módulo consistente sin acentos para evitar desajustes con la BD
 $permisos = new Permisos();
-$permisosUsuario = $permisos->getPermisosUsuarioModulo($id_rol, strtolower('compra fisica'));
+$permisosUsuario = $permisos->getPermisosUsuarioModulo($id_rol, 'Venta Presencial');
 
 if (is_file("Vista/" . $pagina . ".php")) {
     $accion = $_POST['accion'] ?? '';
@@ -264,7 +264,7 @@ if (is_file("Vista/" . $pagina . ".php")) {
 
             case 'permisos_tiempo_real':
                 header('Content-Type: application/json; charset=utf-8');
-                $permisosActualizados = $permisos->getPermisosUsuarioModulo($id_rol, 'compra fisica');
+                $permisosActualizados = $permisos->getPermisosUsuarioModulo($id_rol, 'Venta Presencial');
                 if (is_array($permisosActualizados) && !array_key_exists('incluir', $permisosActualizados) && array_key_exists('ingresar', $permisosActualizados)) {
                     $permisosActualizados['incluir'] = (bool) $permisosActualizados['ingresar'];
                 }
@@ -306,7 +306,7 @@ if (is_file("Vista/" . $pagina . ".php")) {
     $permisos = new Permisos();
     $permisosUsuarioEntrar = $permisos->getPermisosPorRolModulo();
     $listadocuentas = $cuentaModel->consultarCuentabanco();
-    $vistaNueva = "Vista/Vista/" . $pagina . ".php";
+    $vistaNueva = "Vista/VistaNew/" . $pagina . ".php";
     $vistaLegacy = "Vista/" . $pagina . ".php";
     require_once(is_file($vistaNueva) ? $vistaNueva : $vistaLegacy);
     if (!defined('SKIP_SIDE_EFFECTS') && isset($_SESSION['id_usuario'])) {

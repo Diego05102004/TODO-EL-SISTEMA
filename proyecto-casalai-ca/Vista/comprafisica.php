@@ -263,54 +263,28 @@ aria-labelledby="registrarCompraFisicaModalLabel" aria-hidden="true">
             <tr>
                 <th>FECHA</th>
                 <th>CLIENTE / CÉDULA</th>
-                <th>MONTO TOTAL</th>
+                <th>TOTAL (USD / EQUIVALENTE BS. A TASA ACTUAL)</th>
                 <th>ACCIÓN</th>
             </tr>
         </thead>
-<?php 
+<?php
 foreach ($compras as &$compra) {
-    // Convertir productos y pagos a arrays
     $compra['productos'] = !empty($compra['productos'])
         ? json_decode('[' . $compra['productos'] . ']', true)
         : [];
-
     $compra['pagos'] = !empty($compra['pagos'])
         ? json_decode('[' . $compra['pagos'] . ']', true)
         : [];
-
-    // 🔹 AGRUPAR PRODUCTOS REPETIDOS
-    $agrupadosProductos = [];
-    foreach ($compra['productos'] as $producto) {
-        $key = $producto['id_producto'] . '-' . $producto['precio'];
-        if (!isset($agrupadosProductos[$key])) {
-            $agrupadosProductos[$key] = $producto;
-        } 
-    }
-    $compra['productos'] = array_values($agrupadosProductos);
-
-    // 🔹 AGRUPAR PAGOS REPETIDOS
-    $agrupadosPagos = [];
-    foreach ($compra['pagos'] as $pago) {
-        // Usamos referencia + cuenta + monto como clave única
-        $keyPago = $pago['referencia'] . '-' . $pago['cuenta'] . '-' . $pago['monto'];
-        if (!isset($agrupadosPagos[$keyPago])) {
-            $agrupadosPagos[$keyPago] = $pago;
-        } 
-    }
-    $compra['pagos'] = array_values($agrupadosPagos);
 }
 unset($compra);
-
 ?>
 
 <tbody>
 <?php if (!empty($compras)): ?>
     <?php foreach ($compras as $compra): ?>
         <?php
-            $montoTotal = 0;
-            foreach ($compra['productos'] as $prod) {
-                $montoTotal += $prod['precio'] * $prod['cantidad'];
-            }
+            $montoTotalUsd = (float)($compra['total_usd'] ?? 0);
+            $montoTotalBsActual = $montoTotalUsd * (float)($data['monitors']['bcv']['price'] ?? 0);
         ?>
         <tr>
             <td>
@@ -328,7 +302,8 @@ unset($compra);
             </td>
             <td>
                 <span class="campo-numeros">
-                    <?= number_format($montoTotal, 2) ?>
+                    <strong>$ <?= number_format($montoTotalUsd, 2, '.', ',') ?></strong>
+                    <br><small>Bs. <?= number_format($montoTotalBsActual, 2, '.', ',') ?></small>
                 </span>
             </td>
             <td>
@@ -406,7 +381,7 @@ unset($compra);
                                 <th>Comprobante</th>
                                 <th>Tipo de Compra</th>
                                 <th>Referencia</th>
-                                <th>Monto</th>
+                                <th>Monto (Bs.)</th>
                                 <th>Estatus</th>
                             </tr>
                         </thead>

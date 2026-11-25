@@ -2232,6 +2232,7 @@ function eliminarFilaProducto(id_producto) {
         const analyticsProduct = document.getElementById('analyticsProduct');
         const analyticsCategory = document.getElementById('analyticsCategory');
         const analyticsStatus = document.getElementById('analyticsStatus');
+        const analyticsResults = document.getElementById('analyticsResults');
         const analyticsKpis = document.getElementById('analyticsKpis');
         const analyticsRecommendations = document.getElementById('analyticsRecommendations');
         const analyticsCanvas = document.getElementById('analyticsChart');
@@ -2243,6 +2244,7 @@ function eliminarFilaProducto(id_producto) {
         const cainFrozenProducts = document.getElementById('cainFrozenProducts');
         const cainMoodImages = cainAssistant ? JSON.parse(cainAssistant.dataset.images || '{}') : {};
         let analyticsChart = null;
+        let analyticsActivated = false;
         let globalFrozenProducts = null;
         let globalStrategicCombos = [];
 
@@ -3162,6 +3164,8 @@ function eliminarFilaProducto(id_producto) {
         }
 
         async function loadAnalytics() {
+            if (!analyticsActivated) return false;
+
             const productId = analyticsProduct.value;
             const categoryId = analyticsCategory.value;
 
@@ -3181,6 +3185,7 @@ function eliminarFilaProducto(id_producto) {
                     frecuencia: document.getElementById('analyticsFrequency').value,
                     horizonte: document.getElementById('analyticsHorizon').value,
                 });
+                analyticsResults.hidden = false;
                 const filteredAnalysis = Boolean(productId || categoryId);
                 const responseFrozenProducts = Array.isArray(result.productos_congelados)
                     ? result.productos_congelados
@@ -3299,10 +3304,10 @@ function eliminarFilaProducto(id_producto) {
             }
         }
 
-        document.getElementById('runAnalytics').addEventListener('click', loadAnalytics);
-
-        // Sin filtros, el microservicio analiza el inventario completo y genera combos estratégicos.
-        loadAnalytics();
+        document.getElementById('runAnalytics').addEventListener('click', function () {
+            analyticsActivated = true;
+            loadAnalytics();
+        });
 
         async function createSuggestedCombo(button) {
             const comboInfo = JSON.parse(button.dataset.comboInfo);

@@ -419,11 +419,34 @@ class Comprafisica extends BD{
         return $this->ejecutarConConexionSegura(function($pdo) use ($datos, $idUsuarioAuditor){
             try{
                 error_log("[COMPRFISICA-MODELO] Iniciando r_compraFisica con procedimiento almacenado");
-                error_log("[COMPRFISICA-MODELO] Datos recibidos: " . json_encode($datos));
-                
+                $datosLog = $datos;
+                if (isset($datosLog['pagos']) && is_array($datosLog['pagos'])) {
+                    foreach ($datosLog['pagos'] as &$pagoLog) {
+                        if (isset($pagoLog['referencia'])) {
+                            $pagoLog['referencia'] = '[cifrada]';
+                        }
+                    }
+                    unset($pagoLog);
+                }
+                error_log("[COMPRFISICA-MODELO] Datos recibidos: " . json_encode($datosLog));
+
                 // Preparar datos para el procedimiento almacenado
                 $productosJson = json_encode($datos['productos']);
-                $pagosJson = !empty($datos['pagos']) ? json_encode($datos['pagos']) : null;
+
+                // La referencia se cifra antes de persistirla en tbl_detalles_pago
+                $pagosJson = null;
+                if (!empty($datos['pagos']) && is_array($datos['pagos'])) {
+                    $pagosCifrados = $datos['pagos'];
+                    foreach ($pagosCifrados as &$pagoCifrado) {
+                        if (is_array($pagoCifrado) && array_key_exists('referencia', $pagoCifrado)) {
+                            $pagoCifrado['referencia'] = $this->encryption->encrypt(
+                                (string) ($pagoCifrado['referencia'] ?? '')
+                            );
+                        }
+                    }
+                    unset($pagoCifrado);
+                    $pagosJson = json_encode($pagosCifrados);
+                }
                 $fecha = date('Y-m-d');
                 
                 error_log("[COMPRFISICA-MODELO] Productos JSON: " . $productosJson);
@@ -501,7 +524,19 @@ class Comprafisica extends BD{
                 ");
                 $stmtPagos->execute([':id_factura' => $idFactura]);
                 $pagos = $stmtPagos->fetchAll(PDO::FETCH_ASSOC);
-                
+
+                // Descifrar referencias antes de devolverlas al frontend
+                foreach ($pagos as &$pago) {
+                    if (isset($pago['referencia']) && is_string($pago['referencia']) && $pago['referencia'] !== '') {
+                        try {
+                            $pago['referencia'] = $this->encryption->decrypt($pago['referencia']);
+                        } catch (\Throwable $e) {
+                            error_log('[COMPRFISICA] No se pudo descifrar una referencia: ' . $e->getMessage());
+                        }
+                    }
+                }
+                unset($pago);
+
                 // Construir respuesta en el formato esperado por el frontend
                 $respuesta = [
                     'id_factura' => $idFactura,
@@ -693,81 +728,156 @@ class Comprafisica extends BD{
     }
     private function g_Compras() {
         $resultado = $this->ejecutarConConexionSegura(function($pdo) {
-            $sql = "
-                SELECT 
+            $sql = "SELECT
                     f.id_factura,
                     f.fecha AS fecha_factura,
                     f.descuento,
+                    f.estatus,
                     c.id_clientes,
                     c.cedula,
                     c.nombre AS nombre_cliente,
                     c.direccion,
                     c.telefono,
                     c.correo,
-                    d.id_despachos,
-                    
-                    -- Productos agrupados como JSON
-                    GROUP_CONCAT(
-                        CONCAT(
-                            '{',
-                            '\"id_producto\":\"', p.id_producto, '\",',
-                            '\"codigo\":\"', p.id_producto, '\",',
-                            '\"nombre\":\"', p.nombre_producto, '\",',
-                            '\"descripcion\":\"', p.descripcion_producto, '\",',
-                            '\"modelo\":\"', m.nombre_modelo, '\",',
-                            '\"marca\":\"', mar.nombre_marca, '\",',
-                            '\"serial\":\"', p.serial, '\",',
-                            '\"precio\":\"', p.precio, '\",',
-                            '\"cantidad\":\"', fd.cantidad, '\"',
-                            '}'
-                        ) SEPARATOR ','
-                    ) AS productos,
-
-                    -- Pagos agrupados como JSON
-                    GROUP_CONCAT(
-                        CONCAT(
-                            '{',
-                            '\"id_detalles\":\"', dp.id_detalles, '\",',
-                            '\"cuenta\":\"', dp.id_cuenta, '\",',
-                            '\"referencia\":\"', dp.referencia, '\",',
-                            '\"fecha\":\"', dp.fecha, '\",',
-                            '\"tipo\":\"', dp.tipo, '\",',
-                            '\"monto\":\"', dp.monto, '\",',
-                            '\"comprobante\":\"', COALESCE(dp.comprobante, ''), '\",',
-                            '\"estatus\":\"', dp.estatus, '\",',
-                            '\"observaciones\":\"', COALESCE(dp.observaciones, ''), '\"',
-                            '}'
-                        ) SEPARATOR ','
-                    ) AS pagos
-
+                    COALESCE(
+                        (
+                            SELECT ie.monto
+                            FROM tbl_ingresos_egresos ie
+                            WHERE ie.tipo = 'ingreso'
+                                AND ie.estado = 1
+                                AND ie.descripcion LIKE CONCAT('Venta presencial #', f.id_factura, ' -%')
+                            ORDER BY ie.id_finanzas DESC
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT SUM(
+                                CASE
+                                    WHEN fd.precio_unitario IS NULL OR (fd.id_combo IS NULL AND fd.precio_unitario = 0)
+                                        THEN p.precio
+                                    ELSE fd.precio_unitario
+                                END * fd.cantidad
+                            )
+                            FROM tbl_factura_detalle fd
+                            INNER JOIN tbl_productos p ON p.id_producto = fd.id_producto
+                            WHERE fd.factura_id = f.id_factura
+                        ),
+                        0
+                    ) AS total_usd
                 FROM tbl_facturas f
                 INNER JOIN tbl_clientes c ON f.cliente = c.id_clientes
-                INNER JOIN tbl_despachos d ON d.id_clientes = c.id_clientes AND d.fecha_despacho = f.fecha
-                INNER JOIN tbl_despacho_detalle dd ON d.id_despachos = dd.id_despacho
-                INNER JOIN tbl_productos p ON dd.id_producto = p.id_producto
-                INNER JOIN tbl_modelos m ON p.id_modelo = m.id_modelo
-                INNER JOIN tbl_marcas mar ON m.id_marca = mar.id_marca
-                INNER JOIN tbl_factura_detalle fd ON f.id_factura = fd.factura_id AND p.id_producto = fd.id_producto
-                INNER JOIN tbl_detalles_pago dp ON f.id_factura = dp.id_factura
+                WHERE f.estatus = 'Pagada en Oficina'
+                ORDER BY f.fecha DESC, f.id_factura DESC";
 
-                GROUP BY f.id_factura
-                ORDER BY f.fecha DESC, f.id_factura DESC
-            ";
+            $stmt = $pdo->query($sql);
+            $compras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if ($compras === []) {
+                return [];
+            }
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $rows;
+            $idsFacturas = array_map(function($compra) {
+                return (int)$compra['id_factura'];
+            }, $compras);
+            $placeholders = implode(', ', array_fill(0, count($idsFacturas), '?'));
+
+            $stmtProductos = $pdo->prepare("SELECT
+                    fd.factura_id,
+                    p.id_producto,
+                    p.id_producto AS codigo,
+                    p.nombre_producto AS nombre,
+                    p.descripcion_producto AS descripcion,
+                    m.nombre_modelo AS modelo,
+                    mar.nombre_marca AS marca,
+                    p.serial,
+                    CASE
+                        WHEN fd.precio_unitario IS NULL OR (fd.id_combo IS NULL AND fd.precio_unitario = 0)
+                            THEN p.precio
+                        ELSE fd.precio_unitario
+                    END AS precio,
+                    fd.cantidad
+                FROM tbl_factura_detalle fd
+                INNER JOIN tbl_productos p ON p.id_producto = fd.id_producto
+                LEFT JOIN tbl_modelos m ON m.id_modelo = p.id_modelo
+                LEFT JOIN tbl_marcas mar ON mar.id_marca = m.id_marca
+                WHERE fd.factura_id IN ($placeholders)
+                ORDER BY fd.factura_id, p.nombre_producto");
+            $stmtProductos->execute($idsFacturas);
+
+            $productosPorFactura = [];
+            foreach ($stmtProductos->fetchAll(PDO::FETCH_ASSOC) as $producto) {
+                $idFactura = (int)$producto['factura_id'];
+                unset($producto['factura_id']);
+                $productosPorFactura[$idFactura][] = $producto;
+            }
+
+            $stmtPagos = $pdo->prepare("SELECT
+                    dp.id_factura,
+                    dp.id_detalles AS id_detalles,
+                    dp.id_cuenta AS cuenta,
+                    dp.referencia,
+                    dp.fecha,
+                    dp.tipo,
+                    dp.monto,
+                    COALESCE(dp.comprobante, '') AS comprobante,
+                    COALESCE(dp.estatus, '') AS estatus,
+                    COALESCE(dp.observaciones, '') AS observaciones
+                FROM tbl_detalles_pago dp
+                WHERE dp.id_factura IN ($placeholders)
+                ORDER BY dp.id_factura, dp.id_detalles");
+            $stmtPagos->execute($idsFacturas);
+
+            $pagosPorFactura = [];
+            foreach ($stmtPagos->fetchAll(PDO::FETCH_ASSOC) as $pago) {
+                $idFactura = (int)$pago['id_factura'];
+                unset($pago['id_factura']);
+                if (!empty($pago['referencia'])) {
+                    try {
+                        $pago['referencia'] = $this->encryption->decrypt($pago['referencia']);
+                    } catch (\Throwable $e) {
+                        error_log('[COMPRFISICA] No se pudo descifrar una referencia de pago: ' . $e->getMessage());
+                    }
+                }
+                $pagosPorFactura[$idFactura][] = $pago;
+            }
+
+            return [
+                'compras' => $this->encryption->decryptResults(
+                    $compras,
+                    array_merge(self::CAMPOS_CIFRADOS_CLIENTES, ['nombre_cliente'])
+                ),
+                'productos' => $productosPorFactura,
+                'pagos' => $pagosPorFactura
+            ];
         });
-        
-        // Descifrar datos personales de los clientes
-        if (is_array($resultado) && !empty($resultado)) {
-            // Incluir alias en la lista de campos a descifrar
-            $camposADescifrar = array_merge(self::CAMPOS_CIFRADOS_CLIENTES, ['nombre_cliente']);
-            $resultado = $this->encryption->decryptResults($resultado, $camposADescifrar);
+
+        if (empty($resultado)) {
+            return [];
         }
-        
-        return $resultado;
+
+        $serializarFragmentosJson = function(array $valores): string {
+            if ($valores === []) {
+                return '';
+            }
+            $json = json_encode(
+                $valores,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+            if ($json === false) {
+                throw new \RuntimeException('No se pudieron serializar los detalles de una compra presencial.');
+            }
+            return substr($json, 1, -1);
+        };
+
+        foreach ($resultado['compras'] as &$compra) {
+            $idFactura = (int)$compra['id_factura'];
+            $productos = $resultado['productos'][$idFactura] ?? [];
+            $pagos = $resultado['pagos'][$idFactura] ?? [];
+            $compra['total_usd'] = round((float)$compra['total_usd'], 2);
+            $compra['productos'] = $serializarFragmentosJson($productos);
+            $compra['pagos'] = $serializarFragmentosJson($pagos);
+        }
+        unset($compra);
+
+        return $resultado['compras'];
     }
 
     public function getdespacho() {
@@ -831,10 +941,22 @@ class Comprafisica extends BD{
             $stmtPagos->execute([$idDespacho]);
             $pagos = $stmtPagos->fetchAll(PDO::FETCH_ASSOC);
 
+            foreach ($pagos as &$pago) {
+                if (isset($pago['referencia']) && is_string($pago['referencia']) && $pago['referencia'] !== '') {
+                    try {
+                        $pago['referencia'] = $this->encryption->decrypt($pago['referencia']);
+                    } catch (\Throwable $e) {
+                        error_log('[COMPRFISICA] No se pudo descifrar una referencia: ' . $e->getMessage());
+                    }
+                }
+            }
+            unset($pago);
+
             $ret = [
                 'productos' => $productos,
                 'pagos' => $pagos
             ];
+            return $ret;
         });
     }
 

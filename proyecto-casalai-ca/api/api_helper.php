@@ -204,6 +204,7 @@ function apiDecryptResponseData($value, Encryption $encryption, string $fieldNam
         'nombre_banco',
         'nombre_cuenta',
         'nombre_cliente',
+        'referencia',
     ];
 
     if (is_array($value)) {
