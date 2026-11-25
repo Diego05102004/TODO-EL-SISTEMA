@@ -247,7 +247,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                         <div class="form-group">
                             <label for="apellido_usuario">Apellido(s)*</label>
                             <input type="text" class="input-textnum" id="apellido_usuario" name="apellido_usuario" placeholder="Ingrese su apellido" maxlength="50">
-                            <span class="span-value" id="sapellido"></span>
+                            <span class="span-value" id="sapellido_usuario"></span>
                         </div>
                     </div>
 

@@ -582,7 +582,8 @@
                 icon: 'success',
                 title: 'Estatus actualizado',
                 text: 'El estatus del usuario se actualizó correctamente.',
-                confirmButtonText: 'Entendido'
+                timer: 2000,
+                showConfirmButton: false
             });
         } catch (error) {
             await showError('No se pudo cambiar el estatus', error);
