@@ -24,8 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_usuario_accion = $_SESSION['id_usuario'] ?? null; // Usuario que realiza la acción
     error_log('DEBUG_USUARIO_POST: ' . json_encode([
         'accion' => $_POST['accion'] ?? null,
-        'id_usuario_sesion' => $_SESSION['id_usuario'] ?? null,
-        'payload' => $_POST
+        'id_usuario_sesion' => $_SESSION['id_usuario'] ?? null
     ]));
     
     if (isset($_POST['accion'])) {
@@ -114,6 +113,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 if ($usuario->ingresarUsuario($id_usuario_sesion)) {
                     $usuarioRegistrado = $usuario->obtenerUltimoUsuario();
+                    if (is_array($usuarioRegistrado)) {
+                        unset($usuarioRegistrado['password'], $usuarioRegistrado['clave']);
+                    }
                     
                     echo json_encode([
                         'status' => 'success',
@@ -176,6 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $usuarioData = $usuario->obtenerUsuarioPorId($id_usuario);
             
             if ($usuarioData !== null) {
+                unset($usuarioData['password'], $usuarioData['clave']);
                 echo json_encode($usuarioData);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Usuario no encontrado']);
@@ -255,6 +258,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $usuarioViejo = $usuario->obtenerUsuarioPorId($id_usuario);
                 if ($usuario->modificarUsuario($id_usuario, $id_usuario_sesion)) {
                     $usuarioActualizado = $usuario->obtenerUsuarioPorId($id_usuario);
+                    if (is_array($usuarioActualizado)) {
+                        unset($usuarioActualizado['password'], $usuarioActualizado['clave']);
+                    }
                     
                     echo json_encode([
                         'status' => 'success',

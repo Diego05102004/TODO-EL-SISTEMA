@@ -1,0 +1,121 @@
+.modal.modal-container {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0 12px;
+    box-sizing: border-box;
+    background-color: rgba(0, 0, 0, 0.5);
+    overscroll-behavior: contain;
+}
+
+.modal-narrow {
+    box-sizing: border-box;
+    max-width: 95%;
+    width: 750px;
+    height: 82vh;
+    max-height: 90vh;
+    margin: 9vh auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+    opacity: 1;
+}
+
+.modal-broad {
+    box-sizing: border-box;
+    max-width: 95%;
+    max-height: 90vh;
+    min-height: 0;
+    width: 1300px;
+    height: 82vh;
+    margin: 9vh auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+    opacity: 1;
+}
+
+.modal-body {
+    display: flex;
+    flex: 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.background-blue {
+    width: 100%;
+    height: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+.background-red {
+    width: 100%;
+    height: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+.modal-header-content {
+    display: flex;
+    gap: 150px;
+    z-index: 990;
+}
+
+.modal-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.modal-title-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.modal-title-content p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+@media (max-width: 576px) {
+    .modal-narrow,
+    .modal-broad {
+        width: 100%;
+        max-width: 100%;
+        height: 90vh;
+        max-height: 90vh;
+        margin: 5vh auto;
+    }
+}

@@ -205,7 +205,7 @@ body {
     gap: 30px;
 }
 
-/* ===== Summary Cards ===== */
+/* ===== Summary Cards ===== 
 .summary-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -351,7 +351,7 @@ body {
     from {
         stroke-dasharray: 0, 100;
     }
-}
+}*/
 
 /* ===== Dashboard Grid ===== */
 .dashboard-grid {

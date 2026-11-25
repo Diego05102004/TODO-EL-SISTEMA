@@ -70,15 +70,27 @@ ob_start();
                 <?php foreach ($recepciones as $recepcion): ?>
                     <tr>
                         <td data-order="<?php echo htmlspecialchars((string)($recepcion['fecha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                            <?php echo date('d/m/Y', strtotime($recepcion['fecha'] ?? 'now')); ?>
+                            <span class="campo-texto">
+                                <?php echo date('d/m/Y', strtotime($recepcion['fecha'] ?? 'now')); ?>
+                            </span>
                         </td>
-                        <td><?php echo htmlspecialchars($recepcion['correlativo'] ?? 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($recepcion['nombre_proveedor'] ?? 'N/A'); ?></td>
                         <td>
-                            $<?php echo number_format($recepcion['total_factura'] ?? $recepcion['costo_inversion'] ?? 0, 2, ',', '.'); ?>
-                            <?php if (($recepcion['total_factura'] ?? null) === null): ?>
-                                <small title="El IVA de esta recepción no fué registrada">IVA no registrado</small>
-                            <?php endif; ?>
+                            <span class="campo-texto">
+                                <?php echo htmlspecialchars($recepcion['correlativo'] ?? 'N/A'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="campo-texto">
+                                <?php echo htmlspecialchars($recepcion['nombre_proveedor'] ?? 'N/A'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="campo-texto">
+                                $<?php echo number_format($recepcion['total_factura'] ?? $recepcion['costo_inversion'] ?? 0, 2, ',', '.'); ?>
+                                <?php if (($recepcion['total_factura'] ?? null) === null): ?>
+                                    <small title="El IVA de esta recepción no fué registrada">IVA no registrado</small>
+                                <?php endif; ?>
+                            </span>
                         </td>
                         <td class="action-buttons">
                             <button class="btn-action btn-detallar" 
@@ -105,23 +117,23 @@ ob_start();
 </div>
 
 <!-- Modal para Registrar Recepción -->
-<div id="recepcionModal" class="modal">
-    <div class="modal-content modal-large">
-        <div class="modal-header">
+<div id="recepcionModal" class="modal modal-container">
+    <div class="modal-broad">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-inbox"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2 id="modalTitle">Nueva Recepción</h2>
-                    <p>Complete los datos para registrar una nueva recepción de productos</p>
+                    <h2 id="modalTitle">Incluir Recepción</h2>
+                    <p>Complete los datos para incluir una nueva recepción de productos</p>
                 </div>
                 <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para Incluir Recepción" data-contexto="registrar">
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
-            <span class="close-modal" onclick="closeRecepcionModal()">&times;</span>
         </div>
+        
         <div class="modal-body">
             <form id="recepcionForm" enctype="multipart/form-data">
                 <div class="form-row-content">
@@ -129,7 +141,7 @@ ob_start();
                         <!-- CAI -->
                         <div id="caiRecepcionSection" class="form-section scrollable-section cai-recepcion-section" hidden>
                             <div class="form-row">
-                                <div class="form-group">
+                                <div class="form-group-cai">
                                     <label for="fotoFacturaRecepcion">
                                         <i class="fas fa-robot"></i>
                                         Factura para análisis asistido por CAI
@@ -155,9 +167,7 @@ ob_start();
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="correlativo">
-                                    Número de Factura*
-                                </label>
+                                <label for="correlativo">Número de Factura*</label>
                                 <input type="text" placeholder="Ej: 012345" class="input-textnum" id="correlativo" name="correlativo" minlength="6" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off">
                                 <span class="span-value" id="scorrelativo"></span>
                             </div>
@@ -236,19 +246,19 @@ ob_start();
                                 </div>
 
                                 <div class="data-producto producto-importes">
-                                    <div class="form-group">
+                                    <div class="form-data">
                                         <label>Costo Unitario*</label>
                                         <input type="text" name="costo[]" placeholder="0.00" class="input-with-icon input-textnum costo-input" maxlength="12" oninput="limitarDigitos(this, 9, true); limitarDosDecimales(this); calcularSubtotal(this);">
                                         <span class="span-value scosto-msg"></span>
                                     </div>
 
-                                    <div class="form-group">
+                                    <div class="form-data">
                                         <label>Cantidad*</label>
                                         <input type="text" name="cantidad[]" placeholder="0" class="input-with-icon input-textnum cantidad-input" maxlength="9" oninput="limitarDigitos(this, 9); calcularSubtotal(this)">
                                         <span class="span-value scantidad-msg"></span>
                                     </div>
 
-                                    <div class="form-group subtotal-group">
+                                    <div class="form-data subtotal-group">
                                         <label>Subtotal</label>
                                         <input type="text" class="subtotal-display" readonly value="$0.00">
                                     </div>
@@ -283,15 +293,14 @@ ob_start();
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
+                            <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
                                 <i class="fas fa-times"></i> Cancelar
                             </button>
-                            <button type="button" class="btm-confirmar btn-save" onclick="saveRecepcion()">
+                            <button type="button" class="btn-confirmar btn-save" onclick="saveRecepcion()">
                                 <i class="fas fa-check"></i> Registrar
                             </button>
                         </div>
                     </div>
-
                 </div>
             </form>
         </div>
@@ -299,22 +308,23 @@ ob_start();
 </div>
 
 <!-- Modal para Ver Detalles de Recepción -->
-<div id="viewModal" class="modal">
-    <div class="modal-content modal-large">
-        <div class="modal-header">
+<div id="viewModal" class="modal modal-container">
+    <div class="modal-broad">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-eye"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Detalles de Recepción</h2>
+                    <h2>Detallar Recepción</h2>
                     <p>Información completa de la recepción seleccionada</p>
                 </div>
+                <span class="close-modal" onclick="closeViewModal()">&times;</span>
             </div>
-            <span class="close-modal" onclick="closeViewModal()">&times;</span>
         </div>
-        <div class="modal-body-detallar">
-            <div class="recepcion-detallar">
+        
+        <div class="modal-body">
+            <div class="detallado-column">
                 <!-- Información General -->
                 <div class="detalle-section">
                     <div class="section-title">
@@ -322,16 +332,16 @@ ob_start();
                         <h3>Información General</h3>
                     </div>
                     <div class="detalle-grid">
-                        <div class="detalle-item">
-                            <label>Número de Factura:</label>
+                        <div class="detalle-item detalle-row">
+                            <strong class="title-data">Número de Factura:</strong>
                             <span id="viewCorrelativo"></span>
                         </div>
-                        <div class="detalle-item">
-                            <label>Proveedor:</label>
+                        <div class="detalle-item detalle-row">
+                            <strong class="title-data">Proveedor:</strong>
                             <span id="viewProveedor"></span>
                         </div>
-                        <div class="detalle-item">
-                            <label>Fecha:</label>
+                        <div class="detalle-item detalle-row">
+                            <strong class="title-data">Fecha:</strong>
                             <span id="viewFecha"></span>
                         </div>
                     </div>
@@ -376,6 +386,12 @@ ob_start();
                             </tfoot>
                         </table>
                     </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -383,11 +399,11 @@ ob_start();
 </div>
 
 <!-- Modal para Anular Recepción -->
-<div id="anularModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header warning">
+<div id="anularModal" class="modal modal-container">
+    <div class="modal-narrow">
+        <div class="background-red">
             <div class="modal-header-content">
-                <div class="modal-icon warning">
+                <div class="modal-icon background-red">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="modal-title-content">
@@ -397,25 +413,26 @@ ob_start();
             </div>
             <span class="close-modal" onclick="closeAnularModal()">&times;</span>
         </div>
-        <div class="modal-body-warning">
-            <div class="anular-content">
-                <div class="anular-icon">
+        <div class="modal-body">
+            <div class="content-eliminacion">
+                <div class="quest-icon">
                     <i class="fas fa-exclamation-circle"></i>
                 </div>
                 <h3>¿Está seguro de anular esta recepción?</h3>
                 <p>Esta acción no se puede deshacer y afectará el inventario del sistema.</p>
                 
-                <div class="anular-info">
+                <div class="info-eliminacion">
                     <div class="info-row">
                         <label>Número de Factura:</label>
                         <span id="anularCorrelativo"></span>
                     </div>
                 </div>
+
                 <div class="modal-footer-content">
-                    <button class="btm-confirmar btn-cancel" onclick="closeAnularModal()">
+                    <button class="btn-confirmar btn-cancel" onclick="closeAnularModal()">
                         Cancelar
                     </button>
-                    <button class="btm-confirmar btn-danger" onclick="confirmarAnulacion()">
+                    <button class="btn-confirmar btn-danger" onclick="confirmarAnulacion()">
                         Confirmar
                     </button>
                 </div>

@@ -1,55 +1,22 @@
-/* Modal Header */
-.modal-header-content {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.modal-icon.warning {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-}
-
-.modal-icon i {
-    font-size: 1.5rem;
-    color: white;
-}
-
-.modal-title-content h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: white;
-    margin: 0 0 5px 0;
-}
-
-.modal-title-content p {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0;
-}
-
-.modal-header.warning {
-    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-}
-
-/* Modal Body */
-.modal-body-warning {
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-.anular-content {
+.content-eliminacion {
     text-align: center;
-    padding: 20px;
+    height: 100%;
 }
 
-.anular-icon {
+.content-eliminacion h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.content-eliminacion p {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 10px;
+}
+
+.quest-icon {
     width: 80px;
     height: 80px;
     margin: 0 auto 20px;
@@ -60,25 +27,12 @@
     justify-content: center;
 }
 
-.anular-icon i {
+.quest-icon i {
     font-size: 2.5rem;
     color: white;
 }
 
-.anular-content h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #2d3748;
-    margin-bottom: 10px;
-}
-
-.anular-content p {
-    font-size: 0.95rem;
-    color: #718096;
-    margin-bottom: 10px;
-}
-
-.anular-info {
+.info-eliminacion {
     background: rgba(245, 101, 101, 0.05);
     border: 1px solid rgba(245, 101, 101, 0.2);
     border-radius: 10px;
@@ -117,13 +71,13 @@
     border-top: 1px solid rgba(245, 101, 101, 0.1);
 }
 
-.btm-confirmar {
+.btn-confirmar {
     color: white;
     padding: 12px 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     display: flex;
     align-items: center;

@@ -1247,7 +1247,7 @@ function openModal(type) {
     const form = document.getElementById('recepcionForm');
     
     if (type === 'registrar') {
-        if (modalTitle) modalTitle.textContent = 'Nueva Recepción';
+        if (modalTitle) modalTitle.textContent = 'Incluir Recepción';
         if (form) form.reset();
         limpiarFacturaIARecepcion();
         actualizarCAIRecepcion('amigable');
@@ -1969,13 +1969,6 @@ function viewRecepcion(boton) {
         const modal = document.getElementById('viewModal');
         if (modal) { modal.style.display = 'block'; modal.style.animation = 'fadeIn 0.3s ease'; }
     });
-}
-
-function closeRecepcionModal() {
-    const modal = document.getElementById('recepcionModal');
-    if (!modal) return;
-    modal.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(() => { modal.style.display = 'none'; }, 300);
 }
 
 function closeViewModal() {
