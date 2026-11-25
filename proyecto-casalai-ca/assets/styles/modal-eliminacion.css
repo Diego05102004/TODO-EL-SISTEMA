@@ -1,6 +1,9 @@
 .content-eliminacion {
     text-align: center;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .content-eliminacion h3 {
@@ -58,7 +61,7 @@
 }
 
 .info-row span {
-    font-weight: 700;
+    font-weight: 600;
     color: #2d3748;
 }
 

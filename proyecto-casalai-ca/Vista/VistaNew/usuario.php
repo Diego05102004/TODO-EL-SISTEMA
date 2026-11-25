@@ -216,7 +216,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <h2 id="modalTitle">Incluir Usuarios</h2>
                     <p>Complete los datos para incluir un nuevo usuario</p>
                 </div>
-                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para Incluir Usuarios" data-contexto="registrar">
+                <button type="button" class="btn-help blue" title="Ayuda para Incluir Usuarios" data-contexto="registrar">
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
@@ -399,7 +399,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <h2>Eliminar Usuario</h2>
                     <p>Confirmación de eliminación permanente</p>
                 </div>
-                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para eliminar usuarios" data-contexto="eliminar">
+                <button type="button" class="btn-help red" title="Ayuda para eliminar usuarios" data-contexto="eliminar">
                     <img src="assets/img/info-ayuda.svg" alt="Ayuda">
                 </button>
             </div>
@@ -444,7 +444,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <h2>Cambiar Estatus</h2>
                     <p>Confirmación de cambio de estatus</p>
                 </div>
-                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para cambiar el estatus" data-contexto="estatus">
+                <button type="button" class="btn-help blue" title="Ayuda para cambiar el estatus" data-contexto="estatus">
                     <img src="assets/img/info-ayuda.svg" alt="Ayuda">
                 </button>
             </div>

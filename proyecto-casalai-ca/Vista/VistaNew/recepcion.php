@@ -128,7 +128,7 @@ ob_start();
                     <h2 id="modalTitle">Incluir Recepción</h2>
                     <p>Complete los datos para incluir una nueva recepción de productos</p>
                 </div>
-                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para Incluir Recepción" data-contexto="registrar">
+                <button type="button" class="btn-help blue" title="Ayuda para Incluir Recepción" data-contexto="registrar">
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
@@ -410,8 +410,10 @@ ob_start();
                     <h2>Anular Recepción</h2>
                     <p>Confirmación de anulación de recepción</p>
                 </div>
+                <button type="button" class="btn-help red" title="Ayuda para anular recepciones" data-contexto="anular">
+                    <img src="assets/img/info-ayuda.svg" alt="Ayuda">
+                </button>
             </div>
-            <span class="close-modal" onclick="closeAnularModal()">&times;</span>
         </div>
         <div class="modal-body">
             <div class="content-eliminacion">
