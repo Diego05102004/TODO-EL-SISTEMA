@@ -770,10 +770,10 @@
     }
 
     function closeViewModal() {
-      const modal = document.getElementById('userDetailsModal');
-      if (!modal) return;
-      modal.style.animation = 'fadeOut 0.3s ease';
-      setTimeout(() => { modal.style.display = 'none'; }, 300);
+        const modal = document.getElementById('userDetailsModal');
+        if (!modal) return;
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
 
     function initialize() {
