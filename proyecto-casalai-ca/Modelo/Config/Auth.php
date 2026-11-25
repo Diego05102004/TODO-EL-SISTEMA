@@ -33,7 +33,14 @@ class Auth {
         $envFile = __DIR__ . '/../../.env';
         if (file_exists($envFile)) {
             $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            $skippingRsaKey = false;
             foreach ($lines as $line) {
+                if ($skippingRsaKey) {
+                    if (strpos($line, '-----END ') !== false) {
+                        $skippingRsaKey = false;
+                    }
+                    continue;
+                }
                 if (strpos(trim($line), '#') === 0) {
                     continue;
                 }
@@ -43,6 +50,15 @@ class Auth {
                 list($name, $value) = explode('=', $line, 2);
                 $name = trim($name);
                 $value = trim($value);
+                // Las claves RSA son PEM multilínea: las carga EnvLoader o
+                // Encryption directamente desde el archivo. Guardarlas aquí
+                // truncaría el valor y rompería el descifrado de forma intermitente.
+                if (in_array($name, ['RSA_PUBLIC_KEY', 'RSA_PRIVATE_KEY', 'RSA_LEGACY_PRIVATE_KEY'], true)) {
+                    if (strpos($value, '"') === 0 && strpos($value, '-----END ') === false) {
+                        $skippingRsaKey = true;
+                    }
+                    continue;
+                }
                 if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
                     putenv("$name=$value");
                     $_ENV[$name] = $value;

@@ -40,7 +40,7 @@ BEGIN
     DECLARE v_correo VARCHAR(255);
     DECLARE v_pago_tipo VARCHAR(50);
     DECLARE v_pago_monto DECIMAL(10,2);
-    DECLARE v_pago_referencia VARCHAR(100);
+    DECLARE v_pago_referencia VARCHAR(2048);
     DECLARE v_pago_id_cuenta INT;
     DECLARE v_pago_comprobante VARCHAR(255);
     DECLARE v_error_msg VARCHAR(500);

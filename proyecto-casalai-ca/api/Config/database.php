@@ -1,19 +1,23 @@
 <?php
+// TEMPORAL - pruebas locales con XAMPP. Restaurar credenciales de AlwaysData
+// (mysql-casalai.alwaysdata.net / casalai / ****) antes de desplegar.
+// Copia de producción disponible en api_hosting/Config/database.php
+
 // Base de Datos Principal "casalai"
 define('DB_PRINCIPAL', [
-    'host' => 'mysql-casalai.alwaysdata.net',
+    'host' => 'localhost',
     'dbname' => 'casalai_principal',
-    'user' => 'casalai',
-    'pass' => 'Diego.10',
+    'user' => 'root',
+    'pass' => '',
     'charset' => 'utf8'
 ]);
 
 // Base de Datos Secundaria "seguridadlai"
 define('DB_SEGURIDAD', [
-    'host' => 'mysql-casalai.alwaysdata.net',
+    'host' => 'localhost',
     'dbname' => 'casalai_seguridad',
-    'user' => 'casalai',
-    'pass' => 'Diego.10',
+    'user' => 'root',
+    'pass' => '',
     'charset' => 'utf8'
 ]);
 

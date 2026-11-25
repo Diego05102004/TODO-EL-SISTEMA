@@ -69,12 +69,20 @@ $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
 $stmt->execute();
 $notificaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$encryptionNav = new \Usuario\ProyectoCasalaiCa\Config\Encryption();
 foreach ($notificaciones as &$notif) {
     if ($notif['tipo'] == 'pago' && $notif['id_referencia']) {
         $query_pago = "SELECT * FROM tbl_detalles_pago WHERE id_detalles = ?";
         $stmt_pago = $pdo_casalai->prepare($query_pago);
         $stmt_pago->execute([$notif['id_referencia']]);
         $notif['detalle_pago'] = $stmt_pago->fetch(PDO::FETCH_ASSOC);
+        if (is_array($notif['detalle_pago']) && !empty($notif['detalle_pago']['referencia'])) {
+            try {
+                $notif['detalle_pago']['referencia'] = $encryptionNav->decrypt($notif['detalle_pago']['referencia']);
+            } catch (\Throwable $e) {
+                error_log('[NAVBAR] No se pudo descifrar una referencia de pago: ' . $e->getMessage());
+            }
+        }
     }
 }
 unset($notif);

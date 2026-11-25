@@ -1034,12 +1034,15 @@ $(document).ready(function () {
     });
 
     function agregarFilaVenta(compra) {
-        let montoTotal = 0;
-        if (compra.productos && Array.isArray(compra.productos)) {
+        let montoTotal = Number(compra.total) || 0;
+        if (!montoTotal && compra.productos && Array.isArray(compra.productos)) {
+            montoTotal = 0;
             compra.productos.forEach(p => {
                 montoTotal += (Number(p.precio) || 0) * (Number(p.cantidad) || 0);
             });
         }
+        const tasaDolar = parseFloat($('#tasa').val()) || 0;
+        const montoTotalBsActual = montoTotal * tasaDolar;
 
         const escaparHtml = valor => String(valor ?? '').replace(/[&<>"']/g, caracter => ({
             '&': '&amp;',
@@ -1055,7 +1058,8 @@ $(document).ready(function () {
             `<span class="campo-numeros">${escaparHtml(fechaMostrada)}</span>`,
             `<span class="campo-nombres">${escaparHtml(compra.nombre_cliente)}</span>
             <span class="campo-numeros">(${escaparHtml(compra.cedula)})</span>`,
-            `<span class="campo-numeros">${formatearNumero(montoTotal)}</span>`,
+            `<strong>$ ${formatearNumero(montoTotal)}</strong>
+            <br><small>Bs. ${formatearNumero(montoTotalBsActual)}</small>`,
             `<ul>
                 <button class="btn-detalle ver-detalles"
                     title="Detallar"
@@ -2080,7 +2084,8 @@ function configurarValidacionNumerosPositivos() {
 }
 
 function actualizarConversionDolar(montoDolar, idx) {
-    const tasa = parseFloat(document.getElementById('tasa').textContent) || 0;
+    const tasaElement = document.getElementById('tasa');
+    const tasa = parseFloat(tasaElement ? (tasaElement.value || tasaElement.textContent) : 0) || 0;
     const montoBs = (montoDolar * tasa);
     
     // Mostrar conversión formateada
@@ -2093,7 +2098,8 @@ function actualizarConversionDolar(montoDolar, idx) {
 $(document).on('input', '.monto-input-dolar', function () {
     const idx = $(this).attr('id').split('_')[1];
     const montoDolar = parsearNumeroFormateado($(this).val());
-    const tasa = parseFloat(document.getElementById('tasa').textContent) || 0;
+    const tasaElement = document.getElementById('tasa');
+    const tasa = parseFloat(tasaElement ? (tasaElement.value || tasaElement.textContent) : 0) || 0;
     const montoBs = (montoDolar * tasa).toFixed(2);
 
     // Mostrar conversión formateada
