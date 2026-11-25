@@ -63,6 +63,7 @@
 .info-row span {
     font-weight: 600;
     color: #2d3748;
+    pointer-events: none;
 }
 
 /* Botones de confirmación */

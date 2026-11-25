@@ -101,7 +101,7 @@ ob_start();
                                 onclick="viewRecepcion(this)">
                                 <img src="assets/img/eye.svg">
                             </button>
-                            <?php if (isset($_SESSION['nombre_rol']) && $_SESSION['nombre_rol'] === 'Administrador'): ?>
+                            <?php if (isset($_SESSION['nombre_rol']) && $_SESSION['nombre_rol'] === 'SuperUsuario'): ?>
                                 <button class="btn-action btn-anular" 
                                     title="Anular Recepción"
                                     onclick="anularRecepcion('<?php echo htmlspecialchars($recepcion['correlativo'] ?? ''); ?>')">

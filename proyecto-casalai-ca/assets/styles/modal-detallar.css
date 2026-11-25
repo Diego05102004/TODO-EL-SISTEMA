@@ -31,12 +31,14 @@
     font-weight: 600;
     color: #2196F3;
     margin: 0;
+    pointer-events: none;
 }
 
 .detalle-item span {
     font-size: 0.9rem;
     font-weight: 400;
     color: #2d3748;
+    pointer-events: none;
 }
 
 .detalle-section {
