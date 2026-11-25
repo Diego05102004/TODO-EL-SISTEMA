@@ -157,27 +157,6 @@
     font-weight: 600;
 }
 
-.section-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid rgba(33, 150, 243, 0.1);
-}
-
-.section-title i {
-    font-size: 1.3rem;
-    color: #2196F3;
-}
-
-.section-title h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2d3748;
-    margin: 0;
-}
-
 /* Modal de Detalles */
 .detalle-table {
     overflow-x: auto;
@@ -197,7 +176,7 @@
     padding: 12px;
     text-align: center;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
 }
 
 .detalle-table td {
@@ -210,7 +189,7 @@
 }
 
 .detalle-table tfoot td {
-    font-weight: 700;
+    font-weight: 600;
     color: #2196F3;
 }
 

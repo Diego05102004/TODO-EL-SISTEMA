@@ -334,15 +334,15 @@ ob_start();
                     </div>
                     <div class="detalle-grid">
                         <div class="detalle-item detalle-row">
-                            <label>Número de Factura:</label>
+                            <strong class="title-data">Número de Factura:</strong>
                             <span id="viewCorrelativo"></span>
                         </div>
                         <div class="detalle-item detalle-row">
-                            <label>Proveedor:</label>
+                            <strong class="title-data">Proveedor:</strong>
                             <span id="viewProveedor"></span>
                         </div>
                         <div class="detalle-item detalle-row">
-                            <label>Fecha:</label>
+                            <strong class="title-data">Fecha:</strong>
                             <span id="viewFecha"></span>
                         </div>
                     </div>
