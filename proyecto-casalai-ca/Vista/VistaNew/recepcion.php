@@ -70,15 +70,27 @@ ob_start();
                 <?php foreach ($recepciones as $recepcion): ?>
                     <tr>
                         <td data-order="<?php echo htmlspecialchars((string)($recepcion['fecha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                            <?php echo date('d/m/Y', strtotime($recepcion['fecha'] ?? 'now')); ?>
+                            <span class="campo-texto">
+                                <?php echo date('d/m/Y', strtotime($recepcion['fecha'] ?? 'now')); ?>
+                            </span>
                         </td>
-                        <td><?php echo htmlspecialchars($recepcion['correlativo'] ?? 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($recepcion['nombre_proveedor'] ?? 'N/A'); ?></td>
                         <td>
-                            $<?php echo number_format($recepcion['total_factura'] ?? $recepcion['costo_inversion'] ?? 0, 2, ',', '.'); ?>
-                            <?php if (($recepcion['total_factura'] ?? null) === null): ?>
-                                <small title="El IVA de esta recepción no fué registrada">IVA no registrado</small>
-                            <?php endif; ?>
+                            <span class="campo-texto">
+                                <?php echo htmlspecialchars($recepcion['correlativo'] ?? 'N/A'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="campo-texto">
+                                <?php echo htmlspecialchars($recepcion['nombre_proveedor'] ?? 'N/A'); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="campo-texto">
+                                $<?php echo number_format($recepcion['total_factura'] ?? $recepcion['costo_inversion'] ?? 0, 2, ',', '.'); ?>
+                                <?php if (($recepcion['total_factura'] ?? null) === null): ?>
+                                    <small title="El IVA de esta recepción no fué registrada">IVA no registrado</small>
+                                <?php endif; ?>
+                            </span>
                         </td>
                         <td class="action-buttons">
                             <button class="btn-action btn-detallar" 
@@ -130,7 +142,7 @@ ob_start();
                         <!-- CAI -->
                         <div id="caiRecepcionSection" class="form-section scrollable-section cai-recepcion-section" hidden>
                             <div class="form-row">
-                                <div class="form-group">
+                                <div class="form-group-cai">
                                     <label for="fotoFacturaRecepcion">
                                         <i class="fas fa-robot"></i>
                                         Factura para análisis asistido por CAI
@@ -235,19 +247,19 @@ ob_start();
                                 </div>
 
                                 <div class="data-producto producto-importes">
-                                    <div class="form-group">
+                                    <div class="form-data">
                                         <label>Costo Unitario*</label>
                                         <input type="text" name="costo[]" placeholder="0.00" class="input-with-icon input-textnum costo-input" maxlength="12" oninput="limitarDigitos(this, 9, true); limitarDosDecimales(this); calcularSubtotal(this);">
                                         <span class="span-value scosto-msg"></span>
                                     </div>
 
-                                    <div class="form-group">
+                                    <div class="form-data">
                                         <label>Cantidad*</label>
                                         <input type="text" name="cantidad[]" placeholder="0" class="input-with-icon input-textnum cantidad-input" maxlength="9" oninput="limitarDigitos(this, 9); calcularSubtotal(this)">
                                         <span class="span-value scantidad-msg"></span>
                                     </div>
 
-                                    <div class="form-group subtotal-group">
+                                    <div class="form-data subtotal-group">
                                         <label>Subtotal</label>
                                         <input type="text" class="subtotal-display" readonly value="$0.00">
                                     </div>
@@ -305,14 +317,15 @@ ob_start();
                     <i class="fas fa-eye"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Detalles de Recepción</h2>
+                    <h2>Detallar Recepción</h2>
                     <p>Información completa de la recepción seleccionada</p>
                 </div>
             </div>
             <span class="close-modal" onclick="closeViewModal()">&times;</span>
         </div>
+        
         <div class="modal-body-detallar">
-            <div class="recepcion-detallar">
+            <div class="detallado-column">
                 <!-- Información General -->
                 <div class="detalle-section">
                     <div class="section-title">
@@ -320,15 +333,15 @@ ob_start();
                         <h3>Información General</h3>
                     </div>
                     <div class="detalle-grid">
-                        <div class="detalle-item">
+                        <div class="detalle-item detalle-row">
                             <label>Número de Factura:</label>
                             <span id="viewCorrelativo"></span>
                         </div>
-                        <div class="detalle-item">
+                        <div class="detalle-item detalle-row">
                             <label>Proveedor:</label>
                             <span id="viewProveedor"></span>
                         </div>
-                        <div class="detalle-item">
+                        <div class="detalle-item detalle-row">
                             <label>Fecha:</label>
                             <span id="viewFecha"></span>
                         </div>

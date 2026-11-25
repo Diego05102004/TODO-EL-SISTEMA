@@ -1247,7 +1247,7 @@ function openModal(type) {
     const form = document.getElementById('recepcionForm');
     
     if (type === 'registrar') {
-        if (modalTitle) modalTitle.textContent = 'Nueva Recepción';
+        if (modalTitle) modalTitle.textContent = 'Incluir Recepción';
         if (form) form.reset();
         limpiarFacturaIARecepcion();
         actualizarCAIRecepcion('amigable');

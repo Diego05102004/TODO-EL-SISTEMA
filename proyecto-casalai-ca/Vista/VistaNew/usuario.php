@@ -53,6 +53,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
 
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/javascript/datatable.js"></script>
+<script src="assets/javascript/usuario.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/usuario.js'); ?>"></script>
 <link rel="stylesheet" href="assets/styles/cards.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/cards.css'); ?>">
 
 <!-- Summary Cards para Usuarios -->
@@ -233,12 +234,16 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
-            <span class="close-modal" onclick="closeRecepcionModal()">&times;</span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
         </div>
         
         <div class="modal-body">
             <form id="userForm" enctype="multipart/form-data">
                 <div class="form-section">
+                    <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            <h3>Información</h3>
+                        </div>
                     <input type="hidden" id="userId" name="id_usuario">
 
                     <div class="form-row">
@@ -336,56 +341,67 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
     </div>
 </div>
 
-            <div id="userDetailsModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Detalles del usuario</h2>
-                        <span class="close-modal" id="closeUserDetails">&times;</span>
+<div id="userDetailsModal" class="modal">
+    <div class="modal-content modal-corto">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="modal-title-content">
+                    <h2>Detallar Usuario</h2>
+                    <p>Información completa del usuario seleccionado</p>
+                </div>
+            </div>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+
+        <div class="modal-body-detallar body-data">
+            <div class="detallado-column">
+                <div class="detalle-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        <h3>Información General</h3>
                     </div>
-                    <div class="modal-body">
-                        <dl class="user-details-grid">
-                            <div><dt>Usuario</dt><dd id="detailUsername">-</dd></div>
-                            <div><dt>Nombre</dt><dd id="detailFirstName">-</dd></div>
-                            <div><dt>Apellido</dt><dd id="detailLastName">-</dd></div>
-                            <div><dt>Correo</dt><dd id="detailEmail">-</dd></div>
-                            <div><dt>Cédula</dt><dd id="detailCedula">-</dd></div>
-                            <div><dt>Teléfono</dt><dd id="detailPhone">-</dd></div>
-                            <div><dt>Rol</dt><dd id="detailRole">-</dd></div>
-                            <div><dt>Estado</dt><dd id="detailStatus">-</dd></div>
-                        </dl>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-cancel" type="button" onclick="closeUserDetailsModal()">Cerrar</button>
+                    <div class="detallado-row">
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Usuario</strong>
+                            <span id="detailUsername"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Cédula</strong>
+                            <span id="detailCedula"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Nombre</strong>
+                            <span id="detailFirstName"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Apellido</strong>
+                            <span id="detailLastName"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Teléfono</strong>
+                            <span id="detailPhone"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Correo electrónico</strong>
+                            <span id="detailEmail"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Rol</strong>
+                            <span id="detailRole"></span>
+                        </div>
+                        <div class="detalle-item detalle-column">
+                            <strong class="title-data">Estado</strong>
+                            <span id="detailStatus"></span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <style>
-                .user-details-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                    gap: 16px;
-                    margin: 0;
-                }
-
-                .user-details-grid div {
-                    min-width: 0;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid #eee;
-                }
-
-                .user-details-grid dt {
-                    color: #667085;
-                    font-size: 0.85rem;
-                    margin-bottom: 4px;
-                }
-
-                .user-details-grid dd {
-                    margin: 0;
-                    color: #222;
-                    overflow-wrap: anywhere;
-                }
-            </style>
+        </div>
+    </div>
+</div>
 
             <script>
                 const userModal = document.getElementById('userModal');
@@ -488,14 +504,14 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
 
                 async function openModal(type, userId = null) {
                     if (type === 'agregar') {
-                        modalTitle.textContent = 'Agregar Usuario';
+                        modalTitle.textContent = 'Incluir Usuarios';
                         userForm.reset();
                         document.getElementById('userId').value = '';
                         document.getElementById('passwordGroup').style.display = 'block';
                         document.getElementById('confirmPasswordGroup').style.display = 'block';
                         clearUserValidation();
                     } else if (type === 'editar') {
-                        modalTitle.textContent = 'Editar Usuario';
+                        modalTitle.textContent = 'Modificar Usuario';
                         const usuario = await fetchUser(userId);
                         if (!usuario) return;
                         userForm.reset();

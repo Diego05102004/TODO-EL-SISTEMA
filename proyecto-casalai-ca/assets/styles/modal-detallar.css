@@ -1,9 +1,13 @@
 /* Modal Header */
-#viewModal .modal-content.modal-large {
+.modal-content.modal-corto {
     max-width: 95%;
-    width: 1300px;
+    width: 750px;
+    height: 82vh;
     max-height: 90vh;
     margin-top: 8vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header-content {
@@ -45,25 +49,61 @@
 }
 
 /* Modal Body */
-#viewModal .modal-content {
-    max-height: 90vh;
-    overflow: hidden;
-}
-
-#viewModal .modal-body-detallar {
+.modal-body-detallar {
     max-height: calc(90vh - 120px);
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
 }
 
-.recepcion-detallar {
-    display: flex;
-    flex-direction: column;
+.body-data {
+    flex: 1 1 auto;
+}
+
+.detallado-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 
+.detallado-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 25px;
+}
+
+.detalle-item {
+    display: flex;
+    min-width: 0;
+    gap: 5px;
+    padding: 12px;
+}
+
+.detalle-row {
+    flex-direction: row;
+}
+
+.detalle-column {
+    flex-direction: column;
+}
+
+.title-data {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2196F3;
+    margin: 0;
+}
+
+.detalle-item span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #2d3748;
+}
+
 .detalle-section {
+    width: 100%;
     background: rgba(33, 150, 243, 0.03);
     border-radius: 12px;
     padding: 20px;
@@ -72,30 +112,18 @@
     text-align: center;
 }
 
+.section-data {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
 .detalle-grid {
     display: flex;
     justify-content:space-around;
     align-items: center;
-    margin: 0 20px;
+    margin: 10px 20px 0 20px;
     gap: 15px;
-}
-
-.detalle-item {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.detalle-item label {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: #2196F3;
-}
-
-.detalle-item span {
-    font-size: 1rem;
-    font-weight: 400;
-    color: #2d3748;
 }
 
 .section-title {

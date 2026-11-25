@@ -346,10 +346,10 @@
 }
 
 .producto-identificacion {
-    display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 40px;
+    display: flex;
+    justify-content:space-around;
+    align-items: center;
     gap: 12px;
-    align-items: start;
 }
 
 .producto-index {
@@ -367,21 +367,17 @@
     font-weight: 700;
 }
 
+.form-group-cai{
+    width: 500px;
+}
+
 .producto-selector-group,
 .producto-row .form-group {
     min-width: 0;
     margin: 0;
 }
 
-.producto-row .form-group label,
-.producto-row .form-data label {
-    margin-bottom: 6px;
-    color: #2196F3;
-    font-size: 0.82rem;
-    font-weight: 650;
-}
-
-.producto-selector-group .producto-select {
+.producto-selector-group{
     min-height: 42px;
     border-color: #d7e4f2;
 }
@@ -409,13 +405,13 @@
     align-items: start;
 }
 
-.producto-row .subtotal-group {
+.producto-row {
     min-height: 74px;
     justify-content: center;
     padding: 10px 12px;
 }
 
-.producto-row .subtotal-group label {
+.producto-row{
     color: white;
 }
 
@@ -434,10 +430,6 @@
     height: 100%;
 }
 
-.data-producto {
-    min-width: 0;
-}
-
 .subtotal-group {
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     border-radius: 8px;
@@ -449,9 +441,8 @@
 
 .subtotal-group label {
     color: white;
-    font-size: 0.7rem;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 .subtotal-display {

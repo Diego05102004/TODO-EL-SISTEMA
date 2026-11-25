@@ -108,7 +108,7 @@
     width: 300px;
 }
 
-.form-group label {
+label {
     display: flex;
     align-items: center;
     font-weight: 600;
