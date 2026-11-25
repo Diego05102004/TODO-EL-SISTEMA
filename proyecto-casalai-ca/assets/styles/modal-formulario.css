@@ -39,6 +39,7 @@
 
 .form-group{
     width: 300px;
+    height: 100px;
 }
 
 label {
@@ -135,7 +136,6 @@ input[type="file"]::file-selector-button {
 
 .span-value{
     color:#ff0000c7;
-    margin-top: 5px;
     margin-bottom: 7px;
     font-size: 0.9rem;
 }
