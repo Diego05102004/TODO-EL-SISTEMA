@@ -1971,13 +1971,6 @@ function viewRecepcion(boton) {
     });
 }
 
-function closeRecepcionModal() {
-    const modal = document.getElementById('recepcionModal');
-    if (!modal) return;
-    modal.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(() => { modal.style.display = 'none'; }, 300);
-}
-
 function closeViewModal() {
     const modal = document.getElementById('viewModal');
     if (!modal) return;

@@ -45,7 +45,6 @@ $totalHabilitados = is_array($usuariosHabilitados ?? null) ? count($usuariosHabi
 $totalInhabilitados = is_array($usuariosDeshabilitados ?? null) ? count($usuariosDeshabilitados) : 0;
 
 // Calcular porcentajes
-$porcentaje_total = 100;
 $porcentaje_activos = $total_usuarios > 0 ? round(($usuarios_activos / $total_usuarios) * 100) : 0;
 $porcentaje_inactivos = $total_usuarios > 0 ? round(($usuarios_inactivos / $total_usuarios) * 100) : 0;
 $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuarios) * 100) : 0;
@@ -53,7 +52,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
 
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
 <script src="assets/javascript/datatable.js"></script>
-<script src="assets/javascript/usuario.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/usuario.js'); ?>"></script>
+<script defer src="assets/javascript/usuario.js?v=<?php echo filemtime(__DIR__ . '/../../assets/javascript/usuario.js'); ?>"></script>
 <link rel="stylesheet" href="assets/styles/cards.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/cards.css'); ?>">
 
 <!-- Summary Cards para Usuarios -->
@@ -63,14 +62,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
         <div class="card-content">
             <h3>Total Usuarios</h3>
             <div class="card-data">
-                <p class="card-value"><?php echo $total_usuarios; ?></p>
-                <div class="progress-circle">
-                    <svg viewBox="0 0 36 36" class="circular-chart">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_total; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <span class="percentage"><?php echo $porcentaje_total; ?>%</span>
-                </div>
+                <p class="card-value" id="totalUsersCount"><?php echo $total_usuarios; ?></p>
             </div>
         </div>
     </div>
@@ -80,7 +72,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
         <div class="card-content">
             <h3>Usuarios Habilitados</h3>
             <div class="card-data">
-                <p class="card-value"><?php echo number_format($totalHabilitados); ?></p>
+                <p class="card-value" id="activeUsersCount"><?php echo number_format($totalHabilitados); ?></p>
                 <div class="progress-circle">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -97,7 +89,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
         <div class="card-content">
             <h3>Usuarios Inhabilitados</h3>
             <div class="card-data">
-                <p class="card-value"><?php echo number_format($totalInhabilitados); ?></p>
+                <p class="card-value" id="inactiveUsersCount"><?php echo number_format($totalInhabilitados); ?></p>
                 <div class="progress-circle">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -125,7 +117,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                 </select>
             </div>
             <div class="filter-options">
-                <select id="statusFilter" class="select-filter" onchange="filterByStatus()">
+                <select id="filtro-estatus" class="select-filter">
                     <option value="">Todos los estados</option>
                     <option value="active">Habilitados</option>
                     <option value="inactive">Inhabilitados</option>
@@ -175,7 +167,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <td>
                         <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
                                 <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
-                                onclick="toggleUserStatus(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>, '<?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>')"
+                                data-user-action="status"
                                 title="Click para cambiar estado"
                                 <?php endif; ?>
                                 <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
@@ -188,17 +180,17 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                         <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
                             <button class="btn-action btn-detallar" 
                                 title="Detallar Usuario"
-                                onclick="viewUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                data-user-action="details">
                                 <img src="assets/img/eye.svg">
                             </button>
                             <button class="btn-action btn-modificar"
                                 title="Modificar Usuario"
-                                onclick="openModal('editar', <?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                data-user-action="edit">
                                 <img src="assets/img/pencil.svg">
                             </button>
                             <button class="btn-action btn-eliminar" 
                                 title="Eliminar Usuario"
-                                onclick="deleteUser(<?php echo (int)($usuario['id_usuario'] ?? 0); ?>)">
+                                data-user-action="delete">
                                 <img src="assets/img/circle-x.svg">
                             </button>
                         <?php else: ?>
@@ -207,23 +199,17 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 20px;">
-                        No hay usuarios registrados
-                    </td>
-                </tr>
             <?php endif; ?>
         </tbody>
     </table>
 </div>
 
 <!-- Modal para Agregar/Editar Usuario -->
-<div id="userModal" class="modal">
-    <div class="modal-content modal-large">
-        <div class="modal-header">
+<div id="userModal" class="modal modal-container">
+    <div class="modal-broad">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="modal-title-content">
@@ -234,11 +220,10 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
-            <span class="close-modal" onclick="closeModal()">&times;</span>
         </div>
         
         <div class="modal-body">
-            <form id="userForm" enctype="multipart/form-data">
+            <form id="userForm" enctype="multipart/form-data" novalidate>
                 <div class="form-section">
                     <div class="section-title">
                             <i class="fas fa-info-circle"></i>
@@ -328,10 +313,10 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
+                        <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
-                        <button type="button" class="btm-confirmar btn-save" onclick="saveUser()">
+                        <button type="button" class="btn-confirmar btn-save">
                             <i class="fas fa-check"></i> Registrar
                         </button>
                     </div>
@@ -341,22 +326,22 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
     </div>
 </div>
 
-<div id="userDetailsModal" class="modal">
-    <div class="modal-content modal-corto">
-        <div class="modal-header">
+<div id="userDetailsModal" class="modal modal-container">
+    <div class="modal-narrow">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-eye"></i>
                 </div>
                 <div class="modal-title-content">
                     <h2>Detallar Usuario</h2>
                     <p>Información completa del usuario seleccionado</p>
                 </div>
+                <span class="close-modal" onclick="closeViewModal()">&times;</span>
             </div>
-            <span class="close-modal" onclick="closeModal()">&times;</span>
         </div>
 
-        <div class="modal-body-detallar body-data">
+        <div class="modal-body body-data">
             <div class="detallado-column">
                 <div class="detalle-section">
                     <div class="section-title">
@@ -365,35 +350,35 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     </div>
                     <div class="detallado-row">
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Usuario</strong>
+                            <strong class="title-data">Usuario:</strong>
                             <span id="detailUsername"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Cédula</strong>
+                            <strong class="title-data">Cédula:</strong>
                             <span id="detailCedula"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Nombre</strong>
+                            <strong class="title-data">Nombre:</strong>
                             <span id="detailFirstName"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Apellido</strong>
+                            <strong class="title-data">Apellido:</strong>
                             <span id="detailLastName"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Teléfono</strong>
+                            <strong class="title-data">Teléfono:</strong>
                             <span id="detailPhone"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Correo electrónico</strong>
+                            <strong class="title-data">Correo electrónico:</strong>
                             <span id="detailEmail"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Rol</strong>
+                            <strong class="title-data">Rol:</strong>
                             <span id="detailRole"></span>
                         </div>
                         <div class="detalle-item detalle-column">
-                            <strong class="title-data">Estado</strong>
+                            <strong class="title-data">Estado:</strong>
                             <span id="detailStatus"></span>
                         </div>
                     </div>
@@ -403,398 +388,99 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
     </div>
 </div>
 
-            <script>
-                const userModal = document.getElementById('userModal');
-                const userDetailsModal = document.getElementById('userDetailsModal');
-                const modalTitle = document.getElementById('modalTitle');
-                const closeModalBtn = document.querySelector('#userModal .close-modal');
-                const closeUserDetailsBtn = document.getElementById('closeUserDetails');
-                const userForm = document.getElementById('userForm');
-                const userFields = Array.from(userForm.querySelectorAll('[name]'));
+<div id="deleteUserModal" class="modal modal-container" aria-hidden="true">
+    <div class="modal-narrow">
+        <div class="background-red">
+            <div class="modal-header-content">
+                <div class="modal-icon background-red">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="modal-title-content">
+                    <h2>Eliminar Usuario</h2>
+                    <p>Confirmación de eliminación permanente</p>
+                </div>
+                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para eliminar usuarios" data-contexto="eliminar">
+                    <img src="assets/img/info-ayuda.svg" alt="Ayuda">
+                </button>
+            </div>
+        </div>
 
-                function clearUserValidation() {
-                    document.querySelectorAll('#userForm .field-error').forEach((field) => {
-                        field.textContent = '';
-                    });
-                }
+        <div class="modal-body">
+            <div class="content-eliminacion">
+                <div class="quest-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h3>¿Está seguro de eliminar este usuario?</h3>
+                <p>Esta acción es permanente y no se puede deshacer.</p>
 
-                function validateUserForm() {
-                    const values = Object.fromEntries(new FormData(userForm).entries());
-                    values.nombre = (values.nombre || '').replace(/\s{2,}/g, ' ').trim();
-                    values.apellido_usuario = (values.apellido_usuario || '').replace(/\s{2,}/g, ' ').trim();
-                    values.cedula = (values.cedula || '').trim();
-                    values.telefono_usuario = (values.telefono_usuario || '').trim();
-                    values.correo_usuario = (values.correo_usuario || '').trim();
-                    userForm.elements.nombre.value = values.nombre;
-                    userForm.elements.apellido_usuario.value = values.apellido_usuario;
-                    userForm.elements.cedula.value = values.cedula;
-                    userForm.elements.telefono_usuario.value = values.telefono_usuario;
-                    userForm.elements.correo_usuario.value = values.correo_usuario;
+                <div class="info-eliminacion">
+                    <div class="info-row">
+                        <label>Usuario:</label>
+                        <span id="deleteUserName"></span>
+                    </div>
+                </div>
 
-                    const isEditing = Boolean(values.id_usuario);
-                    const rules = [
-                        { field: 'nombre', pattern: /^[a-zA-ZÁÉÍÓÚñÑáéíóúüÜ\s]{2,50}$/, message: 'Ingrese un nombre de 2 a 50 caracteres, solo con letras y espacios.' },
-                        { field: 'apellido_usuario', pattern: /^[a-zA-ZÁÉÍÓÚñÑáéíóúüÜ\s]{2,50}$/, message: 'Ingrese un apellido de 2 a 50 caracteres, solo con letras y espacios.' },
-                        { field: 'cedula', pattern: /^(?:\d{1,2}\.\d{3}\.\d{3})$/, message: 'Use el formato de cédula 1.234.567 o 12.345.678.' },
-                        { field: 'telefono_usuario', pattern: /^\d{4}-\d{3}-\d{4}$/, message: 'Use el formato telefónico 0400-000-0000.' },
-                        { field: 'correo_usuario', pattern: /^[A-Za-z0-9._%+\-ÁÉÍÓÚáéíóúñÑ]+@(gmail\.com|outlook\.com|yahoo\.com|icloud\.com)$/, message: 'Use un correo de Gmail, Outlook, Yahoo o iCloud.' },
-                        { field: 'nombre_usuario', pattern: /^[a-zA-Z0-9_]{3,20}$/, message: 'El nombre de usuario debe tener entre 3 y 20 caracteres alfanuméricos.' }
-                    ];
+                <div class="modal-footer-content">
+                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn-confirmar btn-danger" id="confirmDeleteUser">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    // Solo validar contraseña si es nuevo usuario
-                    if (!isEditing) {
-                        rules.push(
-                            { field: 'clave_usuario', pattern: /^.{6,15}$/, message: 'La contraseña debe tener entre 6 y 15 caracteres.' },
-                            { field: 'clave_confirmar', pattern: /^.{6,15}$/, message: 'La confirmación debe tener entre 6 y 15 caracteres.' }
-                        );
-                    }
+<div id="userStatusModal" class="modal modal-container" aria-hidden="true">
+    <div class="modal-narrow">
+        <div class="background-blue">
+            <div class="modal-header-content">
+                <div class="modal-icon background-blue">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="modal-title-content">
+                    <h2>Cambiar Estatus</h2>
+                    <p>Confirmación de cambio de estatus</p>
+                </div>
+                <button type="button" class="btn-ayuda-modal btn-ayuda" title="Ayuda para cambiar el estatus" data-contexto="estatus">
+                    <img src="assets/img/info-ayuda.svg" alt="Ayuda">
+                </button>
+            </div>
+        </div>
 
-                    const errors = {};
-                    clearUserValidation();
+        <div class="modal-body">
+            <div class="content-status">
+                <div class="status-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h3>¿Desea cambiar el estatus de este usuario?</h3>
+                <p>El cambio de estatus afectará el acceso del usuario al sistema.</p>
 
-                    rules.forEach(({ field, pattern, message }) => {
-                        if (values[field] && !pattern.test(values[field])) {
-                            errors[field] = message;
-                            const errorElement = document.querySelector(`[data-error-for="${field}"]`);
-                            if (errorElement) errorElement.textContent = message;
-                        }
-                    });
+                <div class="info-status">
+                    <div class="info-row">
+                        <label>Usuario:</label>
+                        <span id="statusUserName"></span>
+                    </div>
+                    <div class="info-row">
+                        <label>Nuevo estatus:</label>
+                        <span id="statusUserNext"></span>
+                    </div>
+                </div>
 
-                    // Validar que las contraseñas coincidan
-                    if (!isEditing && values.clave_usuario !== values.clave_confirmar) {
-                        errors['clave_confirmar'] = 'Las contraseñas no coinciden';
-                        const errorElement = document.querySelector('[data-error-for="clave_confirmar"]');
-                        if (errorElement) errorElement.textContent = 'Las contraseñas no coinciden';
-                    }
-
-                    return { values, errors };
-                }
-
-                const userDebug = { logs: [] };
-                window.userDebug = userDebug;
-
-                function debugUserLog(label, payload) {
-                    const entry = { label, payload, timestamp: new Date().toISOString() };
-                    userDebug.logs.push(entry);
-                    console.debug('[Usuario debug]', label, payload);
-                }
-
-                async function showUserError(title, message) {
-                    return Swal.fire({ icon: 'error', title, text: message, confirmButtonText: 'Entendido' });
-                }
-
-                userForm.elements.cedula.addEventListener('input', function() {
-                    const digits = this.value.replace(/\D/g, '').slice(0, 8);
-                    if (digits.length === 7) this.value = `${digits.slice(0, 1)}.${digits.slice(1, 4)}.${digits.slice(4)}`;
-                    else if (digits.length === 8) this.value = `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
-                    else this.value = digits;
-                });
-
-                userForm.elements.telefono_usuario.addEventListener('input', function() {
-                    const digits = this.value.replace(/\D/g, '').slice(0, 11);
-                    if (digits.length > 7) this.value = `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
-                    else if (digits.length > 4) this.value = `${digits.slice(0, 4)}-${digits.slice(4)}`;
-                    else this.value = digits;
-                });
-
-                userFields.forEach((field) => field.addEventListener('input', () => {
-                    const error = document.querySelector(`[data-error-for="${field.name}"]`);
-                    if (error) error.textContent = '';
-                }));
-
-                async function openModal(type, userId = null) {
-                    if (type === 'agregar') {
-                        modalTitle.textContent = 'Incluir Usuarios';
-                        userForm.reset();
-                        document.getElementById('userId').value = '';
-                        document.getElementById('passwordGroup').style.display = 'block';
-                        document.getElementById('confirmPasswordGroup').style.display = 'block';
-                        clearUserValidation();
-                    } else if (type === 'editar') {
-                        modalTitle.textContent = 'Modificar Usuario';
-                        const usuario = await fetchUser(userId);
-                        if (!usuario) return;
-                        userForm.reset();
-                        clearUserValidation();
-                        document.getElementById('userId').value = usuario.id_usuario;
-                        document.getElementById('nombre_usuario').value = usuario.username || '';
-                        document.getElementById('nombre').value = usuario.nombres || '';
-                        document.getElementById('apellido_usuario').value = usuario.apellidos || '';
-                        document.getElementById('correo_usuario').value = usuario.correo || '';
-                        document.getElementById('cedula').value = usuario.cedula || '';
-                        document.getElementById('telefono_usuario').value = usuario.telefono || '';
-                        document.getElementById('rango').value = usuario.id_rol || '';
-                        // Ocultar campos de contraseña al editar
-                        document.getElementById('passwordGroup').style.display = 'none';
-                        document.getElementById('confirmPasswordGroup').style.display = 'none';
-                    }
-                    userModal.style.display = 'block';
-                }
-
-                async function postUserAction(action, values = {}) {
-                    const formData = new FormData();
-                    formData.append('accion', action);
-                    Object.entries(values).forEach(([key, value]) => formData.append(key, value));
-                    debugUserLog('POST usuario', { action, values });
-                    const response = await fetch(window.location.href, { method: 'POST', body: formData });
-                    const result = await response.json();
-                    debugUserLog('Respuesta usuario', { action, status: response.status, result });
-                    return result;
-                }
-
-                async function fetchUser(userId) {
-                    try {
-                        const result = await postUserAction('obtener_usuario', { id_usuario: userId });
-                        if (result.status === 'error') throw new Error(result.message || 'No se pudo obtener el usuario.');
-                        return result;
-                    } catch (error) {
-                        await showUserError('No se pudo consultar el usuario', error.message || 'Intente nuevamente.');
-                        return null;
-                    }
-                }
-
-                function userDetailValue(value) {
-                    const text = String(value ?? '').trim();
-                    if (!text) return '-';
-
-                    if (/^[A-Za-z0-9+/]+={0,2}$/.test(text) && text.length > 24) {
-                        try {
-                            const decoded = atob(text);
-                            const keyLength = decoded.length >= 4
-                                ? ((decoded.charCodeAt(0) << 24) | (decoded.charCodeAt(1) << 16) | (decoded.charCodeAt(2) << 8) | decoded.charCodeAt(3)) >>> 0
-                                : 0;
-                            if (keyLength === 256) return 'Dato cifrado no disponible';
-                        } catch (error) {
-                            return text;
-                        }
-                    }
-
-                    return text;
-                }
-
-                async function viewUser(userId) {
-                    const usuario = await fetchUser(userId);
-                    if (!usuario) return;
-
-                    document.getElementById('detailUsername').textContent = userDetailValue(usuario.username);
-                    document.getElementById('detailFirstName').textContent = userDetailValue(usuario.nombres);
-                    document.getElementById('detailLastName').textContent = userDetailValue(usuario.apellidos);
-                    document.getElementById('detailEmail').textContent = userDetailValue(usuario.correo);
-                    document.getElementById('detailCedula').textContent = userDetailValue(usuario.cedula);
-                    document.getElementById('detailPhone').textContent = userDetailValue(usuario.telefono);
-                    document.getElementById('detailRole').textContent = userDetailValue(usuario.nombre_rol);
-                    document.getElementById('detailStatus').textContent = userDetailValue(usuario.estatus);
-                    userDetailsModal.style.display = 'block';
-                }
-
-                window.viewUser = viewUser;
-
-                function closeUserDetailsModal() {
-                    userDetailsModal.style.display = 'none';
-                }
-
-                function closeModal() {
-                    userModal.style.display = 'none';
-                }
-
-                async function saveUser() {
-                    const { values, errors } = validateUserForm();
-                    if (Object.keys(errors).length) {
-                        const firstInvalidField = userForm.elements[Object.keys(errors)[0]];
-                        await Swal.fire({
-                            icon: 'error',
-                            title: 'Revisa los datos del usuario',
-                            html: `<ul style="text-align:left;margin:0;padding-left:20px">${Object.values(errors).map((message) => `<li>${message}</li>`).join('')}</ul>`,
-                            confirmButtonText: 'Entendido'
-                        });
-                        firstInvalidField.focus();
-                        return;
-                    }
-                    const isEditing = Boolean(values.id_usuario);
-                    try {
-                        const result = await postUserAction(isEditing ? 'modificar' : 'registrar', values);
-                        if (result.status !== 'success') {
-                            throw new Error((result.errors ? Object.values(result.errors).join('\n') : '') || result.message || 'No se pudo guardar el usuario.');
-                        }
-                        closeModal();
-                        await Swal.fire({
-                            icon: 'success',
-                            title: isEditing ? 'Usuario modificado' : 'Usuario registrado',
-                            text: result.message || 'La operación se completó correctamente',
-                            confirmButtonText: 'Entendido'
-                        });
-                        window.location.reload();
-                    } catch (error) {
-                        await showUserError('No se pudo guardar el usuario', error.message || 'Intente nuevamente.');
-                    }
-                }
-
-                async function deleteUser(userId) {
-                    const confirmation = await Swal.fire({
-                        icon: 'warning',
-                        title: '¿Eliminar este usuario?',
-                        text: 'Esta acción no se puede deshacer.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sí, eliminar',
-                        cancelButtonText: 'Cancelar',
-                        reverseButtons: true,
-                        confirmButtonColor: '#dc3545'
-                    });
-                    if (!confirmation.isConfirmed) return;
-
-                    try {
-                        const result = await postUserAction('eliminar', { id_usuario: userId });
-                        if (result.status !== 'success') {
-                            throw new Error((result.errors ? Object.values(result.errors).join('\n') : '') || result.message || 'No se pudo eliminar el usuario.');
-                        }
-                        await Swal.fire({ icon: 'success', title: 'Usuario eliminado', text: result.message || 'El usuario se eliminó correctamente.' });
-                        window.location.reload();
-                    } catch (error) {
-                        await showUserError('No se pudo eliminar el usuario', error.message || 'Intente nuevamente.');
-                    }
-                }
-
-                // Función para cambiar el estado del usuario
-                async function toggleUserStatus(userId, currentStatus) {
-                    const nextStatus = currentStatus === 'habilitado' ? 'inhabilitado' : 'habilitado';
-                    const confirmation = await Swal.fire({
-                        icon: 'question',
-                        title: '¿Cambiar estado del usuario?',
-                        text: currentStatus === 'habilitado' ? 'El usuario será deshabilitado' : 'El usuario será habilitado',
-                        showCancelButton: true,
-                        confirmButtonText: 'Sí, cambiar',
-                        cancelButtonText: 'Cancelar',
-                        reverseButtons: true,
-                        confirmButtonColor: '#2196F3'
-                    });
-
-                    if (!confirmation.isConfirmed) return;
-
-                    try {
-                        const formData = new FormData();
-                        formData.append('accion', 'cambiar_estatus');
-                        formData.append('id_usuario', userId);
-                        formData.append('nuevo_estatus', nextStatus);
-
-                        debugUserLog('toggleUserStatus', { userId, currentStatus, nextStatus });
-
-                        const response = await fetch(window.location.href, {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        const result = await response.json();
-                        debugUserLog('toggleUserStatus respuesta', { userId, status: response.status, result });
-
-                        if (result.status === 'success') {
-                            await Swal.fire({
-                                icon: 'success',
-                                title: 'Estado cambiado',
-                                text: result.message || 'El estado del usuario se actualizó correctamente.',
-                                confirmButtonText: 'Entendido'
-                            });
-                            window.location.reload();
-                        } else {
-                            throw new Error(result.message || 'No se pudo cambiar el estado');
-                        }
-                    } catch (error) {
-                        debugUserLog('toggleUserStatus error', { userId, error: error.message });
-                        await Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: error.message || 'No se pudo cambiar el estado del usuario',
-                            confirmButtonText: 'Entendido'
-                        });
-                    }
-                }
-
-                function applyUserTableFilters() {
-                    const searchInput = document.getElementById('searchUser');
-                    const roleFilter = document.getElementById('roleFilter');
-                    const statusFilter = document.getElementById('statusFilter');
-
-                    const query = (searchInput?.value || '').trim().toLowerCase();
-                    const roleValue = (roleFilter?.value || '').trim().toLowerCase();
-                    const statusValue = (statusFilter?.value || '').trim().toLowerCase();
-
-                    const rows = document.querySelectorAll('.users-table tbody tr[data-id]');
-                    rows.forEach((row) => {
-                        const text = (row.textContent || '').toLowerCase();
-                        const roleText = (row.querySelector('.role-badge')?.textContent || '').trim().toLowerCase();
-                        const statusText = (row.querySelector('.status')?.textContent || '').trim().toLowerCase();
-
-                        const matchesSearch = !query || text.includes(query);
-                        const matchesRole = !roleValue || roleText.includes(roleValue);
-                        const matchesStatus = !statusValue || (
-                            statusValue === 'active' ? statusText.includes('habilitado') :
-                            statusValue === 'inactive' ? statusText.includes('inhabilitado') :
-                            true
-                        );
-
-                        row.style.display = matchesSearch && matchesRole && matchesStatus ? '' : 'none';
-                    });
-                }
-
-                function searchUsers() {
-                    applyUserTableFilters();
-                }
-
-                function filterByRole() {
-                    applyUserTableFilters();
-                }
-
-                function filterByStatus() {
-                    applyUserTableFilters();
-                }
-
-                function importUsers() {
-                    debugUserLog('importUsers', { message: 'Función de importación pendiente por implementar' });
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Importación pendiente',
-                        text: 'La importación de usuarios aún no está implementada.',
-                        confirmButtonText: 'Entendido'
-                    });
-                }
-
-                function exportUsers() {
-                    debugUserLog('exportUsers inicio', { rows: document.querySelectorAll('.users-table tbody tr[data-id]').length });
-                    const rows = Array.from(document.querySelectorAll('.users-table tbody tr[data-id]'));
-                    const visibleRows = rows.filter((row) => row.style.display !== 'none');
-                    const data = [['Usuario', 'Nombre', 'Email', 'Rol', 'Estado']];
-                    visibleRows.forEach((row) => {
-                        const cells = row.cells;
-                        data.push([
-                            cells[0].querySelector('.username')?.textContent.trim() || '',
-                            cells[1].textContent.trim(),
-                            cells[2].textContent.trim(),
-                            cells[3].textContent.trim(),
-                            cells[4].textContent.trim()
-                        ]);
-                    });
-                    const csv = data.map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
-                    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'usuarios.csv';
-                    link.click();
-                    URL.revokeObjectURL(url);
-                    debugUserLog('exportUsers fin', { total: visibleRows.length });
-                }
-
-                // Event listeners para cerrar modal
-                closeModalBtn.addEventListener('click', closeModal);
-                closeUserDetailsBtn.addEventListener('click', closeUserDetailsModal);
-
-                window.addEventListener('click', function(event) {
-                    if (event.target === userModal) {
-                        closeModal();
-                    }
-                    if (event.target === userDetailsModal) {
-                        closeUserDetailsModal();
-                    }
-                });
-            </script>
+                <div class="modal-footer-content">
+                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn-confirmar btn-cambiar" id="confirmUserStatus">
+                        <i class="fas fa-check"></i> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php
 $contenido_pagina = ob_get_clean();

@@ -223,10 +223,12 @@ if ($id_usuario_header > 0) {
     </div>
 </div>
 
-<link rel="stylesheet" href="assets/styles/tablas_section_styles.css">
-<link rel="stylesheet" href="assets/styles/modal-registrar.css">
+<link rel="stylesheet" href="assets/styles/tablas_consultar.css">
+<link rel="stylesheet" href="assets/styles/modales.css?v=<?php echo filemtime(__DIR__ . '/../../assets/styles/modales.css'); ?>">
+<link rel="stylesheet" href="assets/styles/modal-formulario.css">
 <link rel="stylesheet" href="assets/styles/modal-detallar.css">
-<link rel="stylesheet" href="assets/styles/modal-eliminar-anular.css">
+<link rel="stylesheet" href="assets/styles/modal-eliminacion.css">
+<link rel="stylesheet" href="assets/styles/modal-status.css">
 
 <script src="assets/javascript/http-long-poll-client.js"></script>
 <script>

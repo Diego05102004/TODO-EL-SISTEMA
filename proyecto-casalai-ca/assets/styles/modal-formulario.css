@@ -1,77 +1,10 @@
-.modal-body {
-    display: flex;
-    flex: 1 auto;
-    flex-direction: column;
-    overflow: hidden;
-    overscroll-behavior: contain;
-}
-
-.modal-content.modal-large {
-    max-width: 95%;
-    width: 1300px;
-    height: 82vh;
-    max-height: 90vh;
-    margin-top: 8vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Modal Header */
-.modal-header-content {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    z-index: 990;
-}
-
-.span-value{
-    color:#ff0000c7;
-    font-style: italic;
-    margin-top: 3px;
-    margin-bottom: 7px;
-    font-size: 1rem;
-    z-index: 1055;
-}
-
-.modal-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-}
-
-.modal-icon i {
-    font-size: 1.5rem;
-    color: white;
-}
-
-.modal-title-content h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: white;
-    margin: 0 0 5px 0;
-}
-
-.modal-title-content p {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0;
-}
-
-.modal-header {
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-}
-
 /* Modal Body */
 .form-section {
     background: rgba(33, 150, 243, 0.03);
     border-radius: 12px;
     padding: 10px 20px;
-    height: 100%;
+    height: auto;
+    min-height: 0;
     border: 1px solid rgba(33, 150, 243, 0.1);
 }
 
@@ -217,6 +150,15 @@ input[type="file"]::file-selector-button {
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+.span-value{
+    color:#ff0000c7;
+    font-style: italic;
+    margin-top: 3px;
+    margin-bottom: 7px;
+    font-size: 1rem;
+    z-index: 1055;
+}
+
 /* Botones de confirmación */
 .modal-footer {
     display: flex;
@@ -227,13 +169,13 @@ input[type="file"]::file-selector-button {
     border-top: 1px solid rgba(245, 101, 101, 0.1);
 }
 
-.btm-confirmar {
+.btn-confirmar {
     color: white;
     padding: 12px 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     display: flex;
     align-items: center;

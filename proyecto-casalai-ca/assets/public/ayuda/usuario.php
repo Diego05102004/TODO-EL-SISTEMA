@@ -78,7 +78,7 @@
                             - Teléfono: 0400-000-0000 <br>
                             - Nombre de Usuario: (único en el sistema) <br>
                             - Correo: (gmail, outlook, yahoo, icloud) <br>
-                            - Contraseña: (6-15 caracteres, con al menos 1 mayúscula, 1 número y 1 caracter especial) <br>
+                            - Contraseña: (8-15 caracteres, con mayúscula, minúscula, número y símbolo) <br>
                         </div>
                     </div>
                 </div>
@@ -151,12 +151,13 @@
                         <ul>
                             <li>Encuentre el usuario en la lista</li>
                             <li>Haga clic sobre su estatus actual</li>
-                            <li>El sistema alternará entre activo/inactivo</li>
+                            <li>Confirme el cambio de estatus en el modal</li>
+                            <li>El sistema alternará entre habilitado/inhabilitado</li>
                             <li>El usuario mantendrá sus datos pero cambiará su estado</li>
                             <li>Un usuario inactivo no puede acceder al sistema</li>
                         </ul>
                         <div class="alert alert-info">
-                            <strong>Instantáneo:</strong> Sin confirmación
+                            <strong>Importante:</strong> El cambio se aplica después de confirmar
                         </div>
                     </div>
                 </div>

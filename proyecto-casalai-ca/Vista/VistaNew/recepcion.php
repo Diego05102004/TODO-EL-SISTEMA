@@ -117,11 +117,11 @@ ob_start();
 </div>
 
 <!-- Modal para Registrar Recepción -->
-<div id="recepcionModal" class="modal">
-    <div class="modal-content modal-large">
-        <div class="modal-header">
+<div id="recepcionModal" class="modal modal-container">
+    <div class="modal-broad">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-inbox"></i>
                 </div>
                 <div class="modal-title-content">
@@ -132,7 +132,6 @@ ob_start();
                     <img src="assets/img/info-ayuda.svg">
                 </button>
             </div>
-            <span class="close-modal" onclick="closeRecepcionModal()">&times;</span>
         </div>
         
         <div class="modal-body">
@@ -294,10 +293,10 @@ ob_start();
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btm-confirmar btn-cancel" onclick="closeModal()">
+                            <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
                                 <i class="fas fa-times"></i> Cancelar
                             </button>
-                            <button type="button" class="btm-confirmar btn-save" onclick="saveRecepcion()">
+                            <button type="button" class="btn-confirmar btn-save" onclick="saveRecepcion()">
                                 <i class="fas fa-check"></i> Registrar
                             </button>
                         </div>
@@ -309,22 +308,22 @@ ob_start();
 </div>
 
 <!-- Modal para Ver Detalles de Recepción -->
-<div id="viewModal" class="modal">
-    <div class="modal-content modal-large">
-        <div class="modal-header">
+<div id="viewModal" class="modal modal-container">
+    <div class="modal-broad">
+        <div class="background-blue">
             <div class="modal-header-content">
-                <div class="modal-icon">
+                <div class="modal-icon background-blue">
                     <i class="fas fa-eye"></i>
                 </div>
                 <div class="modal-title-content">
                     <h2>Detallar Recepción</h2>
                     <p>Información completa de la recepción seleccionada</p>
                 </div>
+                <span class="close-modal" onclick="closeViewModal()">&times;</span>
             </div>
-            <span class="close-modal" onclick="closeViewModal()">&times;</span>
         </div>
         
-        <div class="modal-body-detallar">
+        <div class="modal-body">
             <div class="detallado-column">
                 <!-- Información General -->
                 <div class="detalle-section">
@@ -387,6 +386,12 @@ ob_start();
                             </tfoot>
                         </table>
                     </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                            <i class="fas fa-times"></i> Cerrar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -394,11 +399,11 @@ ob_start();
 </div>
 
 <!-- Modal para Anular Recepción -->
-<div id="anularModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header warning">
+<div id="anularModal" class="modal modal-container">
+    <div class="modal-narrow">
+        <div class="background-red">
             <div class="modal-header-content">
-                <div class="modal-icon warning">
+                <div class="modal-icon background-red">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="modal-title-content">
@@ -408,25 +413,26 @@ ob_start();
             </div>
             <span class="close-modal" onclick="closeAnularModal()">&times;</span>
         </div>
-        <div class="modal-body-warning">
-            <div class="anular-content">
-                <div class="anular-icon">
+        <div class="modal-body">
+            <div class="content-eliminacion">
+                <div class="quest-icon">
                     <i class="fas fa-exclamation-circle"></i>
                 </div>
                 <h3>¿Está seguro de anular esta recepción?</h3>
                 <p>Esta acción no se puede deshacer y afectará el inventario del sistema.</p>
                 
-                <div class="anular-info">
+                <div class="info-eliminacion">
                     <div class="info-row">
                         <label>Número de Factura:</label>
                         <span id="anularCorrelativo"></span>
                     </div>
                 </div>
+
                 <div class="modal-footer-content">
-                    <button class="btm-confirmar btn-cancel" onclick="closeAnularModal()">
+                    <button class="btn-confirmar btn-cancel" onclick="closeAnularModal()">
                         Cancelar
                     </button>
-                    <button class="btm-confirmar btn-danger" onclick="confirmarAnulacion()">
+                    <button class="btn-confirmar btn-danger" onclick="confirmarAnulacion()">
                         Confirmar
                     </button>
                 </div>
