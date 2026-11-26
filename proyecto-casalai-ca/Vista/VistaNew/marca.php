@@ -43,62 +43,60 @@ ob_start();
 <!-- Marcas Section -->
 <div class="table-section" id="contenedor-marcas">
     <div id="mensaje-permiso" style="display:none; color:#dc2626; text-align:center; margin:20px 0; font-weight:600;"></div>
-    <div class="section-header">
-                    <h2>Lista de Marcas</h2>
-                    <div class="section-actions">
-                        <button class="btn-add-marca" id="btn-add-marca">
-                            <span class="btn-icon"><i class="fas fa-plus"></i></span>
-                            Nueva Marca
-                        </button>
-                        <button class="btn-filter" id="btn-filter">
-                            <span class="btn-icon"><i class="fas fa-search"></i></span>
-                            Buscar
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Tabla de Marcas -->
-                <div class="table-container">
-                    <table class="marcas-table" id="tablaMarcas" data-datatable data-page-length="15" data-datatable-order="[[0,\"desc\"]]" data-datatable-no-order="2" data-datatable-no-search="2">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($marcas)): ?>
-                                <?php foreach ($marcas as $marca): ?>
-                                    <tr data-id="<?php echo (int)$marca['id_marca']; ?>">
-                                        <td><?php echo (int)$marca['id_marca']; ?></td>
-                                        <td><?php echo htmlspecialchars($marca['nombre_marca'] ?? 'N/A'); ?></td>
-                                        <td>
-                                            <button class="btn-action btn-edit" title="Modificar Marca"
-                                                data-id="<?php echo (int)$marca['id_marca']; ?>"
-                                                data-nombre="<?php echo htmlspecialchars($marca['nombre_marca'] ?? '', ENT_QUOTES); ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-action btn-delete" title="Eliminar Marca"
-                                                data-id="<?php echo (int)$marca['id_marca']; ?>"
-                                                data-nombre="<?php echo htmlspecialchars($marca['nombre_marca'] ?? '', ENT_QUOTES); ?>">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="3" style="text-align: center; padding: 40px;">
-                                        <i class="fas fa-trademark" style="font-size: 3rem; color: #2196F3; margin-bottom: 15px;"></i>
-                                        <p style="color: #718096; margin: 0;">No hay marcas registradas</p>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="section-header">
+        <h2>Listar Marcas</h2>
+        <div class="section-actions">
+            <button class="btn-table-superior btn-ayuda" title="Visualizar Ayuda">
+                <img src="assets/img/info-ayuda.svg">
+            </button>
+            <button class="btn-table-superior btn-incluir" title="Incluir Marcas" onclick="openModal('agregar')">
+                <img src="assets/img/plus.svg">
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de Marcas -->
+    <table class="table-info" data-datatable data-page-length="10" data-datatable-order='[[0, "desc"]]' data-datatable-no-order="4" data-datatable-no-search="4">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($marcas)): ?>
+                <?php foreach ($marcas as $marca): ?>
+                    <tr data-id="<?php echo (int)$marca['id_marca']; ?>">
+                        <td>
+                            <span class="campo-texto">
+                                <?php echo (int)$marca['id_marca']; ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="campo-texto">
+                                <?php echo htmlspecialchars($marca['nombre_marca'] ?? 'N/A'); ?>
+                            </span>
+                        </td>
+                        <td class="action-buttons">
+                            <button class="btn-action btn-modificar"
+                                title="Modificar Marcas"
+                                data-user-action="edit">
+                                <img src="assets/img/pencil.svg">
+                            </button>
+                            <button class="btn-action btn-eliminar" 
+                                title="Eliminar Marcas"
+                                data-user-action="delete">
+                                <img src="assets/img/circle-x.svg">
+                            </button>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
             <!-- Modal para Registrar/Editar Marca -->
             <div id="marcaModal" class="modal">
@@ -186,15 +184,6 @@ ob_start();
             </button>
 
             <style>
-
-                .table-container {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 25px;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-                    border: 1px solid rgba(33, 150, 243, 0.1);
-                }
-
                 .marcas-table {
                     width: 100%;
                     border-collapse: collapse;
