@@ -96,6 +96,93 @@ const estadosCAIRecepcion = {
     }
 };
 
+let modalAyudaRecepcion = null;
+let cargaAyudaRecepcion = null;
+
+function navegarAyudaRecepcion(contexto) {
+    if (!contexto || !modalAyudaRecepcion) return;
+    const indice = modalAyudaRecepcion.getSlideIndex(contexto);
+    if (indice > 0) modalAyudaRecepcion.goToSlide(indice);
+}
+
+function abrirAyudaRecepcion(contexto) {
+    if (modalAyudaRecepcion) {
+        modalAyudaRecepcion.openModal();
+        if (contexto) {
+            window.setTimeout(() => navegarAyudaRecepcion(contexto), 300);
+        }
+        return Promise.resolve();
+    }
+
+    if (cargaAyudaRecepcion) {
+        return cargaAyudaRecepcion.then(() => {
+            if (contexto) navegarAyudaRecepcion(contexto);
+        });
+    }
+
+    cargaAyudaRecepcion = fetch('assets/public/ayuda/recepcion.php')
+        .then(response => {
+            if (!response.ok) throw new Error('No se pudo cargar el contenido de ayuda.');
+            return response.text();
+        })
+        .then(html => {
+            if (!document.getElementById('modalAyuda')) {
+                const container = document.createElement('div');
+                container.innerHTML = html;
+                if (!container.querySelector('#modalAyuda')) {
+                    throw new Error('El contenido de ayuda no contiene el modal esperado.');
+                }
+                while (container.firstChild) document.body.appendChild(container.firstChild);
+            }
+
+            if (!document.querySelector('link[data-recepcion-help-style]')) {
+                const style = document.createElement('link');
+                style.rel = 'stylesheet';
+                style.href = 'assets/public/ayuda/css/modal.css';
+                style.dataset.recepcionHelpStyle = 'true';
+                document.head.appendChild(style);
+            }
+
+            if (typeof window.inicializarModalAyudaUsuario === 'function') {
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'assets/public/ayuda/js/modal.js';
+                script.onload = resolve;
+                script.onerror = () => {
+                    reject(new Error('No se pudo cargar el comportamiento del modal de ayuda.'));
+                };
+                document.body.appendChild(script);
+            });
+        })
+        .then(() => {
+            if (typeof window.inicializarModalAyudaUsuario !== 'function') {
+                throw new Error('El modal de ayuda no se pudo inicializar.');
+            }
+            modalAyudaRecepcion = window.inicializarModalAyudaUsuario();
+            if (!modalAyudaRecepcion) {
+                throw new Error('El modal de ayuda no devolvió una instancia válida.');
+            }
+            modalAyudaRecepcion.openModal();
+            if (contexto) {
+                window.setTimeout(() => navegarAyudaRecepcion(contexto), 300);
+            }
+        })
+        .catch(error => {
+            cargaAyudaRecepcion = null;
+            return window.Swal.fire({
+                icon: 'error',
+                title: 'No se pudo abrir la ayuda',
+                text: error && error.message ? error.message : 'Intente nuevamente.',
+                confirmButtonText: 'Entendido'
+            });
+        });
+
+    return cargaAyudaRecepcion;
+}
+
 function obtenerPanelCAIRecepcion() {
     const modal = document.getElementById('recepcionModal') ||
         document.getElementById('registrarRecepcionModal');
@@ -2062,6 +2149,13 @@ async function confirmarAnulacion() {
 $(document).ready(function() {
     // DataTable se inicializa automáticamente por data-table.js
     // No duplicamos la inicialización aquí para evitar conflictos al recargar
+
+    document.addEventListener('click', function(event) {
+        const botonAyuda = event.target.closest('.btn-ayuda, .btn-help, .btn-ayuda-modal');
+        if (!botonAyuda || botonAyuda.closest('#modalAyuda')) return;
+        event.preventDefault();
+        abrirAyudaRecepcion(botonAyuda.dataset.contexto || '');
+    });
 
     actualizarProteccionSelectsProductos();
     $('#registrarRecepcionModal').on('shown.bs.modal', function() {

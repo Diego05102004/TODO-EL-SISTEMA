@@ -211,6 +211,16 @@
             .replace(/[^a-z0-9_-]/g, '');
     }
 
+    function formatStatus(status) {
+        return String(status || 'habilitado').toLowerCase() === 'habilitado'
+            ? 'Habilitado'
+            : 'Inhabilitado';
+    }
+
+    function escapeRegex(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     function getUserCells(user) {
         const id = Number(user.id_usuario);
         const username = escapeHtml(user.username);
@@ -235,7 +245,7 @@
             '<span class="campo-texto">' + username + '</span>',
             '<span class="campo-texto">' + fullName + '</span>',
             '<span class="role-badge ' + roleClass(user.nombre_rol) + '">' + role + '</span>',
-            '<span class="status ' + statusClass + '" ' + statusButton + '>' + escapeHtml(status) + '</span>',
+            '<span class="status ' + statusClass + '" ' + statusButton + '>' + formatStatus(status) + '</span>',
             '<div class="action-buttons" data-user-id="' + safeId + '">' + actions + '</div>'
         ];
     }
@@ -297,7 +307,7 @@
         const row = table ? table.row(selector).node() : userTable.querySelector(selector);
         const badge = row && row.querySelector('.status');
         if (!badge) return;
-        badge.textContent = status;
+        badge.textContent = formatStatus(status);
         badge.classList.toggle('active', status === 'habilitado');
         badge.classList.toggle('inactive', status !== 'habilitado');
         if (table) {
@@ -311,20 +321,17 @@
         const table = getDataTable();
         if (!table) return;
         const roleValue = byId('roleFilter')?.value || '';
-        const roleNames = {
-            admin: 'administrador',
-            gerente: 'gerente',
-            vendedor: 'vendedor',
-            almacen: 'almacenista'
-        };
         const statusValue = byId('filtro-estatus')?.value || '';
-        const roleName = roleNames[roleValue] || '';
-        table.column(2).search(roleName, false, false);
+        const rolePattern = roleValue
+            ? '^\\s*' + escapeRegex(roleValue) + '\\s*$'
+            : '';
+        table.column(2).search(rolePattern, true, false, true);
         table.column(3).search(
-            statusValue === 'active' ? '^habilitado$' :
-                statusValue === 'inactive' ? '^inhabilitado$' : '',
+            statusValue === 'active' ? '^\\s*Habilitado\\s*$' :
+                statusValue === 'inactive' ? '^\\s*Inhabilitado\\s*$' : '',
             statusValue !== '',
-            false
+            false,
+            true
         );
         table.draw();
     }
@@ -418,6 +425,8 @@
         if (type === 'editar') {
             try {
                 const user = await fetchUser(userId);
+                const rolePlaceholder = byId('rango').querySelector('[data-role-placeholder]');
+                if (rolePlaceholder) rolePlaceholder.hidden = true;
                 byId('userId').value = user.id_usuario;
                 byId('nombre_usuario').value = user.username || '';
                 byId('nombre').value = user.nombres || '';
@@ -439,6 +448,8 @@
                 return;
             }
         } else {
+            const rolePlaceholder = byId('rango').querySelector('[data-role-placeholder]');
+            if (rolePlaceholder) rolePlaceholder.hidden = false;
             byId('passwordGroup').hidden = false;
             byId('confirmPasswordGroup').hidden = false;
             if (title) title.textContent = 'Registrar Usuario';
@@ -580,8 +591,8 @@
             closeModal('userStatusModal');
             await window.Swal.fire({
                 icon: 'success',
-                title: 'Estatus actualizado',
-                text: 'El estatus del usuario se actualizó correctamente.',
+                title: 'Estado actualizado',
+                text: 'El estado del usuario se actualizó correctamente.',
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -592,13 +603,18 @@
         }
     }
 
+    function goToHelpContext(context) {
+        const cardContext = context === 'estado' ? 'estatus' : context;
+        const slide = helpModalInstance.getSlideIndex(cardContext);
+        if (slide > 0) helpModalInstance.goToSlide(slide);
+    }
+
     function loadHelpModal(context) {
-        const slides = { registrar: 1, modificar: 2, eliminar: 3, estatus: 4, reporte: 5 };
         if (helpModalInstance) {
             helpModalInstance.openModal();
-            if (context && slides[context] !== undefined) {
+            if (context) {
                 window.setTimeout(function () {
-                    helpModalInstance.goToSlide(slides[context]);
+                    goToHelpContext(context);
                 }, 300);
             }
             return Promise.resolve();
@@ -641,9 +657,9 @@
                 }
                 helpModalInstance = window.inicializarModalAyudaUsuario();
                 helpModalInstance.openModal();
-                if (context && slides[context] !== undefined) {
+                if (context) {
                     window.setTimeout(function () {
-                        helpModalInstance.goToSlide(slides[context]);
+                        goToHelpContext(context);
                     }, 300);
                 }
             })
@@ -770,18 +786,11 @@
         window.filterByStatus = applyUserFilters;
     }
 
-    function closeViewModal() {
-        const modal = document.getElementById('userDetailsModal');
-        if (!modal) return;
-        modal.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => { modal.style.display = 'none'; }, 300);
-    }
-
     function initialize() {
         initializeValidation();
         initializeEvents();
         exposePublicFunctions();
-        closeViewModal();
+        closeModal('userDetailsModal');
         updateSummaryCards();
         applyUserFilters();
     }

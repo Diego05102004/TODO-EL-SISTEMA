@@ -41,6 +41,7 @@
                         <ul class="ayuda-lista">
                             <li><strong>Registrar:</strong> Nuevo usuario</li>
                             <li><strong>Consultar:</strong> Ver lista completa</li>
+                            <li><strong>Detallar:</strong> Ver información detallada</li>
                             <li><strong>Modificar:</strong> Actualizar datos</li>
                             <li><strong>Eliminar:</strong> Remover usuario</li>
                             <li><strong>Estatus:</strong> Activar/Desactivar cuenta</li>
@@ -51,7 +52,7 @@
             </div>
             
             <!-- Contenido de tarjetas (inicialmente oculto) -->
-            <div class="ayuda-tarjetas" id="ayudaTarjetas" style="display: none;">
+            <div class="ayuda-tarjetas" id="ayudaTarjetas" data-orden-tarjetas="registrar,modificar,eliminar,estatus,reporte" style="display: none;">
                 <!-- Tarjeta Registrar -->
                 <div class="tarjeta-ayuda tarjeta-registrar" data-tarjeta="registrar">
                     <div class="tarjeta-header">

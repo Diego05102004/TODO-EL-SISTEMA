@@ -386,12 +386,6 @@ ob_start();
                             </tfoot>
                         </table>
                     </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
-                            <i class="fas fa-times"></i> Cerrar
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

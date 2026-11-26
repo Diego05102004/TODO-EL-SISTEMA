@@ -48,6 +48,16 @@ $totalInhabilitados = is_array($usuariosDeshabilitados ?? null) ? count($usuario
 $porcentaje_activos = $total_usuarios > 0 ? round(($usuarios_activos / $total_usuarios) * 100) : 0;
 $porcentaje_inactivos = $total_usuarios > 0 ? round(($usuarios_inactivos / $total_usuarios) * 100) : 0;
 $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuarios) * 100) : 0;
+
+$rolesUsuarios = [];
+foreach ($usuarios ?? [] as $usuario) {
+    $nombreRol = trim((string)($usuario['nombre_rol'] ?? ''));
+    if ($nombreRol !== '') {
+        $rolesUsuarios[] = $nombreRol;
+    }
+}
+$rolesUsuarios = array_values(array_unique($rolesUsuarios, SORT_FLAG_CASE | SORT_STRING));
+sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
 ?>
 
 <script src="assets/public/js/jquery-3.7.1.min.js"></script>
@@ -110,17 +120,18 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
             <div class="filter-options">
                 <select id="roleFilter" class="select-filter" onchange="filterByRole()">
                     <option value="">Todos los roles</option>
-                    <option value="admin">Administrador</option>
-                    <option value="gerente">Gerente</option>
-                    <option value="vendedor">Vendedor</option>
-                    <option value="almacen">Almacenista</option>
+                    <?php foreach ($rolesUsuarios as $nombreRol): ?>
+                        <option value="<?php echo htmlspecialchars($nombreRol, ENT_QUOTES, 'UTF-8'); ?>">
+                            <?php echo htmlspecialchars($nombreRol, ENT_QUOTES, 'UTF-8'); ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="filter-options">
                 <select id="filtro-estatus" class="select-filter">
                     <option value="">Todos los estados</option>
-                    <option value="active">Habilitados</option>
-                    <option value="inactive">Inhabilitados</option>
+                    <option value="active">Habilitado</option>
+                    <option value="inactive">Inhabilitado</option>
                 </select>
             </div>
         </div>
@@ -173,7 +184,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                                 <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
                                 style="cursor: not-allowed; opacity: 0.6;"
                                 <?php endif; ?>>
-                            <?php echo htmlspecialchars($usuario['estatus'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                            <?php echo htmlspecialchars(ucfirst(strtolower($usuario['estatus'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                     </td>
                     <td class="action-buttons">
@@ -275,7 +286,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                         <div class="form-group">
                             <label for="rango">Rol del Usuario*</label>
                             <select id="rango" name="rango" class="input-select">
-                                <option value="">Seleccione el rol</option>
+                                <option value="" data-role-placeholder>Seleccione el rol</option>
                                 <?php
                                 if (!empty($selecionarRol)) {
                                     foreach ($selecionarRol as $rol) {
@@ -337,7 +348,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <h2>Detallar Usuario</h2>
                     <p>Información completa del usuario seleccionado</p>
                 </div>
-                <span class="close-modal" onclick="closeViewModal()">&times;</span>
+                <span class="close-modal" onclick="closeModal('userDetailsModal')">&times;</span>
             </div>
         </div>
 
@@ -421,7 +432,7 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                 </div>
 
                 <div class="modal-footer-content">
-                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal('deleteUserModal')">
                         <i class="fas fa-times"></i> Cerrar
                     </button>
                     <button type="button" class="btn-confirmar btn-danger" id="confirmDeleteUser">
@@ -441,10 +452,10 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Cambiar Estatus</h2>
-                    <p>Confirmación de cambio de estatus</p>
+                    <h2>Cambiar Estado</h2>
+                    <p>Confirmación de cambio de estado</p>
                 </div>
-                <button type="button" class="btn-help blue" title="Ayuda para cambiar el estatus" data-contexto="estatus">
+                <button type="button" class="btn-help blue" title="Ayuda para cambiar el estado" data-contexto="estado">
                     <img src="assets/img/info-ayuda.svg" alt="Ayuda">
                 </button>
             </div>
@@ -455,8 +466,8 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                 <div class="status-icon">
                     <i class="fas fa-question-circle"></i>
                 </div>
-                <h3>¿Desea cambiar el estatus de este usuario?</h3>
-                <p>El cambio de estatus afectará el acceso del usuario al sistema.</p>
+                <h3>¿Desea cambiar el estado de este usuario?</h3>
+                <p>El cambio de estado afectará el acceso del usuario al sistema.</p>
 
                 <div class="info-status">
                     <div class="info-row">
@@ -464,13 +475,13 @@ $porcentaje_admin = $total_usuarios > 0 ? round(($administradores / $total_usuar
                         <span id="statusUserName"></span>
                     </div>
                     <div class="info-row">
-                        <label>Nuevo estatus:</label>
+                        <label>Nuevo estado:</label>
                         <span id="statusUserNext"></span>
                     </div>
                 </div>
 
                 <div class="modal-footer-content">
-                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal()">
+                    <button type="button" class="btn-confirmar btn-cancel" onclick="closeModal('userStatusModal')">
                         <i class="fas fa-times"></i> Cerrar
                     </button>
                     <button type="button" class="btn-confirmar btn-cambiar" id="confirmUserStatus">

@@ -49,7 +49,10 @@ class ModalAyudaUsuario {
         const mapeoIndices = {};
         
         // Buscar todas las tarjetas con data-tarjeta
-        document.querySelectorAll('[data-tarjeta]').forEach(tarjeta => {
+        const tarjetasAyuda = this.ayudaTarjetas
+            ? this.ayudaTarjetas.querySelectorAll('[data-tarjeta]')
+            : [];
+        tarjetasAyuda.forEach(tarjeta => {
             const nombre = tarjeta.dataset.tarjeta;
             if (!tarjetasExistentes.includes(nombre)) {
                 tarjetasExistentes.push(nombre);
@@ -62,11 +65,14 @@ class ModalAyudaUsuario {
         this.tarjetas = [null]; // Slide 0 es la sección principal
         
         // Orden específico para mantener consistencia
-        const ordenTarjetas = ['registrar', 'detallar', 'modificar', 'reporte', 'estatus', 'anular', 'eliminar', 'descargar', 'formatos'];
+        const ordenConfigurado = this.ayudaTarjetas && this.ayudaTarjetas.dataset.ordenTarjetas;
+        const ordenTarjetas = ordenConfigurado
+            ? ordenConfigurado.split(',').map(nombre => nombre.trim()).filter(Boolean)
+            : ['registrar', 'detallar', 'modificar', 'anular', 'eliminar', 'estatus', 'reporte', 'descargar', 'formatos'];
         
         ordenTarjetas.forEach(nombre => {
             if (tarjetasExistentes.includes(nombre)) {
-                const tarjeta = document.querySelector(`[data-tarjeta="${nombre}"]`);
+                const tarjeta = this.ayudaTarjetas.querySelector(`[data-tarjeta="${nombre}"]`);
                 this.tarjetas.push(tarjeta);
                 mapeoIndices[nombre] = this.tarjetas.length - 1;
                 console.log(`✅ Tarjeta "${nombre}" encontrada -> slide ${mapeoIndices[nombre]}`);
@@ -82,7 +88,7 @@ class ModalAyudaUsuario {
         this.totalSlides = this.tarjetas.length;
         
         // Obtener dots del HTML pero limitar al número real de slides
-        this.navDots = document.querySelectorAll('.nav-indicators .nav-dot');
+        this.navDots = this.modal.querySelectorAll('.nav-indicators .nav-dot');
         
         // Depuración
         console.log('🔍 Depuración Modal:');
@@ -107,7 +113,8 @@ class ModalAyudaUsuario {
     
     // Método para obtener el índice correcto del slide basado en el contexto
     getSlideIndex(contexto) {
-        const contextoTarjeta = document.querySelector(`[data-tarjeta="${contexto}"]`);
+        const contextoTarjeta = this.ayudaTarjetas &&
+            this.ayudaTarjetas.querySelector(`[data-tarjeta="${contexto}"]`);
         if (!contextoTarjeta) return 0; // Si no existe, ir al principal
         
         // Buscar en el array original (con nulls) el índice
