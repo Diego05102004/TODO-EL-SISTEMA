@@ -452,7 +452,7 @@
             if (rolePlaceholder) rolePlaceholder.hidden = false;
             byId('passwordGroup').hidden = false;
             byId('confirmPasswordGroup').hidden = false;
-            if (title) title.textContent = 'Registrar Usuario';
+            if (title) title.textContent = 'Incluir Usuarios';
             if (subtitle) subtitle.textContent = 'Complete los datos para incluir un nuevo usuario';
             if (helpButton) {
                 helpButton.dataset.contexto = 'registrar';

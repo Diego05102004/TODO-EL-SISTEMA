@@ -105,7 +105,7 @@ if ($nombre_rol === 'SuperUsuario') {
                 <?php if ($permisosConsulta['Inventario'] ?? false): ?>
                 <a href="?pagina=reporteInventario" class="nav-link <?php echo ($pagina_actual ?? '') === 'reporteInventario' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
-                    <span class="nav-text">Reporte de Inventario</span>
+                    <span class="nav-text">Generar Reporte de Inventario</span>
                 </a>
                 <?php endif; ?>
             </div>
