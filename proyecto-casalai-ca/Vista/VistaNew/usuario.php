@@ -86,9 +86,9 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                 <div class="progress-circle">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_activos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="activeUsersCircle" class="circle" stroke-dasharray="<?php echo $porcentaje_activos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
-                    <span class="percentage"><?php echo $porcentaje_activos; ?>%</span>
+                    <span class="percentage" id="activeUsersPercentage"><?php echo $porcentaje_activos; ?>%</span>
                 </div>
             </div>
         </div>
@@ -103,9 +103,9 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                 <div class="progress-circle">
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="<?php echo $porcentaje_inactivos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="inactiveUsersCircle" class="circle" stroke-dasharray="<?php echo $porcentaje_inactivos; ?>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
-                    <span class="percentage"><?php echo $porcentaje_inactivos; ?>%</span>
+                    <span class="percentage" id="inactiveUsersPercentage"><?php echo $porcentaje_inactivos; ?>%</span>
                 </div>
             </div>
         </div>

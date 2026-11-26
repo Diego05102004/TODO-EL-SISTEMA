@@ -25,7 +25,7 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 
 // Variables para los componentes reutilizables
 $pagina_actual = 'marca';
-$titulo_pagina = 'Gestión de Marcas';
+$titulo_pagina = 'Gestionar Marcas';
 
 // Datos reales para las tarjetas
 $marcasArray = $marcas ?? [];

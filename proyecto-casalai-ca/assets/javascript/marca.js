@@ -92,7 +92,7 @@
         const editing = mode === 'modificar' && marca;
         resetForm();
         document.getElementById('accionForm').value = editing ? 'modificar' : 'registrar';
-        document.getElementById('modalTitle').textContent = editing ? 'Modificar Marca' : 'Incluir Marcas';
+        document.getElementById('modalTitle').textContent = editing ? 'Modificar Marcas' : 'Incluir Marcas';
         document.getElementById('modalSubtitle').textContent = editing
             ? 'Actualice los datos de la marca'
             : 'Complete los datos para incluir una nueva marca';
@@ -159,8 +159,8 @@
         const actionsCell = document.createElement('td');
         actionsCell.className = 'action-buttons';
         actionsCell.append(
-            createActionButton('btn-modificar', 'Modificar Marca', 'assets/img/pencil.svg', id, name),
-            createActionButton('btn-eliminar', 'Eliminar Marca', 'assets/img/circle-x.svg', id, name)
+            createActionButton('btn-modificar', 'Modificar Marcas', 'assets/img/pencil.svg', id, name),
+            createActionButton('btn-eliminar', 'Eliminar Marcas', 'assets/img/circle-x.svg', id, name)
         );
         row.append(idCell, nameCell, actionsCell);
         return row;

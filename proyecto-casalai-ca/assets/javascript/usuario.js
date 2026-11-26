@@ -259,9 +259,21 @@
             if (row.querySelector('.status')?.textContent.trim().toLowerCase() === 'habilitado') active += 1;
             else if (row.querySelector('.status')) inactive += 1;
         });
-        if (byId('totalUsersCount')) byId('totalUsersCount').textContent = String(active + inactive);
+        const total = active + inactive;
+        const activePercentage = total ? Math.round((active / total) * 100) : 0;
+        const inactivePercentage = total ? Math.round((inactive / total) * 100) : 0;
+
+        if (byId('totalUsersCount')) byId('totalUsersCount').textContent = String(total);
         if (byId('activeUsersCount')) byId('activeUsersCount').textContent = String(active);
         if (byId('inactiveUsersCount')) byId('inactiveUsersCount').textContent = String(inactive);
+        if (byId('activeUsersPercentage')) byId('activeUsersPercentage').textContent = activePercentage + '%';
+        if (byId('inactiveUsersPercentage')) byId('inactiveUsersPercentage').textContent = inactivePercentage + '%';
+        if (byId('activeUsersCircle')) {
+            byId('activeUsersCircle').setAttribute('stroke-dasharray', activePercentage + ', 100');
+        }
+        if (byId('inactiveUsersCircle')) {
+            byId('inactiveUsersCircle').setAttribute('stroke-dasharray', inactivePercentage + ', 100');
+        }
     }
 
     function saveUserRow(user) {
