@@ -25,7 +25,7 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 
 // Variables para los componentes reutilizables
 $pagina_actual = 'usuario';
-$titulo_pagina = 'Gestión de Usuarios';
+$titulo_pagina = 'Gestionar Usuarios';
 
 // Iniciar el buffer de contenido
 ob_start();
@@ -115,7 +115,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
 <!-- Usuarios Section -->
 <div class="table-section">
     <div class="section-header">
-        <h2>Lista de Usuarios</h2>
+        <h2>Listar Usuarios</h2>
         <div class="filters-section">
             <div class="filter-options">
                 <select id="roleFilter" class="select-filter" onchange="filterByRole()">
@@ -345,7 +345,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                     <i class="fas fa-eye"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Detallar Usuario</h2>
+                    <h2>Detallar Usuarios</h2>
                     <p>Información completa del usuario seleccionado</p>
                 </div>
                 <span class="close-modal" onclick="closeModal('userDetailsModal')">&times;</span>
@@ -407,7 +407,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Eliminar Usuario</h2>
+                    <h2>Eliminar Usuarios</h2>
                     <p>Confirmación de eliminación permanente</p>
                 </div>
                 <button type="button" class="btn-help red" title="Ayuda para eliminar usuarios" data-contexto="eliminar">
@@ -452,7 +452,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <div class="modal-title-content">
-                    <h2>Cambiar Estado</h2>
+                    <h2>Inhabilitar/Habilitar Usuarios</h2>
                     <p>Confirmación de cambio de estado</p>
                 </div>
                 <button type="button" class="btn-help blue" title="Ayuda para cambiar el estado" data-contexto="estado">

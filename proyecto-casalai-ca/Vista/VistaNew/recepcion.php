@@ -25,7 +25,7 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 
 // Variables para los componentes reutilizables
 $pagina_actual = 'recepcion';
-$titulo_pagina = 'Gestionar de Recepción';
+$titulo_pagina = 'Gestionar Recepción';
 
 // Iniciar el buffer de contenido
 ob_start();
@@ -43,7 +43,7 @@ ob_start();
 <!-- Recepciones Section -->
 <div class="table-section">
     <div class="section-header">
-        <h2>Lista de Recepciones</h2>
+        <h2>Listar Recepciones</h2>
         <div class="section-actions">
             <button class="btn-table-superior btn-ayuda" title="Visualizar Ayuda">
                 <img src="assets/img/info-ayuda.svg">

@@ -237,9 +237,9 @@
             : 'data-user-action="status" title="Click para cambiar estado"';
         const actions = isSuperUser
             ? '<span style="color:#999;font-size:.9rem">NO DISPONIBLE</span>'
-            : '<button type="button" class="btn-action btn-detallar" data-user-action="details" title="Detallar Usuario"><img src="assets/img/eye.svg" alt=""></button>' +
-                '<button type="button" class="btn-action btn-modificar" data-user-action="edit" title="Modificar Usuario"><img src="assets/img/pencil.svg" alt=""></button>' +
-                '<button type="button" class="btn-action btn-eliminar" data-user-action="delete" title="Eliminar Usuario"><img src="assets/img/circle-x.svg" alt=""></button>';
+            : '<button type="button" class="btn-action btn-detallar" data-user-action="details" title="Detallar Usuarios"><img src="assets/img/eye.svg" alt=""></button>' +
+                '<button type="button" class="btn-action btn-modificar" data-user-action="edit" title="Modificar Usuarios"><img src="assets/img/pencil.svg" alt=""></button>' +
+                '<button type="button" class="btn-action btn-eliminar" data-user-action="delete" title="Eliminar Usuarios"><img src="assets/img/circle-x.svg" alt=""></button>';
 
         return [
             '<span class="campo-texto">' + username + '</span>',
@@ -437,7 +437,7 @@
                 byId('rango').value = user.id_rol || '';
                 byId('passwordGroup').hidden = true;
                 byId('confirmPasswordGroup').hidden = true;
-                if (title) title.textContent = 'Modificar Usuario';
+                if (title) title.textContent = 'Modificar Usuarios';
                 if (subtitle) subtitle.textContent = 'Actualice los datos del usuario seleccionado';
                 if (helpButton) {
                     helpButton.dataset.contexto = 'modificar';

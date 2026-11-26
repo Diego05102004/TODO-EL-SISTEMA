@@ -29,71 +29,22 @@ $titulo_pagina = 'Gestión de Marcas';
 
 // Datos reales para las tarjetas
 $marcasArray = $marcas ?? [];
-$totalMarcas = count($marcasArray);
 $marcasPorId = $marcasArray;
 usort($marcasPorId, function ($a, $b) {
     return ((int)($a['id_marca'] ?? 0)) <=> ((int)($b['id_marca'] ?? 0));
 });
-$primeraMarca = $marcasPorId[0] ?? null;
-$ultimaMarca = $marcasPorId[$totalMarcas - 1] ?? null;
+
 
 // Iniciar el buffer de contenido
 ob_start();
 ?>
 
-            <!-- Summary Cards para Marcas -->
-            <div class="summary-cards">
-                <div class="summary-card sales">
-                    <div class="card-icon"><i class="fas fa-trademark"></i></div>
-                    <div class="card-content">
-                        <h3>Total Marcas</h3>
-                        <p class="card-value" id="marca-count-total"><?php echo $totalMarcas; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="100, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage">100%</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="summary-card expenses">
-                    <div class="card-icon"><i class="fas fa-arrow-down"></i></div>
-                    <div class="card-content">
-                        <h3>Primera Registrada</h3>
-                        <p class="card-value" id="marca-primera" style="font-size: 1.1rem;"><?php echo $primeraMarca ? htmlspecialchars($primeraMarca['nombre_marca']) : 'N/A'; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $totalMarcas > 0 ? round(100 / $totalMarcas, 1) : 0; ?>, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $totalMarcas > 0 ? round(100 / $totalMarcas) . '%' : '0%'; ?></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="summary-card income">
-                    <div class="card-icon"><i class="fas fa-arrow-up"></i></div>
-                    <div class="card-content">
-                        <h3>Última Registrada</h3>
-                        <p class="card-value" id="marca-ultima" style="font-size: 1.1rem;"><?php echo $ultimaMarca ? htmlspecialchars($ultimaMarca['nombre_marca']) : 'N/A'; ?></p>
-                        <div class="progress-circle">
-                            <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="circle" stroke-dasharray="<?php echo $totalMarcas > 0 ? round(100 / $totalMarcas, 1) : 0; ?>, 100" stroke="#2196F3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <span class="percentage"><?php echo $totalMarcas > 0 ? round(100 / $totalMarcas) . '%' : '0%'; ?></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Marcas Section -->
-            <div class="marcas-section" id="contenedor-marcas">
-                <div id="mensaje-permiso" style="display:none; color:#dc2626; text-align:center; margin:20px 0; font-weight:600;"></div>
-                <div class="section-header">
-                    <h2>Gestión de Marcas</h2>
+<!-- Marcas Section -->
+<div class="table-section" id="contenedor-marcas">
+    <div id="mensaje-permiso" style="display:none; color:#dc2626; text-align:center; margin:20px 0; font-weight:600;"></div>
+    <div class="section-header">
+                    <h2>Lista de Marcas</h2>
                     <div class="section-actions">
                         <button class="btn-add-marca" id="btn-add-marca">
                             <span class="btn-icon"><i class="fas fa-plus"></i></span>
@@ -235,10 +186,6 @@ ob_start();
             </button>
 
             <style>
-                /* Estilos específicos de Marcas */
-                .marcas-section {
-                    margin-top: 30px;
-                }
 
                 .table-container {
                     background: white;
