@@ -237,9 +237,9 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
             <form id="userForm" enctype="multipart/form-data" novalidate>
                 <div class="form-section">
                     <div class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            <h3>Información</h3>
-                        </div>
+                        <i class="fas fa-info-circle"></i>
+                        <h3>Información</h3>
+                    </div>
                     <input type="hidden" id="userId" name="id_usuario">
 
                     <div class="form-row">
