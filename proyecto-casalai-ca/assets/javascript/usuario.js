@@ -15,7 +15,7 @@
     const fieldRules = {
         nombre_usuario: {
             pattern: /^[a-zA-Z0-9_]{4,20}$/,
-            message: 'El usuario debe tener entre 4 y 20 caracteres: letras, números o guion bajo.',
+            message: 'El usuario debe tener entre 4 y 20 caracteres.',
             keypress: /^[a-zA-Z0-9_]$/
         },
         nombre: {
@@ -40,7 +40,7 @@
         },
         correo_usuario: {
             pattern: /^[A-Za-z0-9._%+\-ÁÉÍÓÚáéíóúñÑ]+@(gmail\.com|outlook\.com|yahoo\.com|icloud\.com)$/i,
-            message: 'Use un correo de Gmail, Outlook, Yahoo o iCloud.',
+            message: 'Ingrese un correo activo (gmail, outlook, yahoo o iCloud).',
             keypress: /^[A-Za-z0-9._%+\-@ÁÉÍÓÚáéíóúñÑ]$/
         }
     };
@@ -123,13 +123,13 @@
         } else if (fieldRules[field.name] && !fieldRules[field.name].pattern.test(value)) {
             message = fieldRules[field.name].message;
         } else if (field.id === 'clave_usuario') {
-            const passwordIsValid = value.length >= 8 && value.length <= 15 &&
+            const passwordIsValid = value.length >= 6 && value.length <= 15 &&
                 passwordPattern.uppercase.test(value) &&
                 passwordPattern.lowercase.test(value) &&
                 passwordPattern.number.test(value) &&
                 passwordPattern.special.test(value);
             if (!passwordIsValid) {
-                message = 'Use 8-15 caracteres, con mayúscula, minúscula, número y símbolo.';
+                message = 'Use 6-15 caracteres, con mayúscula, minúscula, número y símbolo.';
             }
         } else if (field.id === 'clave_confirmar' && value !== byId('clave_usuario').value) {
             message = 'Las contraseñas no coinciden.';
@@ -511,7 +511,7 @@
             if (!response.ok || !result || result.status !== 'success') {
                 if (result && result.errors) showServerFieldErrors(result.errors);
                 const errors = result && result.errors ? Object.values(result.errors).join('\n') : '';
-                throw new Error(errors || (result && result.message) || 'No se pudo guardar el usuario.');
+                throw new Error(errors || (result && result.message) || 'No se pudo incluir el usuario.');
             }
             saveUserRow(result.usuario);
             closeModal('userModal');
@@ -519,11 +519,11 @@
             await window.Swal.fire({
                 icon: 'success',
                 title: editing ? 'Usuario modificado' : 'Usuario registrado',
-                text: result.message || 'La operación se completó correctamente.',
+                text: result.message || 'El usuario fue modificado correctamente.',
                 confirmButtonText: 'Entendido'
             });
         } catch (error) {
-            await showError('No se pudo guardar el usuario', error);
+            await showError('No se pudo incluir el usuario', error);
         } finally {
             if (button) button.disabled = false;
         }
@@ -733,7 +733,7 @@
         byId('filtro-estatus')?.addEventListener('change', applyUserFilters);
 
         document.addEventListener('click', function (event) {
-            const helpButton = event.target.closest('.btn-ayuda, .btn-ayuda-modal, .btn-ayuda-usuario, [data-ayuda="usuario"]');
+            const helpButton = event.target.closest('.btn-ayuda, .btn-help, .btn-ayuda-usuario, [data-ayuda="usuario"]');
             if (helpButton && !helpButton.closest('#modalAyuda')) {
                 event.preventDefault();
                 loadHelpModal(helpButton.dataset.contexto || '');
