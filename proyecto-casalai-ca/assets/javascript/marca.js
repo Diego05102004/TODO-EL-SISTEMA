@@ -251,6 +251,12 @@
 
     async function saveMarca() {
         if (!validateName()) {
+            await window.Swal.fire({
+                icon: 'warning',
+                title: 'Verifique los datos',
+                text: 'Revise los campos señalados antes de continuar.',
+                confirmButtonText: 'Entendido'
+            });
             nameInput.focus();
             return;
         }

@@ -27,14 +27,6 @@ if (!Auth::validateToken() && isset($_SESSION['id_usuario']) && isset($_SESSION[
 $pagina_actual = 'marca';
 $titulo_pagina = 'Gestionar Marcas';
 
-// Datos reales para las tarjetas
-$marcasArray = $marcas ?? [];
-$marcasPorId = $marcasArray;
-usort($marcasPorId, function ($a, $b) {
-    return ((int)($a['id_marca'] ?? 0)) <=> ((int)($b['id_marca'] ?? 0));
-});
-
-
 // Iniciar el buffer de contenido
 ob_start();
 ?>
@@ -132,7 +124,7 @@ ob_start();
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="nombre_marca">Nombre*</label>
+                            <label for="nombre_marca">Nombre de la Marca*</label>
                             <input type="text" id="nombre_marca" name="nombre_marca" placeholder="Ingrese el nombre de la marca" maxlength="25" class="input-textnum">
                             <span class="span-value" id="snombre_marca"></span>
                         </div>

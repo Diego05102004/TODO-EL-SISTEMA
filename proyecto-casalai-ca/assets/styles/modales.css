@@ -79,7 +79,7 @@
 
 .modal-header-content {
     display: flex;
-    gap: 150px;
+    gap: 125px;
     z-index: 990;
 }
 
