@@ -142,13 +142,13 @@ if ($nombre_rol === 'SuperUsuario') {
                 <?php if ($permisosConsulta['Categorias'] ?? false): ?>
                 <a href="?pagina=categoria" class="nav-link <?php echo ($pagina_actual ?? '') === 'categoria' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
-                    <span class="nav-text">Gestionar Categorías</span>
+                    <span class="nav-text">Gestionar Categoría</span>
                 </a>
                 <?php endif; ?>
                 <?php if ($permisosConsulta['ReporteProductos'] ?? false): ?>
                 <a href="?pagina=reporteProductos" class="nav-link <?php echo ($pagina_actual ?? '') === 'reporteProductos' ? 'active' : ''; ?>">
                     <span class="nav-icon"><i class="fas fa-chevron-right"></i></span>
-                    <span class="nav-text">Reporte de Productos</span>
+                    <span class="nav-text">Generar Reporte de Productos</span>
                 </a>
                 <?php endif; ?>
             </div>
