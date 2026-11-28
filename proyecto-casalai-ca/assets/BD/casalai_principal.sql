@@ -287,7 +287,7 @@ DROP TABLE IF EXISTS `tbl_clientes`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `tbl_clientes` (
   `id_clientes` int(11) NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(600) DEFAULT NULL,
+  `nombre` varchar(2048) DEFAULT NULL,
   `cedula` varchar(10) DEFAULT NULL,
   `direccion` text DEFAULT NULL,
   `telefono` varchar(600) DEFAULT NULL,
@@ -3926,7 +3926,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_modificar_cliente`(
 
     IN p_id_cliente INT,
 
-    IN p_nombre VARCHAR(400),
+    IN p_nombre VARCHAR(2048),
 
     IN p_cedula VARCHAR(10),
 
@@ -3945,7 +3945,7 @@ BEGIN
 
     -- Declaración estricta de variables de respaldo histórico al inicio
 
-    DECLARE v_nombre_viejo VARCHAR(255);
+    DECLARE v_nombre_viejo VARCHAR(2048);
 
     DECLARE v_cedula_viejo VARCHAR(10);
 
@@ -5665,7 +5665,7 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_cliente`(
 
-    IN p_nombre VARCHAR(400),
+    IN p_nombre VARCHAR(2048),
 
     IN p_cedula VARCHAR(10),
 

@@ -492,6 +492,7 @@ class cliente extends BD {
         // Descifrar datos personales
         if ($resultado) {
             $resultado = $this->encryption->decryptArray($resultado, self::CAMPOS_CIFRADOS);
+            $resultado = $this->normalizarCamposCliente($resultado);
         }
         
         return $resultado;
@@ -517,6 +518,7 @@ class cliente extends BD {
         // Descifrar datos personales
         if ($resultado) {
             $resultado = $this->encryption->decryptArray($resultado, self::CAMPOS_CIFRADOS);
+            $resultado = $this->normalizarCamposCliente($resultado);
         }
         
         return $resultado;

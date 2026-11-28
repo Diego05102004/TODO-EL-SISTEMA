@@ -179,7 +179,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                         <span class="status <?php echo (strtolower($usuario['estatus'] ?? '') === 'habilitado') ? 'active' : 'inactive'; ?>"
                                 <?php if (strtolower($usuario['nombre_rol'] ?? '') !== 'superusuario'): ?>
                                 data-user-action="status"
-                                title="Click para cambiar estado"
+                                title="Cambiar Estado"
                                 <?php endif; ?>
                                 <?php if (strtolower($usuario['nombre_rol'] ?? '') === 'superusuario'): ?>
                                 style="cursor: not-allowed; opacity: 0.6;"
@@ -410,7 +410,7 @@ sort($rolesUsuarios, SORT_NATURAL | SORT_FLAG_CASE);
                     <h2>Eliminar Usuarios</h2>
                     <p>Confirmación de eliminación permanente</p>
                 </div>
-                <button type="button" class="btn-help red" title="Ayuda para eliminar usuarios" data-contexto="eliminar">
+                <button type="button" class="btn-help red" title="Ayuda para Eliminar Usuarios" data-contexto="eliminar">
                     <img src="assets/img/info-ayuda.svg" alt="Ayuda">
                 </button>
             </div>
